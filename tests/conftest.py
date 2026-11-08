@@ -41,6 +41,9 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.fixture(scope="session")
 def qapp():
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(["clonaut"])
+    # come l'app vera: il GC solo nel thread della GUI (vedi clonaut/app.py)
+    from clonaut.app import collect_garbage_in_main_thread
+    collect_garbage_in_main_thread(app, interval_ms=500)
     yield app
     # finestre e dialoghi rimasti vanno distrutti finché Qt è vivo: lasciati
     # all'uscita dell'interprete, PySide6 6.12 li cancella dopo la
@@ -143,3 +146,4 @@ def window(rcd, qapp, dialogs):
     yield win
     win._quitting = True
     win.close()
+    gc.collect()   # la finestra chiusa si raccoglie qui, nel thread della GUI

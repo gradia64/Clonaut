@@ -126,3 +126,27 @@ def test_closing_to_tray_keeps_daemon_and_app(window, qapp, monkeypatch):
     assert not window.isVisible()
     assert window.ctx.rcd.proc.poll() is None
     assert not quits
+
+
+def test_second_close_does_not_shut_down_again(window, qapp, monkeypatch):
+    """Due chiusure di fila (la X, poi la fixture o «Esci»): la seconda non rifà nulla."""
+    monkeypatch.setattr(QtWidgets.QApplication, "quit", staticmethod(lambda: None))
+    window.settings["close_to_tray"] = False
+    window.close()
+    stops = []
+    monkeypatch.setattr(window.worker, "stop", lambda: stops.append(1))
+    window.close()
+    assert stops == []
+
+
+def test_garbage_is_collected_only_in_the_gui_thread(qapp):
+    """GC automatico spento, raccolta da un timer della GUI (PySide6 6.12.0)."""
+    import gc
+    from clonaut.app import collect_garbage_in_main_thread
+    timer = collect_garbage_in_main_thread(qapp, interval_ms=100)
+    try:
+        assert not gc.isenabled()
+        assert timer.isActive() and timer.thread() is qapp.thread()
+    finally:
+        timer.stop()
+        timer.deleteLater()

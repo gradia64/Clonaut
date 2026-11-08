@@ -57,6 +57,8 @@ All notable changes to Clonaut are listed here. Versions follow
   again and *Run now* failed silently. Closing now really quits the app.
 - When the rclone daemon does not respond, transfers and schedules show the
   error ("rclone rcd is not responding…") instead of failing silently.
+- Possible crash with PySide6 6.12.0 when Python's garbage collector ran in a
+  background thread: it now runs only in the GUI thread.
 
 ## [0.3.1] — 2026-11-08
 

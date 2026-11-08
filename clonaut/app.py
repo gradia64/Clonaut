@@ -13,6 +13,7 @@ Aggancio a un rclone rcd già in esecuzione:
 from __future__ import annotations
 
 import argparse
+import gc
 import sys
 
 from clonaut.api import RcloneApi
@@ -23,6 +24,24 @@ from clonaut.qtcompat import QtCore, QtWidgets
 from clonaut import settings as app_settings
 from clonaut.rcd import RcdProcess, find_rclone, free_port, random_creds
 from clonaut.ui.main_window import MainWindow
+
+
+def collect_garbage_in_main_thread(app: QtWidgets.QApplication,
+                                   interval_ms: int = 2000) -> QtCore.QTimer:
+    """Il garbage collector di Python gira solo nel thread della GUI.
+
+    Automatico, partirebbe in qualunque thread che alloca (il polling, le
+    prove a vuoto): se lì raccoglie un dialogo chiuso, PySide6 6.12.0 ne
+    rimanda la cancellazione al thread principale e va in segfault
+    (Shiboken::BindingManager::runDeletionInMainThread). Spento e richiamato
+    da un timer della GUI, raccoglie sempre nel thread giusto.
+    """
+    gc.disable()
+    timer = QtCore.QTimer(app)
+    timer.setInterval(interval_ms)
+    timer.timeout.connect(gc.collect)
+    timer.start()
+    return timer
 
 
 def make_app() -> QtWidgets.QApplication:
@@ -36,6 +55,7 @@ def make_app() -> QtWidgets.QApplication:
     app.setStyleSheet(APP_QSS)
     app.setWindowIcon(app_icon())
     i18n.install_qt_translator(app)
+    collect_garbage_in_main_thread(app)
     return app
 
 

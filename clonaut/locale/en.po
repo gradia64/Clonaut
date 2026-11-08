@@ -26,39 +26,39 @@ msgid ""
 "modalità «Copia»."
 msgstr "«Move» and «Sync» work on folders: for a single file use «Copy»."
 
-#: clonaut/app.py:44
+#: clonaut/app.py:64
 msgid "Interfaccia grafica per rclone (rcd REST API)"
 msgstr "Graphical interface for rclone (rcd REST API)"
 
-#: clonaut/app.py:45
+#: clonaut/app.py:65
 msgid "aggancia un rcd già avviato (es. http://127.0.0.1:5572)"
 msgstr "attach to an rcd that is already running (e.g. http://127.0.0.1:5572)"
 
-#: clonaut/app.py:46
+#: clonaut/app.py:66
 msgid "utente per l'API rc"
 msgstr "user for the rc API"
 
-#: clonaut/app.py:47
+#: clonaut/app.py:67
 msgid "password per l'API rc"
 msgstr "password for the rc API"
 
-#: clonaut/app.py:48
+#: clonaut/app.py:68
 msgid "file di configurazione rclone da usare"
 msgstr "rclone configuration file to use"
 
-#: clonaut/app.py:49
+#: clonaut/app.py:69
 msgid "porta per il rcd locale (default: casuale)"
 msgstr "port for the local rcd (default: random)"
 
-#: clonaut/app.py:59
+#: clonaut/app.py:79
 msgid "gestito dal rcd esterno"
 msgstr "managed by the external rcd"
 
-#: clonaut/app.py:67
+#: clonaut/app.py:87
 msgid "rclone non trovato. Fonti provate:"
 msgstr "rclone not found. Sources tried:"
 
-#: clonaut/app.py:68
+#: clonaut/app.py:88
 msgid ""
 "Installalo (es. `sudo apt install rclone`, `sudo pacman -S rclone` o da "
 "https://rclone.org), oppure indica il percorso con la variabile "
@@ -68,23 +68,23 @@ msgstr ""
 "from https://rclone.org), or set its path with the CLONAUT_RCLONE "
 "environment variable."
 
-#: clonaut/app.py:80
+#: clonaut/app.py:100
 msgid "Log recente:"
 msgstr "Recent log:"
 
-#: clonaut/app.py:80
+#: clonaut/app.py:100
 msgid "rclone rcd non si è avviato."
 msgstr "rclone rcd did not start."
 
-#: clonaut/app.py:82
+#: clonaut/app.py:102
 msgid "predefinito (~/.config/rclone/rclone.conf)"
 msgstr "default (~/.config/rclone/rclone.conf)"
 
-#: clonaut/app.py:96
+#: clonaut/app.py:116
 msgid "Avvio di rclone rcd…"
 msgstr "Starting rclone rcd…"
 
-#: clonaut/app.py:108 clonaut/ui/transfer_dialog.py:303
+#: clonaut/app.py:128 clonaut/ui/transfer_dialog.py:303
 msgid "Avvio fallito"
 msgstr "Startup failed"
 
@@ -140,51 +140,51 @@ msgstr "AppImage: {path} missing"
 msgid "(nessun log disponibile)"
 msgstr "(no log available)"
 
-#: clonaut/ui/main_window.py:34
+#: clonaut/ui/main_window.py:35
 msgid "Remote"
 msgstr "Remotes"
 
-#: clonaut/ui/main_window.py:35
+#: clonaut/ui/main_window.py:36
 msgid "Trasferimenti"
 msgstr "Transfers"
 
-#: clonaut/ui/main_window.py:39
+#: clonaut/ui/main_window.py:40
 msgid "&File"
 msgstr "&File"
 
-#: clonaut/ui/main_window.py:40
+#: clonaut/ui/main_window.py:41
 msgid "⚙ Impostazioni…"
 msgstr "⚙ Settings…"
 
-#: clonaut/ui/main_window.py:42 clonaut/ui/main_window.py:90
+#: clonaut/ui/main_window.py:43 clonaut/ui/main_window.py:91
 msgid "Esci"
 msgstr "Quit"
 
-#: clonaut/ui/main_window.py:48
+#: clonaut/ui/main_window.py:49
 msgid "&Aiuto"
 msgstr "&Help"
 
-#: clonaut/ui/main_window.py:49
+#: clonaut/ui/main_window.py:50
 msgid "Informazioni su Clonaut…"
 msgstr "About Clonaut…"
 
-#: clonaut/ui/main_window.py:51
+#: clonaut/ui/main_window.py:52
 msgid "Informazioni su Qt…"
 msgstr "About Qt…"
 
-#: clonaut/ui/main_window.py:87
+#: clonaut/ui/main_window.py:88
 msgid "Mostra / Nascondi"
 msgstr "Show / Hide"
 
-#: clonaut/ui/main_window.py:146
+#: clonaut/ui/main_window.py:147
 msgid "Dati app"
 msgstr "App data"
 
-#: clonaut/ui/main_window.py:152
+#: clonaut/ui/main_window.py:153
 msgid "Il pilota grafico per rclone."
 msgstr "The graphical pilot for rclone."
 
-#: clonaut/ui/main_window.py:153
+#: clonaut/ui/main_window.py:154
 msgid ""
 "Interfaccia desktop per <a href='https://rclone.org'>rclone</a>: remote, "
 "trasferimenti con progressi, prove a vuoto, cestino di sicurezza e "
@@ -194,32 +194,32 @@ msgstr ""
 "transfers with progress, dry runs, safety trash and schedules. All the "
 "work on files is done by rclone."
 
-#: clonaut/ui/main_window.py:158
+#: clonaut/ui/main_window.py:159
 msgid "Licenza"
 msgstr "License"
 
-#: clonaut/ui/main_window.py:163
+#: clonaut/ui/main_window.py:164
 msgid "segnala un problema"
 msgstr "report a problem"
 
-#: clonaut/ui/main_window.py:166
+#: clonaut/ui/main_window.py:167
 msgid "Informazioni su Clonaut"
 msgstr "About Clonaut"
 
-#: clonaut/ui/main_window.py:184
+#: clonaut/ui/main_window.py:185
 #, python-brace-format
 msgid "{n} trasferimenti attivi"
 msgstr "{n} active transfers"
 
-#: clonaut/ui/main_window.py:185
+#: clonaut/ui/main_window.py:186
 msgid "nessun trasferimento attivo"
 msgstr "no active transfers"
 
-#: clonaut/ui/main_window.py:197
+#: clonaut/ui/main_window.py:198
 msgid "in attesa di rclone rcd…"
 msgstr "waiting for rclone rcd…"
 
-#: clonaut/ui/main_window.py:200
+#: clonaut/ui/main_window.py:201
 #, python-brace-format
 msgid "rclone {version} · rcd su {url} · config: {config}"
 msgstr "rclone {version} · rcd at {url} · config: {config}"

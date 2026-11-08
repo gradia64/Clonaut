@@ -23,6 +23,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ctx = ctx
         self.settings = settings or app_settings.load()
         self._quitting = False
+        self._shut_down = False   # worker e demoni già fermati da closeEvent
         self.setWindowTitle(f"Clonaut {__version__}")
         self.setWindowIcon(app_icon())
         self.resize(1150, 720)
@@ -217,6 +218,13 @@ class MainWindow(QtWidgets.QMainWindow):
             event.ignore()
             self.hide()   # continua a lavorare nella tray
             return
+        if self._shut_down:
+            # seconda chiusura (es. «Esci» dopo la X): worker e demoni sono
+            # già fermi, rifermarli con PySide6 6.12 può andare in segfault
+            super().closeEvent(event)
+            event.accept()
+            return
+        self._shut_down = True
         self.worker.stop()
         self.worker.wait(2500)
         for dry in list(self.transfers_tab.dry_workers()):
