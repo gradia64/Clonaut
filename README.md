@@ -99,6 +99,37 @@ It replaces the older `gui-rclone` package. Uninstall with
 `sudo apt remove clonaut`. To set the Maintainer field when rebuilding:
 `MAINTAINER="Name <email>" ./build-deb.sh`.
 
+## Installation (Arch Linux, AUR)
+
+From version 0.4.0 Clonaut is on the AUR, with any AUR helper:
+
+```bash
+yay -S clonaut        # latest release
+yay -S clonaut-git    # latest commit on main
+```
+
+The packaging files and the maintainer notes are in
+[`packaging/aur/`](packaging/aur/).
+
+## Verifying a release
+
+From version 0.4.0 every release tag `vX.Y.Z` is signed with the **Clonaut
+release key**, an OpenPGP key that never leaves the maintainer's machine:
+
+- primary `9F54 724A CD09 95BE C321  BD30 E6C5 DCC0 D49C CC6B` (certification only)
+- tag subkey `CEAC C8CA 966C 2A16 B7E8  07DB 5B8D 6236 E772 8ED4`
+
+The public key is [`packaging/clonaut-release-key.asc`](packaging/clonaut-release-key.asc).
+The AUR package `clonaut` builds from the signed tag and `makepkg` checks the
+signature (`validpgpkeys`). To check a tag yourself:
+
+```bash
+scripts/verify-tag.sh v0.4.0
+```
+
+It uses a temporary keyring holding only that public key, and accepts the tag
+only if the tag subkey signed it. Release files come with `SHA256SUMS`.
+
 ## Requirements
 
 - Linux, Python ≥ 3.10

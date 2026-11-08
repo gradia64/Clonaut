@@ -13,6 +13,11 @@ All notable changes to Clonaut are listed here. Versions follow
 - **Choose which rclone to use**: `CLONAUT_RCLONE` environment variable, a new
   *Programma rclone* field in *Impostazioni* (Settings), `PATH`, or a copy
   bundled with the AppImage — in this order. The About dialog shows the path.
+- AUR packages `clonaut` (from the release tag) and `clonaut-git`, tested in
+  a clean Arch container (`packaging/aur/test-in-docker.sh`).
+- **Signed release tags** with the Clonaut release key
+  (`packaging/clonaut-release-key.asc`); `scripts/verify-tag.sh` checks them
+  and the AUR package verifies the tag before building.
 - `CLONAUT_QT=pyqt6|pyside6` picks the Qt binding.
 - Automated test suite (pytest, Qt offscreen, real rclone), passing with both
   Qt bindings on rclone 1.75.2 and 1.76.0.

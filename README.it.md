@@ -94,6 +94,38 @@ scritto per entrambi). Disinstallazione: `sudo apt remove clonaut`.
 Ricompilazione dopo modifiche: `./build-deb.sh` (metadati in `packaging/`;
 per personalizzare il campo Maintainer: `MAINTAINER="Nome <email>" ./build-deb.sh`).
 
+## Installazione (Arch Linux, AUR)
+
+Dalla versione 0.4.0 Clonaut è su AUR, con qualsiasi helper AUR:
+
+```bash
+yay -S clonaut        # ultima release
+yay -S clonaut-git    # ultimo commit su main
+```
+
+I file di pacchettizzazione e le note per il manutentore sono in
+[`packaging/aur/`](packaging/aur/).
+
+## Verificare una release
+
+Da 0.4.0 ogni tag di rilascio `vX.Y.Z` è firmato con la **chiave di rilascio
+di Clonaut**, una chiave OpenPGP che non lascia mai la macchina del maintainer:
+
+- primaria `9F54 724A CD09 95BE C321  BD30 E6C5 DCC0 D49C CC6B` (solo certificazione)
+- sottochiave dei tag `CEAC C8CA 966C 2A16 B7E8  07DB 5B8D 6236 E772 8ED4`
+
+La chiave pubblica è [`packaging/clonaut-release-key.asc`](packaging/clonaut-release-key.asc).
+Il pacchetto AUR `clonaut` si costruisce dal tag firmato e `makepkg` ne
+verifica la firma (`validpgpkeys`). Per verificare un tag a mano:
+
+```bash
+scripts/verify-tag.sh v0.4.0
+```
+
+Usa un portachiavi temporaneo con la sola chiave pubblica e accetta il tag
+solo se l'ha firmato la sottochiave dei tag. I file delle release hanno
+`SHA256SUMS`.
+
 ## Requisiti
 
 - Linux, Python ≥ 3.10
