@@ -140,6 +140,10 @@ jobs:
         with:
           name: packages
 
+      # gli artefatti di GitHub non conservano il permesso di esecuzione
+      - name: AppImage eseguibili
+        run: chmod +x dist/*.AppImage
+
       # Debian 12, Ubuntu 22.04/24.04, Fedora, Arch, openSUSE: solo le
       # librerie di base, Xvfb, niente rclone di sistema
       - name: Distribuzioni in Docker
@@ -156,6 +160,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: packages
+
+      # gli artefatti di GitHub non conservano il permesso di esecuzione
+      - name: AppImage eseguibili
+        run: chmod +x dist/*.AppImage
 
       # pip per installare pytest accanto all'AppImage (smoke-test.sh)
       - uses: actions/setup-python@v6
