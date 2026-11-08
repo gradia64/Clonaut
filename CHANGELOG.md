@@ -25,6 +25,12 @@ All notable changes to Clonaut are listed here. Versions follow
 - **Signed release tags** with the Clonaut release key
   (`packaging/clonaut-release-key.asc`); `scripts/verify-tag.sh` checks them
   and the AUR package verifies the tag before building.
+- **GitHub Actions**: CI on every push and pull request (tests with Python
+  3.10–3.14 and both Qt bindings, AppStream and desktop-file validation,
+  `.deb` with lintian, shellcheck); release workflow on signed `v*` tags that
+  builds and tests the `.deb` and both AppImages and attaches them with
+  `SHA256SUMS` and build-provenance attestations
+  (`gh attestation verify <file> -R gradia64/Clonaut`).
 - `CLONAUT_QT=pyqt6|pyside6` picks the Qt binding.
 - Automated test suite (pytest, Qt offscreen, real rclone), passing with both
   Qt bindings on rclone 1.75.2 and 1.76.0.

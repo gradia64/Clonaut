@@ -163,8 +163,14 @@ scripts/verify-tag.sh v0.4.0
 ```
 
 It uses a temporary keyring holding only that public key, and accepts the tag
-only if the tag subkey signed it. Release files (`.deb`, AppImages) come with
-`SHA256SUMS`.
+only if the tag subkey signed it. Release files (`.deb`, AppImages) are built
+from the tag by GitHub Actions and come with `SHA256SUMS` and a build-provenance
+attestation:
+
+```bash
+sha256sum -c SHA256SUMS --ignore-missing
+gh attestation verify Clonaut-0.4.0-x86_64.AppImage -R gradia64/Clonaut
+```
 
 ## Requirements
 
@@ -303,7 +309,8 @@ pyproject.toml              Python package metadata (`clonaut` command)
 main.py, run.sh             run from source
 build-deb.sh                builds the .deb
 build-appimage.sh           builds the AppImages (x86_64, aarch64)
-scripts/                    release key fingerprints, signed-tag check
+scripts/                    release key fingerprints, signed-tag check, release notes
+.github/workflows/          CI (tests, metadata, .deb) and release builds
 packaging/                  .desktop, AppStream metainfo, icons, Debian files, man page
 tests/                      pytest suite (real rclone, Qt offscreen)
 clonaut/

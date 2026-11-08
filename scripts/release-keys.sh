@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Ruoli della chiave di rilascio di Clonaut, letti da scripts/verify-tag.sh.
 # Unico punto in cui le impronte sono scritte (e nei README, per chi verifica).
 # Stesso modello di Plico: la primaria [C] resta sulla macchina del maintainer,
