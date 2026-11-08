@@ -542,6 +542,7 @@ class TransfersTab(QtWidgets.QWidget):
             except ApiError as exc:
                 d["last_start"] = now   # riprova al prossimo intervallo
                 d["last_status"], d["last_error"] = "err", str(exc)
+                self._paint_rec_idle(def_id, d)   # l'errore si vede subito sulla riga
                 self._save_recurring()
                 continue
             d["current_jid"] = jid

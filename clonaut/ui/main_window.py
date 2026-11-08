@@ -228,3 +228,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ctx.rcd_dry.stop()
         super().closeEvent(event)
         event.accept()
+        # senza demone l'app non serve più: si esce anche se l'icona nella
+        # tray (KDE, Wayland) la terrebbe in vita come finestra senza backend
+        QtWidgets.QApplication.quit()

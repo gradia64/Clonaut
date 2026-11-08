@@ -43,8 +43,14 @@ class RcloneApi:
 
     def call(self, endpoint: str, payload: dict | None = None,
              timeout: float | None = None) -> dict:
-        resp = self.session.post(f"{self.url}/{endpoint}", json=payload or {},
-                                 timeout=timeout or self.timeout)
+        try:
+            resp = self.session.post(f"{self.url}/{endpoint}", json=payload or {},
+                                     timeout=timeout or self.timeout)
+        except requests.RequestException as exc:
+            # demone chiuso o bloccato: per chi chiama è un errore dell'API come
+            # gli altri (il timer dei programmati e i dialoghi gestiscono ApiError)
+            raise ApiError(tr("rclone rcd non risponde ({endpoint}): {error}").format(
+                endpoint=endpoint, error=exc)) from exc
         if resp.status_code != 200:
             try:
                 msg = resp.json().get("error") or resp.text

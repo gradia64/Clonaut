@@ -110,3 +110,19 @@ def test_edit_while_running_warns(window, tree, qapp, dialogs):
     dlg.ed_exclude.setText("x")
     dlg.accept()
     assert dialogs == ["Programmazione aggiornata"]
+
+
+def test_schedule_with_dead_daemon_records_the_error(rcd, qapp, tree):
+    """Il demone muore: il giro programmato segna l'errore invece di sparire."""
+    from clonaut.ui.transfers_tab import TransfersTab
+    tab = TransfersTab(rcd)
+    def_id = tab.add_recurring("sync", str(tree / "a"), str(tree / "b"), [], 3600)
+    rcd.rcd.stop()
+    tab._on_rec_tick()
+    d = tab._recurrent[def_id]
+    assert d["last_status"] == "err"
+    assert "non risponde" in d["last_error"]
+    assert d["current_jid"] is None
+    assert "ultimo: ✕" in tab._rec_item[def_id].text(4)
+    saved = json.loads((settings.config_dir() / "recurring.json").read_text())
+    assert saved["definitions"][0]["last_status"] == "err"

@@ -73,3 +73,12 @@ def test_dry_run_counts_deletions_and_writes_nothing(rcd, tree, qapp):
     assert ok, message
     assert "2 da eliminare" in message
     assert sorted(p.name for p in (tree / "b").iterdir()) == ["extra1", "extra2"]
+
+
+def test_dead_daemon_is_an_api_error():
+    """rcd chiuso: ApiError (gestito da timer e dialoghi), non ConnectionError."""
+    from clonaut.api import ApiError, RcloneApi
+    from clonaut.rcd import free_port
+    api = RcloneApi(f"http://127.0.0.1:{free_port()}", "u", "p", timeout=2)
+    with pytest.raises(ApiError, match="non risponde"):
+        api.start_transfer("copy", "/tmp", "/tmp/x")

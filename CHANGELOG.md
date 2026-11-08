@@ -50,6 +50,14 @@ All notable changes to Clonaut are listed here. Versions follow
 - If no Qt binding can be imported, the error shows the real reason for each
   binding (often a missing system library).
 
+### Fixed
+- **Scheduled transfers stopped running after the window was closed.** With
+  *Close to tray* off, the close button stopped the rclone daemon, but on KDE
+  the tray icon kept the app running without it: ⏰ schedules never started
+  again and *Run now* failed silently. Closing now really quits the app.
+- When the rclone daemon does not respond, transfers and schedules show the
+  error ("rclone rcd is not responding…") instead of failing silently.
+
 ## [0.3.1] — 2026-11-08
 
 First public release.

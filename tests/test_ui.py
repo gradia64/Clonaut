@@ -100,3 +100,29 @@ def test_settings_dialog_validates_rclone_path(qapp, dialogs, tmp_path):
     dlg.accept()
     assert dlg.values()["rclone_path"] == ""
     assert dlg.values()["close_to_tray"] is True
+
+
+def test_closing_without_tray_option_quits_the_app(window, qapp, monkeypatch):
+    """«Chiudi nella tray» disattivo: la X ferma il demone e chiude davvero l'app.
+
+    Prima l'icona nella tray (KDE) teneva in vita l'app senza demone: i
+    programmati non partivano più e «Avvia ora» falliva in silenzio.
+    """
+    quits = []
+    monkeypatch.setattr(QtWidgets.QApplication, "quit", staticmethod(lambda: quits.append(1)))
+    window._setup_tray(force=True)
+    window.settings["close_to_tray"] = False
+    window.close()
+    assert window.ctx.rcd.proc.poll() is not None   # demone fermato
+    assert quits, "la X deve chiudere anche l'app, non solo il demone"
+
+
+def test_closing_to_tray_keeps_daemon_and_app(window, qapp, monkeypatch):
+    quits = []
+    monkeypatch.setattr(QtWidgets.QApplication, "quit", staticmethod(lambda: quits.append(1)))
+    window._setup_tray(force=True)
+    window.settings["close_to_tray"] = True
+    window.close()
+    assert not window.isVisible()
+    assert window.ctx.rcd.proc.poll() is None
+    assert not quits

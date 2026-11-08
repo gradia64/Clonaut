@@ -5,17 +5,22 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: en\n"
 
-#: clonaut/api.py:57
+#: clonaut/api.py:52
+#, python-brace-format
+msgid "rclone rcd non risponde ({endpoint}): {error}"
+msgstr "rclone rcd is not responding ({endpoint}): {error}"
+
+#: clonaut/api.py:63
 #, python-brace-format
 msgid "{endpoint}: risposta non JSON ({error})"
 msgstr "{endpoint}: response is not JSON ({error})"
 
-#: clonaut/api.py:100
+#: clonaut/api.py:106
 #, python-brace-format
 msgid "modalità di trasferimento sconosciuta: {mode}"
 msgstr "unknown transfer mode: {mode}"
 
-#: clonaut/api.py:109
+#: clonaut/api.py:115
 msgid ""
 "«Sposta» e «Sincronizza» operano su cartelle: per un file singolo usa la "
 "modalità «Copia»."
@@ -933,64 +938,64 @@ msgstr "last: ■ cancelled"
 msgid "ultimo: ✕ {error}"
 msgstr "last: ✕ {error}"
 
-#: clonaut/ui/transfers_tab.py:592
+#: clonaut/ui/transfers_tab.py:593
 #, python-brace-format
 msgid "Programmato {mode} completato: {src} → {dst}"
 msgstr "Scheduled {mode} done: {src} → {dst}"
 
-#: clonaut/ui/transfers_tab.py:593
+#: clonaut/ui/transfers_tab.py:594
 #, python-brace-format
 msgid "Programmato {mode} annullato: {src} → {dst}"
 msgstr "Scheduled {mode} cancelled: {src} → {dst}"
 
-#: clonaut/ui/transfers_tab.py:595
+#: clonaut/ui/transfers_tab.py:596
 #, python-brace-format
 msgid "Programmato {mode} in errore: {src} → {dst}"
 msgstr "Scheduled {mode} failed: {src} → {dst}"
 
-#: clonaut/ui/transfers_tab.py:612
+#: clonaut/ui/transfers_tab.py:613
 msgid "▶ Avvia ora"
 msgstr "▶ Run now"
 
-#: clonaut/ui/transfers_tab.py:613
+#: clonaut/ui/transfers_tab.py:614
 msgid "✏ Modifica…"
 msgstr "✏ Edit…"
 
-#: clonaut/ui/transfers_tab.py:614
+#: clonaut/ui/transfers_tab.py:615
 msgid "⏸ Metti in pausa"
 msgstr "⏸ Pause"
 
-#: clonaut/ui/transfers_tab.py:615
+#: clonaut/ui/transfers_tab.py:616
 msgid "▶ Riattiva"
 msgstr "▶ Resume"
 
-#: clonaut/ui/transfers_tab.py:617
+#: clonaut/ui/transfers_tab.py:618
 msgid "🗑 Rimuovi programmazione"
 msgstr "🗑 Remove schedule"
 
-#: clonaut/ui/transfers_tab.py:619
+#: clonaut/ui/transfers_tab.py:620
 msgid "📂 Apri cestino"
 msgstr "📂 Open trash"
 
-#: clonaut/ui/transfers_tab.py:644
+#: clonaut/ui/transfers_tab.py:645
 msgid "Rimuovere la programmazione?"
 msgstr "Remove the schedule?"
 
-#: clonaut/ui/transfers_tab.py:645
+#: clonaut/ui/transfers_tab.py:646
 msgid ""
 "Rimuovere il giro automatico? I file già sincronizzati restano dove sono."
 msgstr "Remove the automatic run? Files already synced stay where they are."
 
-#: clonaut/ui/transfers_tab.py:709
+#: clonaut/ui/transfers_tab.py:710
 msgid "Annullare il trasferimento?"
 msgstr "Cancel the transfer?"
 
-#: clonaut/ui/transfers_tab.py:710
+#: clonaut/ui/transfers_tab.py:711
 #, python-brace-format
 msgid "Annullare il job #{job}? I file già trasferiti restano dove sono."
 msgstr "Cancel job #{job}? Files already transferred stay where they are."
 
-#: clonaut/ui/transfers_tab.py:719
+#: clonaut/ui/transfers_tab.py:720
 msgid "Annullamento fallito"
 msgstr "Cancellation failed"
 
