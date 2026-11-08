@@ -3,6 +3,27 @@
 All notable changes to Clonaut are listed here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Standard Python packaging (`pyproject.toml`): `pip install .` provides the
+  `clonaut` command; `python -m clonaut` works too.
+- AppStream metadata (`io.github.gradia64.Clonaut.metainfo.xml`) and PNG icons
+  (48–256 px) next to the SVG.
+- **Choose which rclone to use**: `CLONAUT_RCLONE` environment variable, a new
+  *Programma rclone* field in *Impostazioni* (Settings), `PATH`, or a copy
+  bundled with the AppImage — in this order. The About dialog shows the path.
+- `CLONAUT_QT=pyqt6|pyside6` picks the Qt binding.
+- Automated test suite (pytest, Qt offscreen, real rclone), passing with both
+  Qt bindings on rclone 1.75.2 and 1.76.0.
+
+### Changed
+- Desktop ID is now `io.github.gradia64.Clonaut` (`.desktop` file and icon
+  name); menu shortcuts to the old `clonaut.desktop` are recreated.
+- Startup code moved from `main.py` to `clonaut/app.py`; `main.py` and
+  `run.sh` still work.
+- If rclone is missing, the error lists every place that was checked.
+
 ## [0.3.1] — 2026-11-08
 
 First public release.

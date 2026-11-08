@@ -84,8 +84,9 @@ sudo apt install ./build/clonaut_0.3.1_all.deb
 
 Il pacchetto installa:
 - `/usr/share/clonaut/` — l'applicazione (sorgenti Python, GPL-3)
-- `/usr/bin/clonaut` — comando da terminale (con le stesse opzioni di `main.py`)
-- voce «Clonaut» nel menu delle applicazioni, icona e pagina man (`man clonaut`)
+- `/usr/bin/clonaut` — comando da terminale
+- voce «Clonaut» nel menu delle applicazioni (`io.github.gradia64.Clonaut.desktop`),
+  icone, metadati AppStream per i software center e pagina man (`man clonaut`)
 
 Dipendenze dichiarate: `python3`, `python3-requests`, `python3-pyqt6`, `rclone`
 (l'app usa PySide6 se presente sul sistema, altrimenti PyQt6 — il codice è
@@ -98,13 +99,35 @@ per personalizzare il campo Maintainer: `MAINTAINER="Nome <email>" ./build-deb.s
 - Linux, Python ≥ 3.10
 - [PySide6](https://pypi.org/project/PySide6/) e `requests` oppure PyQt6, e `requests`
   (vedi `requirements.txt`)
-- `rclone` nel PATH (testato con v1.75.2)
+- `rclone` (testato con v1.75.2 e v1.76.0)
+
+### Quale rclone viene usato
+
+Clonaut cerca il programma `rclone` in quest'ordine e usa il primo che trova:
+
+1. la variabile d'ambiente `CLONAUT_RCLONE` (percorso completo);
+2. il percorso impostato in **File → Impostazioni… → Programma rclone**;
+3. `rclone` nel `PATH`;
+4. la copia inclusa nell'AppImage (in arrivo), solo come ultima risorsa.
+
+La finestra **Aiuto → Informazioni su Clonaut** mostra il percorso in uso.
 
 ## Avvio
 
 ```bash
-./run.sh                    # oppure: python3 main.py
+./run.sh                    # oppure: python3 main.py  /  python3 -m clonaut
 ```
+
+Oppure installalo come pacchetto Python (il binding Qt si sceglie con un
+extra, oppure con `--system-site-packages` si riusa quello della distribuzione):
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install ".[pyqt6]"
+.venv/bin/clonaut
+```
+
+Il binding Qt è PySide6 se presente, altrimenti PyQt6; con
+`CLONAUT_QT=pyqt6` (o `pyside6`) lo scegli tu.
 
 All'avvio l'app:
 
@@ -115,11 +138,11 @@ All'avvio l'app:
 Opzioni:
 
 ```bash
-python3 main.py --config /percorso/rclone.conf   # usa un file di config specifico
-python3 main.py --port 5572                      # porta fissa per il rcd locale
+clonaut --config /percorso/rclone.conf   # usa un file di config specifico
+clonaut --port 5572                      # porta fissa per il rcd locale
 
 # aggancio a un rclone rcd già avviato altrove (non viene avviato nessun processo):
-python3 main.py --url http://127.0.0.1:5572 --user utente --password segreta
+clonaut --url http://127.0.0.1:5572 --user utente --password segreta
 ```
 
 ## Come si usa
@@ -202,15 +225,19 @@ python3 main.py --url http://127.0.0.1:5572 --user utente --password segreta
 ## Struttura
 
 ```
-main.py                     avvio, argomenti CLI, QApplication
-run.sh                      lanciatore
+pyproject.toml              metadati del pacchetto Python (comando `clonaut`)
+main.py, run.sh             avvio dai sorgenti
+build-deb.sh                costruisce il .deb
+packaging/                  .desktop, metadati AppStream, icone, file Debian, pagina man
+tests/                      suite pytest (rclone vero, Qt offscreen)
 clonaut/
+├── app.py                  avvio: argomenti CLI, QApplication, demone rclone
 ├── api.py                  client REST (Basic auth, endpoint config/sync/job/stats/list/purge)
-├── rcd.py                  gestione processo `rclone rcd` (porta, credenziali, stop)
+├── rcd.py                  ricerca di rclone, processo `rclone rcd` (porta, credenziali, log)
 ├── worker.py               thread di polling (watch-list) + DryRunWorker
 ├── appctx.py               contesto condiviso (+ backend dedicato alle prove)
 ├── settings.py             impostazioni persistenti (tray, notifiche)
-├── qtcompat.py             import Qt con fallback PySide6 → PyQt6
+├── qtcompat.py             import Qt: PySide6 o PyQt6 (`CLONAUT_QT`)
 ├── util.py                 formattazioni (size/ETA), QSS globale, icona
 └── ui/
     ├── main_window.py      finestra, tab, tray, menu File→Impostazioni, status bar
@@ -219,7 +246,7 @@ clonaut/
     ├── transfers_tab.py    coda trasferimenti, progressi, programmati ⏰, pulsante cestino
     ├── transfer_dialog.py  dialog nuovo trasferimento (esclusioni, cestino, ripetizione)
     ├── trash_dialog.py     visualizzatore del cestino (lista, apri, svuota)
-    └── settings_dialog.py  impostazioni tray/notifiche
+    └── settings_dialog.py  impostazioni tray, notifiche e percorso di rclone
 ```
 
 ## Dettagli tecnici curiosi
@@ -238,21 +265,28 @@ clonaut/
 - Le esclusioni per-job passano dal blocco `_filter: {ExcludeRule: [...]}` e il
   cestino da `_config: {BackupDir: ...}`; i parametri `_exclude`,
   `_filters-exclude`, `_filter.BackupDir` e `_dry_run` di rc sono ignorati
-  da rclone 1.75 (verificati uno a uno).
-- Per lo stesso motivo le prove a vuoto girano su un secondo `rclone rcd` avviato al primo utilizzo
-  con `--dry-run` globale — la prova non può alterare nessun file.
+  da rclone 1.75 e 1.76 (verificati uno a uno; `_dry_run` è ignorato sia nelle
+  chiamate sincrone sia in quelle `_async`: il sync scrive davvero).
+- Per questo le prove a vuoto girano su un secondo `rclone rcd`, avviato al
+  primo utilizzo con `--dry-run` globale: la prova non può alterare nessun file.
 - Le programmazioni ⏰ vivono in `~/.config/clonaut/recurring.json`
   (override per test: env `CLONAUT_CONFIG_HOME`) e vengono riavviate dal
   timer della GUI: l'app deve restare aperta (anche solo nella tray) perché i
   giri partano.
 
-## Test eseguiti
+## Test
 
-Con rclone 1.75.2 reale e config isolata in /tmp: creazione/eliminazione remote,
-trasferimenti copy (cartelle, sottocartelle, file singolo → cartella e file → file
-rinominato), errori (remote inesistente), annullamento di un job in volo, stats in
-corso e finali, thread di polling (nessuna crescita dei job), GUI offscreen con
-screenshot (tab, dialoghi, stati Completato/Errore/In corso).
+```bash
+python3 -m pytest                    # binding Qt scelto automaticamente
+CLONAUT_QT=pyqt6 python3 -m pytest   # di nuovo con l'altro binding
+```
+
+La suite gira senza schermo (Qt `offscreen`) con un **rclone vero** e una
+configurazione vuota e isolata in una cartella temporanea; i test che hanno
+bisogno di rclone vengono saltati se non è installato. Coprono: ricerca di
+rclone, impostazioni e migrazione, trasferimenti veri (copia, sync, file
+singolo) con esclusioni e cestino, prove a vuoto, coda, programmazioni ⏰ e
+loro modifica, dialog, tray ed entrambi i binding Qt.
 
 ## Licenza
 

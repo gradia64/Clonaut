@@ -11,6 +11,7 @@ DEFAULTS = {
     "minimize_to_tray": False,  # minimizzare la nasconde nella tray
     "start_in_tray": False,     # all'avvio resta ridotta nella tray
     "notify_finished": True,    # notifica a ogni trasferimento terminato
+    "rclone_path": "",          # eseguibile rclone scelto a mano ("" = automatico)
 }
 
 
@@ -61,12 +62,19 @@ def load() -> dict:
     if isinstance(stored, dict):
         for key in DEFAULTS:
             if key in stored:
-                data[key] = bool(stored[key])
+                data[key] = _coerce(key, stored[key])
     return data
 
 
+def _coerce(key: str, value):
+    """Converte un valore al tipo del suo predefinito (bool o testo)."""
+    if isinstance(DEFAULTS[key], bool):
+        return bool(value)
+    return str(value or "").strip()
+
+
 def save(values: dict) -> None:
-    data = {key: bool(values.get(key, DEFAULTS[key])) for key in DEFAULTS}
+    data = {key: _coerce(key, values.get(key, DEFAULTS[key])) for key in DEFAULTS}
     path = settings_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2))

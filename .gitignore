@@ -6,3 +6,5 @@ build/
 venv/
 .idea/
 .vscode/
+*.egg-info/
+.pytest_cache/

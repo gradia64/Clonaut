@@ -1,11 +1,27 @@
-"""Import Qt con fallback PySide6 -> PyQt6 (API identiche usando enum con scope)."""
+"""Import Qt con fallback PySide6 -> PyQt6 (API identiche usando enum con scope).
 
-try:  # PySide6 è la scelta preferita
-    import PySide6 as _binding
-    from PySide6 import QtCore, QtGui, QtWidgets  # noqa: F401
-    from PySide6.QtCore import Signal, QThread, QTimer  # noqa: F401
-    BINDING = f"PySide6 {_binding.__version__}"
-except ImportError:  # pragma: no cover
-    from PyQt6 import QtCore, QtGui, QtWidgets  # noqa: F401
-    from PyQt6.QtCore import pyqtSignal as Signal, QThread, QTimer  # noqa: F401
-    BINDING = f"PyQt6 {QtCore.PYQT_VERSION_STR}"
+La variabile d'ambiente CLONAUT_QT=pyqt6 (o pyside6) sceglie il binding da
+provare per primo: utile per i test e se uno dei due dà problemi.
+"""
+
+import os
+
+_ORDER = ("pyqt6", "pyside6") if os.environ.get("CLONAUT_QT", "").lower() == "pyqt6" \
+    else ("pyside6", "pyqt6")
+
+for _name in _ORDER:
+    try:
+        if _name == "pyside6":
+            import PySide6 as _binding
+            from PySide6 import QtCore, QtGui, QtWidgets  # noqa: F401
+            from PySide6.QtCore import Signal, QThread, QTimer  # noqa: F401
+            BINDING = f"PySide6 {_binding.__version__}"
+        else:
+            from PyQt6 import QtCore, QtGui, QtWidgets  # noqa: F401
+            from PyQt6.QtCore import pyqtSignal as Signal, QThread, QTimer  # noqa: F401
+            BINDING = f"PyQt6 {QtCore.PYQT_VERSION_STR}"
+        break
+    except ImportError:
+        continue
+else:  # pragma: no cover
+    raise ImportError("Serve un binding Qt per Python: PyQt6 oppure PySide6.")

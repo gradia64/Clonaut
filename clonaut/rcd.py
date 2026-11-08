@@ -28,8 +28,52 @@ def prune_logs(log_dir: Path = LOG_DIR, keep_days: float = LOG_KEEP_DAYS) -> Non
         pass
 
 
+RCLONE_ENV = "CLONAUT_RCLONE"
+
+
+def _is_exe(path: str) -> bool:
+    return os.path.isfile(path) and os.access(path, os.X_OK)
+
+
+def find_rclone(setting_path: str = "") -> tuple[str | None, str, list[str]]:
+    """Cerca l'eseguibile rclone; restituisce (percorso, origine, tentativi).
+
+    Ordine: variabile d'ambiente CLONAUT_RCLONE → percorso scelto nelle
+    impostazioni → `rclone` nel PATH → copia inclusa nell'AppImage
+    ($APPDIR/usr/bin/rclone), usata solo come riserva. `tentativi` descrive
+    ogni fonte provata, per il messaggio d'errore.
+    """
+    tried: list[str] = []
+    candidates = (
+        (os.environ.get(RCLONE_ENV, "").strip(), f"variabile {RCLONE_ENV}"),
+        ((setting_path or "").strip(), "impostazioni"),
+    )
+    for raw, source in candidates:
+        if not raw:
+            tried.append(f"{source}: non impostato")
+            continue
+        path = os.path.expanduser(raw)
+        if _is_exe(path):
+            return path, source, tried
+        tried.append(f"{source}: {path} non esiste o non è eseguibile")
+
+    found = shutil.which("rclone")
+    if found:
+        return found, "PATH", tried
+    tried.append("PATH: rclone non trovato")
+
+    appdir = os.environ.get("APPDIR", "")
+    bundled = os.path.join(appdir, "usr", "bin", "rclone") if appdir else ""
+    if bundled and _is_exe(bundled):
+        return bundled, "incluso nell'AppImage", tried
+    tried.append("AppImage: nessuna copia inclusa" if not appdir
+                 else f"AppImage: {bundled} assente")
+    return None, "", tried
+
+
 def which_rclone() -> str | None:
-    return shutil.which("rclone")
+    """Compatibilità: solo il percorso trovato da find_rclone()."""
+    return find_rclone()[0]
 
 
 def free_port() -> int:

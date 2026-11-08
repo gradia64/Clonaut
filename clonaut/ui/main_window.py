@@ -117,16 +117,28 @@ class MainWindow(QtWidgets.QMainWindow):
             self._bring_to_front()
 
     def _open_settings(self) -> None:
-        dlg = SettingsDialog(self.settings, self)
+        dlg = SettingsDialog(self.settings, self, rclone_in_use=self.rclone_desc())
         if dlg.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             self.settings = dlg.values()
             app_settings.save(self.settings)
+
+    def rclone_desc(self) -> str:
+        """Percorso dell'eseguibile rclone in uso, con la sua origine."""
+        exe = getattr(self.ctx, "rclone_exe", None)
+        if not exe:
+            return ""
+        home = os.path.expanduser("~")
+        source = getattr(self.ctx, "rclone_source", "")
+        return exe.replace(home, "~", 1) + (f" ({source})" if source else "")
 
     def about_text(self) -> str:
         """Testo (HTML) della finestra «Informazioni su Clonaut»."""
         home = os.path.expanduser("~")
         cfg = str(app_settings.config_dir()).replace(home, "~", 1)
-        rows = (("rclone", self.ctx.version or "?"),
+        rclone = self.ctx.version or "?"
+        if self.rclone_desc():
+            rclone += f" — {self.rclone_desc()}"
+        rows = (("rclone", rclone),
                 ("Qt", f"{QtCore.qVersion()} ({BINDING})"),
                 ("Python", platform.python_version()),
                 ("Config", self.ctx.config_desc),

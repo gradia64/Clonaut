@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.gradia64.Clonaut</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+
+  <name>Clonaut</name>
+  <summary>Graphical pilot for rclone</summary>
+  <summary xml:lang="it">Il pilota grafico per rclone</summary>
+
+  <developer id="io.github.gradia64">
+    <name>Gradia</name>
+  </developer>
+
+  <description>
+    <p>
+      Clonaut is a desktop interface for rclone: it starts its own local rclone
+      daemon and drives it through the rclone REST API. rclone does all the work
+      on your files; Clonaut is the cockpit.
+    </p>
+    <ul>
+      <li>Create and manage remotes with a form generated from rclone's providers</li>
+      <li>Copy, move and sync with progress bars, speed and ETA</li>
+      <li>Honest dry runs that cannot write or delete anything</li>
+      <li>Safety trash for files that would be deleted or overwritten</li>
+      <li>Scheduled transfers that repeat every minutes, hours or days</li>
+      <li>Per-job exclusions and a system tray icon</li>
+    </ul>
+    <p>The user interface is currently in Italian.</p>
+    <p xml:lang="it">
+      Clonaut è un'interfaccia desktop per rclone: avvia da sola un demone rclone
+      locale e lo pilota tramite la sua REST API.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.gradia64.Clonaut.desktop</launchable>
+  <provides>
+    <binary>clonaut</binary>
+  </provides>
+
+  <url type="homepage">https://github.com/gradia64/Clonaut</url>
+  <url type="bugtracker">https://github.com/gradia64/Clonaut/issues</url>
+  <url type="vcs-browser">https://github.com/gradia64/Clonaut</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Transfer queue with progress, a dry run and a scheduled sync</caption>
+      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-trasferimenti.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Configured remotes</caption>
+      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-remote.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>New remote form generated from the rclone backend</caption>
+      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-nuovo-remote.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>New transfer with exclusions, safety trash and repeat</caption>
+      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-nuovo-trasferimento.png</image>
+    </screenshot>
+  </screenshots>
+
+  <categories>
+    <category>Network</category>
+    <category>FileTransfer</category>
+  </categories>
+  <keywords>
+    <keyword>rclone</keyword>
+    <keyword>sync</keyword>
+    <keyword>backup</keyword>
+    <keyword>cloud</keyword>
+  </keywords>
+
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.3.1" date="2026-11-08">
+      <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.3.1</url>
+      <description>
+        <p>First public release: edit scheduled transfers, Help → About, version in
+        the window title, tray icon reacts to a single click, English README.</p>
+      </description>
+    </release>
+    <release version="0.3.0" date="2026-11-08">
+      <description>
+        <p>Renamed from «GUI rclone» to Clonaut, with many fixes.</p>
+      </description>
+    </release>
+  </releases>
+</component>

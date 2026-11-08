@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .api import RcloneApi
-from .rcd import RcdProcess, free_port, random_creds, which_rclone
+from .rcd import RcdProcess, find_rclone, free_port, random_creds
 
 
 @dataclass
@@ -19,6 +19,9 @@ class AppContext:
     # backend dedicato alle prove a vuoto (--dry-run globale), creato al primo uso
     rcd_dry: RcdProcess | None = None
     api_dry: RcloneApi | None = None
+    # eseguibile rclone in uso e da dove viene (PATH, impostazioni, AppImage…)
+    rclone_exe: str | None = None
+    rclone_source: str = ""
 
     def ensure_dry_backend(self) -> RcloneApi:
         """API di un rcd effimero avviato con --dry-run globale.
@@ -29,9 +32,10 @@ class AppContext:
         """
         if self.api_dry is not None:
             return self.api_dry
-        exe = which_rclone()
+        exe = self.rclone_exe or find_rclone()[0]
         if not exe:
-            raise RuntimeError("rclone non trovato nel PATH.")
+            raise RuntimeError("rclone non trovato: indicane il percorso in "
+                               "File → Impostazioni.")
         port = free_port()
         user, password = random_creds()
         self.rcd_dry = RcdProcess(exe, port, user, password,
