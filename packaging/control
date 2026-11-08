@@ -1,0 +1,18 @@
+Package: clonaut
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: all
+Depends: python3 (>= 3.10), python3-requests, python3-pyqt6, rclone
+Suggests: python3-pyside6
+Replaces: gui-rclone
+Conflicts: gui-rclone
+Provides: gui-rclone
+Maintainer: @MAINTAINER@
+Description: interfaccia grafica per rclone con trasferimenti e programmazioni
+ GUI desktop (Qt) che pilota rclone tramite la sua REST API (rclone rcd):
+ gestione dei remote con form dinamico, trasferimenti copia/sposta/
+ sincronizza con barre di avanzamento, prove a vuoto, cestino di sicurezza,
+ trasferimenti ripetuti programmati, esclusioni per job, icona nella tray.
+ .
+ I file li gestisce rclone; la GUI è solo l'interfaccia.

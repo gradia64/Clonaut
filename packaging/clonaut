@@ -1,0 +1,8 @@
+#!/bin/sh
+# Lanciatore di Clonaut installato dal pacchetto .deb
+if ! python3 -c 'import importlib.util,sys; sys.exit(0 if (importlib.util.find_spec("PySide6") or importlib.util.find_spec("PyQt6")) else 1)'; then
+    echo "Clonaut richiede un binding Qt per Python:" >&2
+    echo "  sudo apt install python3-pyqt6   (oppure: pip install PySide6)" >&2
+    exit 1
+fi
+exec python3 /usr/share/clonaut/main.py "$@"

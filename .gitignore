@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+build/
+*.deb
+.venv/
+venv/
+.idea/
+.vscode/

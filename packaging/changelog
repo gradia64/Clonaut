@@ -1,0 +1,25 @@
+clonaut (0.3.0) unstable; urgency=medium
+
+  * Nuovo nome: Clonaut (prima «GUI rclone», pacchetto gui-rclone).
+    Impostazioni e programmazioni migrate da ~/.config/rclone-gui/.
+  * Corretto: avvio con PyQt6 (dipendenza del pacchetto), spunta Cestino
+    nel dialog di trasferimento, «Rimuovi completati» che non rimuoveva,
+    righe duplicate dei trasferimenti programmati.
+  * Sicurezza: credenziali del demone rcd passate via ambiente, non più
+    visibili con ps.
+  * Form dei remote: esempi modificabili (es. endpoint S3 personalizzati),
+    opzioni duplicate unificate. Prova a vuoto: mostra anche le eliminazioni.
+  * Varie: pulizia automatica dei log, uscita pulita dalla tray, «Avvia ora»
+    anche in pausa, recurring.json corrotto non blocca l'avvio.
+
+ -- @MAINTAINER@  Sun, 08 Nov 2026 18:00:00 +0100
+
+clonaut (0.2.0) unstable; urgency=medium
+
+  * Prima versione pacchettizzata: gestione remote con form dinamico
+    (alias incluse nextcloud), trasferimenti copia/sposta/sincronizza con
+    progressi, esclusioni per job, prova a vuoto onesta (--dry-run),
+    cestino di sicurezza (--backup-dir), trasferimenti ripetuti
+    programmati persistenti, icona nella tray con impostazioni.
+
+ -- @MAINTAINER@  Sun, 08 Nov 2026 14:40:00 +0100

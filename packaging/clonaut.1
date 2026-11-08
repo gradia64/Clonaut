@@ -1,0 +1,38 @@
+.TH CLONAUT 1 "novembre 2026" "clonaut @VERSION@" "Comandi utente"
+.SH NAME
+clonaut \- interfaccia grafica per rclone
+.SH SYNOPSIS
+.B clonaut
+.RI [ opzioni ]
+.SH DESCRIPTION
+Interfaccia grafica (Qt) che pilota rclone tramite la sua REST API
+.RB ( "rclone rcd" ),
+avviato in locale su 127.0.0.1 con credenziali usa\-e\-getta.
+Gestione dei remote, trasferimenti copia/sposta/sincronizza con barre di
+avanzamento, prove a vuoto, cestino di sicurezza (backup\-dir),
+trasferimenti ripetuti programmati, esclusioni per job, icona nella tray.
+Le programmazioni e le impostazioni sopravvivono alla chiusura.
+.SH OPTIONS
+.TP
+.B \-\-config \fIPERCORSO\fR
+Usa il file di configurazione rclone indicato invece di quello predefinito.
+.TP
+.B \-\-port \fIPORTA\fR
+Porta fissa per il demone locale (predefinito: una porta libera casuale).
+.TP
+.BI "\-\-url " URL
+Aggancia un rclone rcd già avviato, invece di avviarne uno.
+.TP
+.BI "\-\-user " UTENTE
+.BI "\-\-password " PASSWORD
+Credenziali per il rcd esterno agganciato con \-\-url.
+.SH FILES
+.TP
+.I ~/.config/clonaut/
+Impostazioni (settings.json), programmazioni (recurring.json).
+.TP
+.I ~/.cache/clonaut/
+Log del demone rclone rcd.
+.SH SEE ALSO
+.BR rclone (1),
+.B https://rclone.org/rc/

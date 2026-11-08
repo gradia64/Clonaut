@@ -1,0 +1,5 @@
+# Clonaut — dipendenze Python
+# PySide6 è il binding preferito; in alternativa funziona anche PyQt6>=6.5.
+# Installazione: python3 -m pip install -r requirements.txt
+PySide6>=6.5
+requests>=2.28

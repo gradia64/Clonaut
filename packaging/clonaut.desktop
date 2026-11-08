@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Clonaut
+GenericName=Interfaccia grafica per rclone
+Comment=Gestisci remote e trasferimenti rclone con progressi, cestino e programmazioni
+Exec=clonaut
+Icon=clonaut
+Terminal=false
+Categories=Network;FileTransfer;
+Keywords=rclone;sync;backup;trasferimenti;nextcloud;
+StartupWMClass=clonaut
