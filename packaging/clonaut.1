@@ -26,6 +26,24 @@ Aggancia un rclone rcd già avviato, invece di avviarne uno.
 .BI "\-\-user " UTENTE
 .BI "\-\-password " PASSWORD
 Credenziali per il rcd esterno agganciato con \-\-url.
+.SH ENVIRONMENT
+.TP
+.B CLONAUT_LANG
+Lingua dell'interfaccia:
+.B it
+o
+.BR en .
+Senza, vale l'impostazione «Lingua», poi la lingua del sistema
+(italiano se è italiano, altrimenti inglese).
+.TP
+.B CLONAUT_RCLONE
+Percorso dell'eseguibile rclone da usare (ha la precedenza su impostazioni e PATH).
+.TP
+.B CLONAUT_QT
+Binding Qt da provare per primo:
+.B pyqt6
+o
+.BR pyside6 .
 .SH FILES
 .TP
 .I ~/.config/clonaut/

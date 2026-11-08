@@ -6,6 +6,7 @@ import json
 
 from ..api import ApiError
 from ..appctx import AppContext
+from ..i18n import N_, tr
 from ..qtcompat import QtCore, QtWidgets, Signal
 from .remote_dialog import RemoteDialog
 
@@ -24,8 +25,8 @@ def _summary(params: dict) -> str:
     return ", ".join(parts) if parts else "—"
 
 
-def _show_error(parent, exc: Exception, title: str = "Errore") -> None:
-    QtWidgets.QMessageBox.critical(parent, title, str(exc))
+def _show_error(parent, exc: Exception, title: str = N_("Errore")) -> None:
+    QtWidgets.QMessageBox.critical(parent, tr(title), str(exc))
 
 
 class RemoteDetailsDialog(QtWidgets.QDialog):
@@ -33,13 +34,13 @@ class RemoteDetailsDialog(QtWidgets.QDialog):
 
     def __init__(self, name: str, params: dict, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"Remote «{name}»")
+        self.setWindowTitle(tr("Remote «{name}»").format(name=name))
         self.resize(520, 420)
         layout = QtWidgets.QVBoxLayout(self)
 
         note = QtWidgets.QLabel(
-            "Nota: rclone maschera i valori sensibili con XXX; per modificarli "
-            "usa <code>rclone config</code> da terminale.")
+            tr("Nota: rclone maschera i valori sensibili con XXX; per modificarli "
+            "usa <code>rclone config</code> da terminale."))
         note.setProperty("role", "hint")
         note.setWordWrap(True)
         layout.addWidget(note)
@@ -71,13 +72,13 @@ class RemotesTab(QtWidgets.QWidget):
 
         # -- barra azioni
         bar = QtWidgets.QHBoxLayout()
-        btn_add = QtWidgets.QPushButton("＋ Aggiungi…")
+        btn_add = QtWidgets.QPushButton(tr("＋ Aggiungi…"))
         btn_add.clicked.connect(self._on_add)
-        btn_del = QtWidgets.QPushButton("🗑 Elimina")
+        btn_del = QtWidgets.QPushButton(tr("🗑 Elimina"))
         btn_del.clicked.connect(self._on_delete)
-        btn_details = QtWidgets.QPushButton("Dettagli…")
+        btn_details = QtWidgets.QPushButton(tr("Dettagli…"))
         btn_details.clicked.connect(self._on_details)
-        btn_refresh = QtWidgets.QPushButton("↻ Aggiorna")
+        btn_refresh = QtWidgets.QPushButton(tr("↻ Aggiorna"))
         btn_refresh.clicked.connect(self.refresh)
         bar.addWidget(btn_add)
         bar.addWidget(btn_del)
@@ -88,7 +89,7 @@ class RemotesTab(QtWidgets.QWidget):
 
         # -- elenco
         self.tree = QtWidgets.QTreeWidget()
-        self.tree.setHeaderLabels(["Nome", "Tipo", "Riepilogo"])
+        self.tree.setHeaderLabels([tr("Nome"), tr("Tipo"), tr("Riepilogo")])
         self.tree.setRootIsDecorated(False)
         self.tree.setAlternatingRowColors(True)
         self.tree.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
@@ -104,8 +105,8 @@ class RemotesTab(QtWidgets.QWidget):
         layout.addWidget(self.tree, 1)
 
         hint = QtWidgets.QLabel(
-            "Doppio clic su un remote per i dettagli. I remoti si usano nei "
-            "trasferimenti come «nome:percorso».")
+            tr("Doppio clic su un remote per i dettagli. I remoti si usano nei "
+            "trasferimenti come «nome:percorso»."))
         hint.setProperty("role", "hint")
         hint.setWordWrap(True)
         layout.addWidget(hint)
@@ -125,7 +126,7 @@ class RemotesTab(QtWidgets.QWidget):
             self._dump = self.ctx.api.dump_config()
         except Exception as exc:  # noqa: BLE001 — mostra tutto all'utente
             QtWidgets.QApplication.restoreOverrideCursor()
-            _show_error(self, exc, "Impossibile leggere la configurazione")
+            _show_error(self, exc, tr("Impossibile leggere la configurazione"))
             return
         QtWidgets.QApplication.restoreOverrideCursor()
 
@@ -138,7 +139,7 @@ class RemotesTab(QtWidgets.QWidget):
             self.tree.addTopLevelItem(item)
         if not self._dump:
             empty = QtWidgets.QTreeWidgetItem(
-                ["Nessun remote configurato", "—", "clicca «＋ Aggiungi…» per crearne uno"])
+                [tr("Nessun remote configurato"), "—", tr("clicca «＋ Aggiungi…» per crearne uno")])
             empty.setFlags(empty.flags() & ~QtCore.Qt.ItemFlag.ItemIsSelectable)
             self.tree.addTopLevelItem(empty)
 
@@ -155,10 +156,10 @@ class RemotesTab(QtWidgets.QWidget):
         if not name:
             return
         answer = QtWidgets.QMessageBox.question(
-            self, "Eliminare il remote?",
-            f"Eliminare il remote «{name}» dalla configurazione di rclone?\n\n"
-            "I file sui servizi remoti NON vengono cancellati: viene rimossa "
-            "solo la voce di configurazione.",
+            self, tr("Eliminare il remote?"),
+            tr("Eliminare il remote «{name}» dalla configurazione di rclone?\n\n"
+               "I file sui servizi remoti NON vengono cancellati: viene rimossa "
+               "solo la voce di configurazione.").format(name=name),
             QtWidgets.QMessageBox.StandardButton.Yes
             | QtWidgets.QMessageBox.StandardButton.No)
         if answer != QtWidgets.QMessageBox.StandardButton.Yes:
@@ -166,7 +167,7 @@ class RemotesTab(QtWidgets.QWidget):
         try:
             self.ctx.api.delete_remote(name)
         except ApiError as exc:
-            _show_error(self, exc, "Eliminazione fallita")
+            _show_error(self, exc, tr("Eliminazione fallita"))
             return
         self.refresh()
         self.changed.emit()

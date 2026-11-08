@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import re
 
+from .i18n import tr
 from .qtcompat import QtCore, QtGui
 
 _TAG_RE = re.compile(r"<[^>]+>")
@@ -49,7 +50,7 @@ def fmt_eta(seconds) -> str:
     m, s = divmod(rem, 60)
     if h >= 24:
         d, h = divmod(h, 24)
-        return f"{d}g {h:02d}h"
+        return tr("{d}g {h:02d}h").format(d=d, h=h)
     if h:
         return f"{h}h {m:02d}m"
     if m:

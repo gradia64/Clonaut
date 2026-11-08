@@ -7,6 +7,8 @@ import re
 
 import requests
 
+from .i18n import tr
+
 
 class ApiError(Exception):
     """Errore restituito dall'API rclone (HTTP != 200 o risposta non valida)."""
@@ -52,7 +54,8 @@ class RcloneApi:
         try:
             return resp.json()
         except ValueError as exc:
-            raise ApiError(f"{endpoint}: risposta non JSON ({exc})") from exc
+            raise ApiError(tr("{endpoint}: risposta non JSON ({error})").format(
+                endpoint=endpoint, error=exc)) from exc
 
     def ping(self) -> dict:
         """Verifica la connessione; restituisce le info di versione."""
@@ -94,7 +97,7 @@ class RcloneApi:
         """
         endpoint = _ENDPOINTS.get(mode)
         if not endpoint:
-            raise ApiError(f"modalità di trasferimento sconosciuta: {mode}")
+            raise ApiError(tr("modalità di trasferimento sconosciuta: {mode}").format(mode=mode))
         if not _REMOTE_RE.match(src):
             src = os.path.expanduser(src)
         if not _REMOTE_RE.match(dst):
@@ -103,8 +106,8 @@ class RcloneApi:
         if not _REMOTE_RE.match(src) and os.path.isfile(src):
             if mode != "copy":
                 raise ApiError(
-                    "«Sposta» e «Sincronizza» operano su cartelle: per un file "
-                    "singolo usa la modalità «Copia».")
+                    tr("«Sposta» e «Sincronizza» operano su cartelle: per un file "
+                    "singolo usa la modalità «Copia»."))
             payload = {
                 "srcFs": os.path.dirname(os.path.abspath(src)) or "/",
                 "srcRemote": os.path.basename(src),

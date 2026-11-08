@@ -18,6 +18,7 @@ import time
 import requests
 
 from .api import ApiError, RcloneApi
+from .i18n import tr
 from .qtcompat import Signal, QThread
 from .util import fmt_duration, human_size
 
@@ -73,7 +74,7 @@ class DryRunWorker(QThread):
                 errors_in_row += 1
                 if errors_in_row >= 30:
                     self.done.emit(self._key, False,
-                                   "il backend delle prove non risponde")
+                                   tr("il backend delle prove non risponde"))
                     return
                 time.sleep(self.POLL)
                 continue
@@ -83,20 +84,22 @@ class DryRunWorker(QThread):
                         stats = self._api.stats(f"job/{jobid}")
                     except Exception:  # noqa: BLE001 — stats non critiche
                         stats = {}
-                    riepilogo = (f"{int(stats.get('transfers') or 0)} file, "
-                                 f"{human_size(stats.get('bytes'))}")
+                    riepilogo = tr("{files} file, {size}").format(
+                        files=int(stats.get("transfers") or 0),
+                        size=human_size(stats.get("bytes")))
                     deletes = int(stats.get("deletes") or 0)
                     if deletes:
-                        riepilogo += f", {deletes} da eliminare"
-                    riepilogo += f" in {fmt_duration(status.get('duration'))}"
+                        riepilogo += tr(", {n} da eliminare").format(n=deletes)
+                    riepilogo += tr(" in {time}").format(
+                        time=fmt_duration(status.get("duration")))
                     self.done.emit(self._key, True, riepilogo)
                 else:
                     self.done.emit(self._key, False,
-                                   status.get("error") or "errore sconosciuto")
+                                   status.get("error") or tr("errore sconosciuto"))
                 return
             time.sleep(self.POLL)
         if not self._stop:
-            self.done.emit(self._key, False, "timeout della prova (1h)")
+            self.done.emit(self._key, False, tr("timeout della prova (1h)"))
 
 
 class PollWorker(QThread):

@@ -6,10 +6,11 @@ import os
 
 from ..api import ApiError, is_remote
 from ..appctx import AppContext
+from ..i18n import N_, tr
 from ..qtcompat import QtCore, QtWidgets
 
 
-_UNITS = (("ore", 3600), ("minuti", 60), ("giorni", 86400))
+_UNITS = ((N_("ore"), 3600), (N_("minuti"), 60), (N_("giorni"), 86400))
 
 
 def split_interval(seconds: int) -> tuple[int, int]:
@@ -35,59 +36,59 @@ class TransferDialog(QtWidgets.QDialog):
         self.tab = transfers_tab
         self._def_id = def_id if schedule is not None else None
         self._orig = dict(schedule or {})
-        self.setWindowTitle("Modifica programmazione" if self._def_id
-                            else "Nuovo trasferimento")
+        self.setWindowTitle(tr("Modifica programmazione") if self._def_id
+                            else tr("Nuovo trasferimento"))
         self.setMinimumWidth(720)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(10)
 
         grid = QtWidgets.QGridLayout()
-        grid.addWidget(QtWidgets.QLabel("Modalità"), 0, 0)
+        grid.addWidget(QtWidgets.QLabel(tr("Modalità")), 0, 0)
         self.cb_mode = QtWidgets.QComboBox()
-        self.cb_mode.addItem("Copia — lascia l'origine intatta", "copy")
-        self.cb_mode.addItem("Sposta — elimina i file di origine dopo il trasferimento",
+        self.cb_mode.addItem(tr("Copia — lascia l'origine intatta"), "copy")
+        self.cb_mode.addItem(tr("Sposta — elimina i file di origine dopo il trasferimento"),
                              "move")
-        self.cb_mode.addItem("Sincronizza — la destinazione diventa identica "
-                             "all'origine (elimina gli extra!)", "sync")
+        self.cb_mode.addItem(tr("Sincronizza — la destinazione diventa identica "
+                             "all'origine (elimina gli extra!)"), "sync")
         grid.addWidget(self.cb_mode, 0, 1, 1, 2)
 
-        grid.addWidget(QtWidgets.QLabel("Sorgente"), 1, 0)
+        grid.addWidget(QtWidgets.QLabel(tr("Sorgente")), 1, 0)
         self.ed_src = QtWidgets.QLineEdit()
         self.ed_src.setPlaceholderText(
-            "es. gdrive:Documenti  oppure  /home/utente/cartella")
+            tr("es. gdrive:Documenti  oppure  /home/utente/cartella"))
         grid.addWidget(self.ed_src, 1, 1)
-        btn_src = QtWidgets.QPushButton("Sfoglia…")
+        btn_src = QtWidgets.QPushButton(tr("Sfoglia…"))
         btn_src.clicked.connect(lambda: self._browse(self.ed_src))
         grid.addWidget(btn_src, 1, 2)
 
-        grid.addWidget(QtWidgets.QLabel("Destinazione"), 2, 0)
+        grid.addWidget(QtWidgets.QLabel(tr("Destinazione")), 2, 0)
         self.ed_dst = QtWidgets.QLineEdit()
-        self.ed_dst.setPlaceholderText("es. /media/backup  oppure  dropbox:Backup")
+        self.ed_dst.setPlaceholderText(tr("es. /media/backup  oppure  dropbox:Backup"))
         grid.addWidget(self.ed_dst, 2, 1)
-        btn_dst = QtWidgets.QPushButton("Sfoglia…")
+        btn_dst = QtWidgets.QPushButton(tr("Sfoglia…"))
         btn_dst.clicked.connect(lambda: self._browse(self.ed_dst))
         grid.addWidget(btn_dst, 2, 2)
 
-        grid.addWidget(QtWidgets.QLabel("Escludi"), 3, 0)
+        grid.addWidget(QtWidgets.QLabel(tr("Escludi")), 3, 0)
         self.ed_exclude = QtWidgets.QLineEdit()
         self.ed_exclude.setPlaceholderText(
-            "pattern rclone separati da virgola, es. .sync_*, .nextcloudsync.log, *.log")
+            tr("pattern rclone separati da virgola, es. .sync_*, .nextcloudsync.log, *.log"))
         grid.addWidget(self.ed_exclude, 3, 1, 1, 2)
         grid.setColumnStretch(1, 1)
         # ripetizione automatica
-        grid.addWidget(QtWidgets.QLabel("Ripeti"), 4, 0)
+        grid.addWidget(QtWidgets.QLabel(tr("Ripeti")), 4, 0)
         rep = QtWidgets.QWidget()
         rep_lay = QtWidgets.QHBoxLayout(rep)
         rep_lay.setContentsMargins(0, 0, 0, 0)
         rep_lay.setSpacing(8)
-        self.chk_repeat = QtWidgets.QCheckBox("automaticamente ogni")
+        self.chk_repeat = QtWidgets.QCheckBox(tr("automaticamente ogni"))
         self.spn_repeat = QtWidgets.QSpinBox()
         self.spn_repeat.setRange(1, 999)
         self.spn_repeat.setValue(6)
         self.cb_unit = QtWidgets.QComboBox()
         for label, secs in _UNITS:
-            self.cb_unit.addItem(label, secs)
+            self.cb_unit.addItem(tr(label), secs)
         rep_lay.addWidget(self.chk_repeat)
         rep_lay.addWidget(self.spn_repeat)
         rep_lay.addWidget(self.cb_unit)
@@ -98,20 +99,20 @@ class TransferDialog(QtWidgets.QDialog):
         self.chk_repeat.toggled.connect(self._repeat_toggled)
 
         # cestino di sicurezza (backup-dir)
-        grid.addWidget(QtWidgets.QLabel("Cestino"), 5, 0)
+        grid.addWidget(QtWidgets.QLabel(tr("Cestino")), 5, 0)
         trash_widget = QtWidgets.QWidget()
         trash_lay = QtWidgets.QHBoxLayout(trash_widget)
         trash_lay.setContentsMargins(0, 0, 0, 0)
         trash_lay.setSpacing(8)
-        self.chk_trash = QtWidgets.QCheckBox("di sicurezza")
+        self.chk_trash = QtWidgets.QCheckBox(tr("di sicurezza"))
         self.chk_trash.setToolTip(
-            "I file che verrebbero eliminati o sovrascritti in destinazione "
+            tr("I file che verrebbero eliminati o sovrascritti in destinazione "
             "vengono SPOSTATI qui invece che cancellati. Non deve stare DENTRO "
-            "la destinazione (il sync lo cancellerebbe).")
+            "la destinazione (il sync lo cancellerebbe)."))
         self.ed_trash = QtWidgets.QLineEdit()
         self.ed_trash.setPlaceholderText(
-            "attiva la spunta: viene proposta <destinazione>-cestino")
-        self.btn_trash = QtWidgets.QPushButton("Sfoglia…")
+            tr("attiva la spunta: viene proposta <destinazione>-cestino"))
+        self.btn_trash = QtWidgets.QPushButton(tr("Sfoglia…"))
         self.btn_trash.clicked.connect(self._browse_trash)
         trash_lay.addWidget(self.chk_trash)
         trash_lay.addWidget(self.ed_trash, 1)
@@ -123,19 +124,19 @@ class TransferDialog(QtWidgets.QDialog):
         layout.addLayout(grid)
 
         self.chk_dry = QtWidgets.QCheckBox(
-            "Prova a vuoto: esegue il trasferimento davvero ma senza scrivere "
-            "o eliminare nulla (l'esito appare nella coda)")
+            tr("Prova a vuoto: esegue il trasferimento davvero ma senza scrivere "
+            "o eliminare nulla (l'esito appare nella coda)"))
         layout.addWidget(self.chk_dry)
 
         hint = QtWidgets.QLabel(
-            "«Sfoglia…» sceglie una cartella locale; per i remoti digita "
+            tr("«Sfoglia…» sceglie una cartella locale; per i remoti digita "
             "nome:percorso (i remoti esistenti vengono suggeriti mentre scrivi). "
             "Puoi anche indicare un singolo file digitandone il percorso. "
             "«Escludi» salta i file corrispondenti (utile per i journal dei "
             "client di sync) e vale anche per la prova a vuoto. "
             "Il cestino tiene l'ultima versione precedente dei file eliminati "
             "o sovrascritti: svuotalo tu di tanto in tanto. "
-            "La ripetizione sopravvive alla chiusura dell'app.")
+            "La ripetizione sopravvive alla chiusura dell'app."))
         hint.setProperty("role", "hint")
         hint.setWordWrap(True)
         layout.addWidget(hint)
@@ -143,8 +144,8 @@ class TransferDialog(QtWidgets.QDialog):
         btns = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.StandardButton.Ok
             | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
-        btns.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setText("Avvia")
-        btns.button(QtWidgets.QDialogButtonBox.StandardButton.Cancel).setText("Annulla")
+        btns.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setText(tr("Avvia"))
+        btns.button(QtWidgets.QDialogButtonBox.StandardButton.Cancel).setText(tr("Annulla"))
         self._btn_ok = btns.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
         btns.accepted.connect(self.accept)
         btns.rejected.connect(self.reject)
@@ -172,7 +173,7 @@ class TransferDialog(QtWidgets.QDialog):
             self.chk_trash.setChecked(True)
         self.chk_dry.setChecked(False)
         self.chk_dry.hide()
-        self._btn_ok.setText("Salva")
+        self._btn_ok.setText(tr("Salva"))
 
     # ------------------------------------------------------------------ helper
 
@@ -180,7 +181,7 @@ class TransferDialog(QtWidgets.QDialog):
         self.spn_repeat.setEnabled(on)
         self.cb_unit.setEnabled(on)
         if self._btn_ok is not None and not getattr(self, "_def_id", None):
-            self._btn_ok.setText("Programma" if on else "Avvia")
+            self._btn_ok.setText(tr("Programma") if on else tr("Avvia"))
 
     def _trash_toggled(self, on: bool) -> None:
         self.ed_trash.setEnabled(on)
@@ -188,11 +189,11 @@ class TransferDialog(QtWidgets.QDialog):
         if on and not self.ed_trash.text().strip():
             dst = self.ed_dst.text().strip().rstrip("/")
             if dst:
-                self.ed_trash.setText(dst + "-cestino")
+                self.ed_trash.setText(dst + tr("-cestino"))   # nome di cartella: «-trash» in inglese
 
     def _browse_trash(self) -> None:
         path = QtWidgets.QFileDialog.getExistingDirectory(
-            self, "Scegli la cartella cestino", os.path.expanduser("~"))
+            self, tr("Scegli la cartella cestino"), os.path.expanduser("~"))
         if path:
             self.ed_trash.setText(path)
 
@@ -208,7 +209,7 @@ class TransferDialog(QtWidgets.QDialog):
 
     def _browse(self, edit: QtWidgets.QLineEdit) -> None:
         path = QtWidgets.QFileDialog.getExistingDirectory(
-            self, "Scegli cartella locale", os.path.expanduser("~"))
+            self, tr("Scegli cartella locale"), os.path.expanduser("~"))
         if path:
             edit.setText(path)
 
@@ -224,21 +225,21 @@ class TransferDialog(QtWidgets.QDialog):
 
         if not src or not dst:
             QtWidgets.QMessageBox.warning(
-                self, "Dati mancanti", "Indica sorgente e destinazione.")
+                self, tr("Dati mancanti"), tr("Indica sorgente e destinazione."))
             return
         if os.path.expanduser(src) == os.path.expanduser(dst):
             QtWidgets.QMessageBox.warning(
-                self, "Percorsi identici", "Sorgente e destinazione coincidono.")
+                self, tr("Percorsi identici"), tr("Sorgente e destinazione coincidono."))
             return
         if trash and not is_remote(trash) and not is_remote(dst):
             td = os.path.abspath(os.path.expanduser(trash))
             dd = os.path.abspath(os.path.expanduser(dst))
             if td == dd or td.startswith(dd + os.sep):
                 QtWidgets.QMessageBox.warning(
-                    self, "Cestino dentro la destinazione",
-                    "Il cestino non può stare dentro la destinazione: il sync "
+                    self, tr("Cestino dentro la destinazione"),
+                    tr("Il cestino non può stare dentro la destinazione: il sync "
                     "lo cancellerebbe al primo giro. Scegli un percorso fuori "
-                    "dalla destinazione (es. una cartella gemella «-cestino»).")
+                    "dalla destinazione (es. una cartella gemella «-cestino»)."))
                 return
 
         # in modifica si richiede conferma solo se cambia ciò che verrà eliminato
@@ -246,12 +247,13 @@ class TransferDialog(QtWidgets.QDialog):
             mode != self._orig.get("mode") or src != self._orig.get("src")
             or dst != self._orig.get("dst"))
         if mode in ("move", "sync") and not dry and changed_scope:
-            what = ("I file di ORIGINE verranno eliminati dopo il trasferimento"
+            what = (tr("I file di ORIGINE verranno eliminati dopo il trasferimento")
                     if mode == "move" else
-                    "La DESTINAZIONE verrà resa identica alla sorgente: i file "
-                    "presenti solo in destinazione verranno ELIMINATI")
+                    tr("La DESTINAZIONE verrà resa identica alla sorgente: i file "
+                    "presenti solo in destinazione verranno ELIMINATI"))
             answer = QtWidgets.QMessageBox.question(
-                self, f"Conferma «{mode}»", f"{what}.\n\nContinuare?",
+                self, tr("Conferma «{mode}»").format(mode=mode),
+                what + ".\n\n" + tr("Continuare?"),
                 QtWidgets.QMessageBox.StandardButton.Yes
                 | QtWidgets.QMessageBox.StandardButton.No)
             if answer != QtWidgets.QMessageBox.StandardButton.Yes:
@@ -261,12 +263,12 @@ class TransferDialog(QtWidgets.QDialog):
             try:
                 self.tab.start_dry(mode, src, dst, exclude, trash)
             except ApiError as exc:
-                QtWidgets.QMessageBox.critical(self, "Prova non riuscita", str(exc))
+                QtWidgets.QMessageBox.critical(self, tr("Prova non riuscita"), str(exc))
                 return
             QtWidgets.QMessageBox.information(
-                self, "Prova a vuoto avviata",
-                "La prova è in corso (senza scritture): l'esito apparirà nella coda "
-                "tra i trasferimenti, marcato «Prova».")
+                self, tr("Prova a vuoto avviata"),
+                tr("La prova è in corso (senza scritture): l'esito apparirà nella coda "
+                "tra i trasferimenti, marcato «Prova»."))
             super().accept()
             return
 
@@ -276,9 +278,9 @@ class TransferDialog(QtWidgets.QDialog):
                 self._def_id, mode, src, dst, exclude, interval, backup_dir=trash)
             if running:
                 QtWidgets.QMessageBox.information(
-                    self, "Programmazione aggiornata",
-                    "Un giro è in corso con le impostazioni precedenti: le "
-                    "modifiche valgono dal prossimo giro.")
+                    self, tr("Programmazione aggiornata"),
+                    tr("Un giro è in corso con le impostazioni precedenti: le "
+                    "modifiche valgono dal prossimo giro."))
             super().accept()
             return
 
@@ -286,10 +288,11 @@ class TransferDialog(QtWidgets.QDialog):
             interval = self.spn_repeat.value() * self.cb_unit.currentData()
             self.tab.add_recurring(mode, src, dst, exclude, interval, backup_dir=trash)
             QtWidgets.QMessageBox.information(
-                self, "Trasferimento programmato",
-                f"Si ripeterà automaticamente ogni {self.spn_repeat.value()} "
-                f"{self.cb_unit.currentText()}: il primo giro parte adesso "
-                "(riga ⏰ nella coda; tasto destro per pausa/rimozione).")
+                self, tr("Trasferimento programmato"),
+                tr("Si ripeterà automaticamente ogni {n} {unit}: il primo giro "
+                   "parte adesso (riga ⏰ nella coda; tasto destro per "
+                   "pausa/rimozione).").format(n=self.spn_repeat.value(),
+                                               unit=self.cb_unit.currentText()))
             super().accept()
             return
 
@@ -297,9 +300,9 @@ class TransferDialog(QtWidgets.QDialog):
             jobid = self.tab.start_transfer(mode, src, dst, exclude=exclude,
                                             backup_dir=trash or None)
         except ApiError as exc:
-            QtWidgets.QMessageBox.critical(self, "Avvio fallito", str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Avvio fallito"), str(exc))
             return
         QtWidgets.QMessageBox.information(
-            self, "Trasferimento avviato",
-            f"Job #{jobid} avviato: guarda la coda per i progressi.")
+            self, tr("Trasferimento avviato"),
+            tr("Job #{job} avviato: guarda la coda per i progressi.").format(job=jobid))
         super().accept()

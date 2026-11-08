@@ -42,6 +42,9 @@ clonaut = "clonaut.app:main"
 [tool.setuptools]
 packages = ["clonaut", "clonaut.ui"]
 
+[tool.setuptools.package-data]
+clonaut = ["locale/*.po"]   # cataloghi delle traduzioni (clonaut/i18n.py)
+
 [tool.setuptools.dynamic]
 version = { attr = "clonaut.__version__" }
 

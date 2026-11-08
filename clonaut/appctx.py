@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .api import RcloneApi
+from .i18n import tr
 from .rcd import RcdProcess, find_rclone, free_port, random_creds
 
 
@@ -34,8 +35,8 @@ class AppContext:
             return self.api_dry
         exe = self.rclone_exe or find_rclone()[0]
         if not exe:
-            raise RuntimeError("rclone non trovato: indicane il percorso in "
-                               "File → Impostazioni.")
+            raise RuntimeError(tr("rclone non trovato: indicane il percorso in "
+                               "File → Impostazioni."))
         port = free_port()
         user, password = random_creds()
         self.rcd_dry = RcdProcess(exe, port, user, password,
@@ -46,6 +47,6 @@ class AppContext:
         if not self.rcd_dry.wait_ready(api, timeout=20):
             tail = self.rcd_dry.log_tail(10)
             self.rcd_dry = None
-            raise RuntimeError("Il backend delle prove non si è avviato.\n\n" + tail)
+            raise RuntimeError(tr("Il backend delle prove non si è avviato.\n\n") + tail)
         self.api_dry = api
         return api

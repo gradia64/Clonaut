@@ -8,6 +8,7 @@ import platform
 from .. import __version__
 from .. import settings as app_settings
 from ..appctx import AppContext
+from ..i18n import tr
 from ..qtcompat import BINDING, QtCore, QtGui, QtWidgets
 from ..util import app_icon
 from ..worker import PollWorker
@@ -30,24 +31,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.remotes_tab = RemotesTab(ctx)
         self.transfers_tab = TransfersTab(ctx)
         tabs = QtWidgets.QTabWidget()
-        tabs.addTab(self.remotes_tab, "Remote")
-        tabs.addTab(self.transfers_tab, "Trasferimenti")
+        tabs.addTab(self.remotes_tab, tr("Remote"))
+        tabs.addTab(self.transfers_tab, tr("Trasferimenti"))
         self.setCentralWidget(tabs)
 
         # -- menu
-        menu = self.menuBar().addMenu("&File")
-        act_settings = QtGui.QAction("⚙ Impostazioni…", self)
+        menu = self.menuBar().addMenu(tr("&File"))
+        act_settings = QtGui.QAction(tr("⚙ Impostazioni…"), self)
         act_settings.triggered.connect(self._open_settings)
-        act_quit = QtGui.QAction("Esci", self)
+        act_quit = QtGui.QAction(tr("Esci"), self)
         act_quit.triggered.connect(self.quit)
         menu.addAction(act_settings)
         menu.addSeparator()
         menu.addAction(act_quit)
 
-        help_menu = self.menuBar().addMenu("&Aiuto")
-        act_about = QtGui.QAction("Informazioni su Clonaut…", self)
+        help_menu = self.menuBar().addMenu(tr("&Aiuto"))
+        act_about = QtGui.QAction(tr("Informazioni su Clonaut…"), self)
         act_about.triggered.connect(self._show_about)
-        act_about_qt = QtGui.QAction("Informazioni su Qt…", self)
+        act_about_qt = QtGui.QAction(tr("Informazioni su Qt…"), self)
         act_about_qt.triggered.connect(QtWidgets.QApplication.aboutQt)
         help_menu.addAction(act_about)
         help_menu.addAction(act_about_qt)
@@ -83,10 +84,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tray.setToolTip("Clonaut")
         menu = QtWidgets.QMenu(self)
         self._tray_menu = menu   # il tray non ne prende possesso: teniamo il riferimento
-        act_show = menu.addAction("Mostra / Nascondi")
+        act_show = menu.addAction(tr("Mostra / Nascondi"))
         act_show.triggered.connect(self._toggle_visible)
         menu.addSeparator()
-        act_quit = menu.addAction("Esci")
+        act_quit = menu.addAction(tr("Esci"))
         act_quit.triggered.connect(self.quit)
         self.tray.setContextMenu(menu)
         self.tray.activated.connect(self._on_tray_activated)
@@ -142,24 +143,27 @@ class MainWindow(QtWidgets.QMainWindow):
                 ("Qt", f"{QtCore.qVersion()} ({BINDING})"),
                 ("Python", platform.python_version()),
                 ("Config", self.ctx.config_desc),
-                ("Dati app", cfg))
+                (tr("Dati app"), cfg))
         table = "".join(
             f"<tr><td style='white-space:nowrap; padding-right:10px'><b>{k}</b></td>"
             f"<td>{v}</td></tr>" for k, v in rows)
         return (
             f"<h2 style='margin-bottom:0'>Clonaut {__version__}</h2>"
-            "<p style='margin-top:2px'><i>Il pilota grafico per rclone.</i></p>"
-            "<p>Interfaccia desktop per <a href='https://rclone.org'>rclone</a>: "
-            "remote, trasferimenti con progressi, prove a vuoto, cestino di "
-            "sicurezza e programmazioni. Tutto il lavoro sui file lo fa rclone.</p>"
-            f"<table cellspacing='0' cellpadding='2'>{table}</table>"
-            "<p>Licenza <a href='https://www.gnu.org/licenses/gpl-3.0.html'>GPL-3.0</a> "
+            "<p style='margin-top:2px'><i>" + tr("Il pilota grafico per rclone.")
+            + "</i></p><p>" + tr(
+                "Interfaccia desktop per <a href='https://rclone.org'>rclone</a>: "
+                "remote, trasferimenti con progressi, prove a vuoto, cestino di "
+                "sicurezza e programmazioni. Tutto il lavoro sui file lo fa rclone.")
+            + f"</p><table cellspacing='0' cellpadding='2'>{table}</table><p>"
+            + tr("Licenza")
+            + " <a href='https://www.gnu.org/licenses/gpl-3.0.html'>GPL-3.0</a> "
             "· © 2026 Gradia<br>"
             "<a href='https://github.com/gradia64/Clonaut'>github.com/gradia64/Clonaut</a>"
-            " · <a href='https://github.com/gradia64/Clonaut/issues'>segnala un problema</a></p>")
+            " · <a href='https://github.com/gradia64/Clonaut/issues'>"
+            + tr("segnala un problema") + "</a></p>")
 
     def _show_about(self) -> None:
-        QtWidgets.QMessageBox.about(self, "Informazioni su Clonaut", self.about_text())
+        QtWidgets.QMessageBox.about(self, tr("Informazioni su Clonaut"), self.about_text())
 
     def quit(self) -> None:
         """Uscita vera (dal menu File o dalla tray): ferma worker e rcd."""
@@ -177,8 +181,8 @@ class MainWindow(QtWidgets.QMainWindow):
                      if not p["status"].get("finished"))
         if self.tray is not None:
             self.tray.setToolTip("Clonaut · " + (
-                f"{active} trasferimenti attivi" if active
-                else "nessun trasferimento attivo"))
+                tr("{n} trasferimenti attivi").format(n=active) if active
+                else tr("nessun trasferimento attivo")))
 
     def _on_job_finished(self, title: str, ok: bool) -> None:
         if self.tray is not None and self.settings.get("notify_finished"):
@@ -190,11 +194,11 @@ class MainWindow(QtWidgets.QMainWindow):
         if ok:
             dot, extra = "#1a7f37", self.ctx.version
         else:
-            dot, extra = "#c62828", "in attesa di rclone rcd…"
+            dot, extra = "#c62828", tr("in attesa di rclone rcd…")
         self._status_lbl.setText(
             f'<span style="color:{dot}; font-weight:600">●</span> '
-            f"rclone {extra} · rcd su {self.ctx.api.url} · "
-            f"config: {self.ctx.config_desc}")
+            + tr("rclone {version} · rcd su {url} · config: {config}").format(
+                version=extra, url=self.ctx.api.url, config=self.ctx.config_desc))
 
     # ------------------------------------------------------------- chiusura
 

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ..api import is_remote
 from ..appctx import AppContext
+from ..i18n import tr
 from ..qtcompat import QtCore, QtGui, QtWidgets
 from ..util import human_size
 
@@ -21,7 +22,7 @@ class TrashDialog(QtWidgets.QDialog):
         super().__init__(parent)
         self.ctx = ctx
         self.backup_dir = backup_dir
-        self.setWindowTitle("Cestino di sicurezza")
+        self.setWindowTitle(tr("Cestino di sicurezza"))
         self.resize(780, 470)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -32,16 +33,16 @@ class TrashDialog(QtWidgets.QDialog):
         layout.addWidget(head)
 
         note = QtWidgets.QLabel(
-            "Qui finiscono i file eliminati o sovrascritti dai trasferimenti "
+            tr("Qui finiscono i file eliminati o sovrascritti dai trasferimenti "
             "(con il loro percorso). Per recuperarli, apri la cartella e "
             "trascinali dove devono stare. Il cestino tiene l'ultima versione "
-            "precedente di ciascun file: svuotalo di tanto in tanto.")
+            "precedente di ciascun file: svuotalo di tanto in tanto."))
         note.setProperty("role", "hint")
         note.setWordWrap(True)
         layout.addWidget(note)
 
         self.tree = QtWidgets.QTreeWidget()
-        self.tree.setHeaderLabels(["File", "Dimensione", "Modificato"])
+        self.tree.setHeaderLabels([tr("File"), tr("Dimensione"), tr("Modificato")])
         self.tree.setRootIsDecorated(False)
         self.tree.setAlternatingRowColors(True)
         header = self.tree.header()
@@ -51,17 +52,17 @@ class TrashDialog(QtWidgets.QDialog):
         layout.addWidget(self.tree, 1)
 
         bar = QtWidgets.QHBoxLayout()
-        btn_refresh = QtWidgets.QPushButton("↻ Aggiorna")
+        btn_refresh = QtWidgets.QPushButton(tr("↻ Aggiorna"))
         btn_refresh.clicked.connect(self.refresh)
-        self.btn_open = QtWidgets.QPushButton("📂 Apri nel gestore file")
+        self.btn_open = QtWidgets.QPushButton(tr("📂 Apri nel gestore file"))
         self.btn_open.clicked.connect(self._open_fm)
-        btn_empty = QtWidgets.QPushButton("🧹 Svuota cestino")
+        btn_empty = QtWidgets.QPushButton(tr("🧹 Svuota cestino"))
         btn_empty.clicked.connect(self._empty)
         bar.addWidget(btn_refresh)
         bar.addWidget(self.btn_open)
         bar.addWidget(btn_empty)
         bar.addStretch(1)
-        btn_close = QtWidgets.QPushButton("Chiudi")
+        btn_close = QtWidgets.QPushButton(tr("Chiudi"))
         btn_close.clicked.connect(self.reject)
         bar.addWidget(btn_close)
         layout.addLayout(bar)
@@ -79,9 +80,10 @@ class TrashDialog(QtWidgets.QDialog):
             msg = str(exc)
             if "not found" in msg or "doesn't exist" in msg or "File o directory" in msg:
                 # svuotato (purge rimuove la cartella) o mai creato: è normale
-                self._show_placeholder("(cestino vuoto)")
+                self._show_placeholder(tr("(cestino vuoto)"))
             else:
-                self._show_placeholder(f"(cestino non raggiungibile: {msg})")
+                self._show_placeholder(
+                    tr("(cestino non raggiungibile: {error})").format(error=msg))
             return
         QtWidgets.QApplication.restoreOverrideCursor()
 
@@ -89,7 +91,7 @@ class TrashDialog(QtWidgets.QDialog):
         files = sorted((e for e in entries if not e.get("IsDir")),
                        key=lambda e: str(e.get("Path", "")))
         if not files:
-            self._show_placeholder("(cestino vuoto)")
+            self._show_placeholder(tr("(cestino vuoto)"))
             return
         for entry in files:
             item = QtWidgets.QTreeWidgetItem([
@@ -111,24 +113,24 @@ class TrashDialog(QtWidgets.QDialog):
     def _open_fm(self) -> None:
         if is_remote(self.backup_dir):
             QtWidgets.QMessageBox.information(
-                self, "Cestino su remote",
-                "Il cestino è su un remote: non c'è un gestore file locale. "
-                "I file restano consultabili in questa finestra.")
+                self, tr("Cestino su remote"),
+                tr("Il cestino è su un remote: non c'è un gestore file locale. "
+                "I file restano consultabili in questa finestra."))
             return
         path = Path(self.backup_dir)
         if not path.is_dir():
             QtWidgets.QMessageBox.information(
-                self, "Cestino",
-                "La cartella cestino non esiste ancora: verrà creata la prima "
-                "volta che un trasferimento vi sposta un file.")
+                self, tr("Cestino"),
+                tr("La cartella cestino non esiste ancora: verrà creata la prima "
+                "volta che un trasferimento vi sposta un file."))
             return
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(path)))
 
     def _empty(self) -> None:
         answer = QtWidgets.QMessageBox.question(
-            self, "Svuotare il cestino?",
-            "Svuotare definitivamente il cestino?\nI file non saranno più "
-            "recuperabili.",
+            self, tr("Svuotare il cestino?"),
+            tr("Svuotare definitivamente il cestino?\nI file non saranno più "
+            "recuperabili."),
             QtWidgets.QMessageBox.StandardButton.Yes
             | QtWidgets.QMessageBox.StandardButton.No)
         if answer != QtWidgets.QMessageBox.StandardButton.Yes:
@@ -136,6 +138,6 @@ class TrashDialog(QtWidgets.QDialog):
         try:
             self.ctx.api.purge(self.backup_dir)
         except Exception as exc:  # noqa: BLE001 — anche rcd giù
-            QtWidgets.QMessageBox.critical(self, "Svuotamento fallito", str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Svuotamento fallito"), str(exc))
             return
         self.refresh()

@@ -17,6 +17,8 @@ import sys
 
 from clonaut.api import RcloneApi
 from clonaut.appctx import AppContext
+from clonaut import i18n
+from clonaut.i18n import tr
 from clonaut.qtcompat import QtCore, QtWidgets
 from clonaut import settings as app_settings
 from clonaut.rcd import RcdProcess, find_rclone, free_port, random_creds
@@ -33,17 +35,18 @@ def make_app() -> QtWidgets.QApplication:
     from clonaut.util import APP_QSS, app_icon
     app.setStyleSheet(APP_QSS)
     app.setWindowIcon(app_icon())
+    i18n.install_qt_translator(app)
     return app
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="clonaut", description="Interfaccia grafica per rclone (rcd REST API)")
-    parser.add_argument("--url", help="aggancia un rcd già avviato (es. http://127.0.0.1:5572)")
-    parser.add_argument("--user", default="", help="utente per l'API rc")
-    parser.add_argument("--password", default="", help="password per l'API rc")
-    parser.add_argument("--config", help="file di configurazione rclone da usare")
-    parser.add_argument("--port", type=int, help="porta per il rcd locale (default: casuale)")
+        prog="clonaut", description=tr("Interfaccia grafica per rclone (rcd REST API)"))
+    parser.add_argument("--url", help=tr("aggancia un rcd già avviato (es. http://127.0.0.1:5572)"))
+    parser.add_argument("--user", default="", help=tr("utente per l'API rc"))
+    parser.add_argument("--password", default="", help=tr("password per l'API rc"))
+    parser.add_argument("--config", help=tr("file di configurazione rclone da usare"))
+    parser.add_argument("--port", type=int, help=tr("porta per il rcd locale (default: casuale)"))
     return parser.parse_args(argv)
 
 
@@ -53,7 +56,7 @@ def _build_context(args: argparse.Namespace, values: dict) -> AppContext:
     if args.url:
         api = RcloneApi(args.url, args.user, args.password)
         version = str(api.ping().get("version", "?")).lstrip("v")
-        config_desc = "gestito dal rcd esterno"
+        config_desc = tr("gestito dal rcd esterno")
         # rclone locale serve solo per le prove a vuoto: può anche mancare
         return AppContext(api=api, version=f"v{version}", config_desc=config_desc,
                           config_path=args.config, rclone_exe=exe,
@@ -61,10 +64,10 @@ def _build_context(args: argparse.Namespace, values: dict) -> AppContext:
 
     if not exe:
         raise RuntimeError(
-            "rclone non trovato. Fonti provate:\n  • " + "\n  • ".join(tried)
-            + "\n\nInstallalo (es. `sudo apt install rclone`, `sudo pacman -S "
-            "rclone` o da https://rclone.org), oppure indica il percorso con "
-            "la variabile CLONAUT_RCLONE.")
+            tr("rclone non trovato. Fonti provate:") + "\n  • " + "\n  • ".join(tried)
+            + "\n\n" + tr("Installalo (es. `sudo apt install rclone`, `sudo pacman -S "
+                          "rclone` o da https://rclone.org), oppure indica il percorso con "
+                          "la variabile CLONAUT_RCLONE."))
 
     port = args.port or free_port()
     user, password = random_creds()
@@ -74,21 +77,23 @@ def _build_context(args: argparse.Namespace, values: dict) -> AppContext:
     if not rcd.wait_ready(api):
         tail = rcd.log_tail(15)
         raise RuntimeError(
-            "rclone rcd non si è avviato.\n\nLog recente:\n" + tail)
+            tr("rclone rcd non si è avviato.") + "\n\n" + tr("Log recente:") + "\n" + tail)
     version = str(api.ping().get("version", "?")).lstrip("v")
-    config_desc = args.config if args.config else "predefinito (~/.config/rclone/rclone.conf)"
+    config_desc = args.config if args.config else tr("predefinito (~/.config/rclone/rclone.conf)")
     return AppContext(api=api, rcd=rcd, version=f"v{version}", config_desc=config_desc,
                       config_path=args.config, rclone_exe=exe, rclone_source=source)
 
 
 def main(argv: list[str] | None = None) -> int:
+    values = app_settings.load()
+    i18n.setup(i18n.detect(values.get("language", "")))
     args = _parse_args(argv if argv is not None else sys.argv[1:])
 
     app = make_app()
 
     # -- avvio del backend con finestra di attesa
     progress = QtWidgets.QProgressDialog()
-    progress.setLabelText("Avvio di rclone rcd…")
+    progress.setLabelText(tr("Avvio di rclone rcd…"))
     progress.setRange(0, 0)
     progress.setCancelButton(None)
     progress.setWindowFlag(QtCore.Qt.WindowType.WindowCloseButtonHint, False)
@@ -96,12 +101,11 @@ def main(argv: list[str] | None = None) -> int:
     progress.show()
     QtWidgets.QApplication.processEvents()
 
-    values = app_settings.load()
     try:
         ctx = _build_context(args, values)
     except Exception as exc:  # noqa: BLE001 — errore di avvio mostrato all'utente
         progress.cancel()
-        QtWidgets.QMessageBox.critical(None, "Avvio fallito", str(exc))
+        QtWidgets.QMessageBox.critical(None, tr("Avvio fallito"), str(exc))
         return 1
     progress.cancel()
 

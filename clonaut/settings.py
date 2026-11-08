@@ -12,6 +12,7 @@ DEFAULTS = {
     "start_in_tray": False,     # all'avvio resta ridotta nella tray
     "notify_finished": True,    # notifica a ogni trasferimento terminato
     "rclone_path": "",          # eseguibile rclone scelto a mano ("" = automatico)
+    "language": "",             # lingua dell'interfaccia: "it", "en" ("" = del sistema)
 }
 
 

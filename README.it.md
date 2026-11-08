@@ -8,6 +8,11 @@ Interfaccia grafica desktop (Qt: PySide6 o PyQt6) per [rclone](https://rclone.or
 sopra la REST API di `rclone rcd`: l'app avvia da sola un demone rclone locale e lo
 pilota via HTTP con `requests`. Il backend è rclone stesso — la GUI è solo l'interfaccia.
 
+L'interfaccia è in **italiano** e in **inglese**: segue la lingua del sistema
+(italiano se il sistema è in italiano, altrimenti inglese); in
+**File → Impostazioni…** se ne può scegliere una, e `CLONAUT_LANG=it|en` vale
+su entrambe.
+
 **Funzioni:**
 
 - **Remote** — elenco con tipo e riepilogo, creazione con form dinamico generato dai
@@ -24,8 +29,8 @@ pilota via HTTP con `requests`. Il backend è rclone stesso — la GUI è solo l
   versione precedente di ciascun file: svuotalo tu di tanto in tanto.
 - **Tray e impostazioni** — icona nella tray (clic per mostrare/nascondere, esci, tooltip
   con i trasferimenti attivi). Menu **File → Impostazioni…**: chiudi/minimizza
-  nella tray, avvio ridotto nella tray e notifiche a fine trasferimento
-  (`~/.config/clonaut/settings.json`). Se l'ambiente non ha tray
+  nella tray, avvio ridotto nella tray, notifiche a fine trasferimento e
+  lingua dell'interfaccia (`~/.config/clonaut/settings.json`). Se l'ambiente non ha tray
   (es. GNOME senza estensione), l'app funziona come prima.
 - **Prova a vuoto** — anteprima onesta: gira su un processo rclone avviato con
   `--dry-run`, impossibile che scriva o elimini; mostra file/byte che
@@ -314,6 +319,8 @@ clonaut/
 ├── appctx.py               contesto condiviso (+ backend dedicato alle prove)
 ├── settings.py             impostazioni persistenti (tray, notifiche)
 ├── qtcompat.py             import Qt: PySide6 o PyQt6 (`CLONAUT_QT`)
+├── i18n.py                 lingua dell'interfaccia: `tr()`, cataloghi gettext letti come .po
+├── locale/en.po            traduzione inglese (i testi originali sono in italiano)
 ├── util.py                 formattazioni (size/ETA), QSS globale, icona
 └── ui/
     ├── main_window.py      finestra, tab, tray, menu File→Impostazioni, status bar
@@ -322,7 +329,7 @@ clonaut/
     ├── transfers_tab.py    coda trasferimenti, progressi, programmati ⏰, pulsante cestino
     ├── transfer_dialog.py  dialog nuovo trasferimento (esclusioni, cestino, ripetizione)
     ├── trash_dialog.py     visualizzatore del cestino (lista, apri, svuota)
-    └── settings_dialog.py  impostazioni tray, notifiche e percorso di rclone
+    └── settings_dialog.py  impostazioni tray, notifiche, percorso di rclone e lingua
 ```
 
 ## Dettagli tecnici curiosi
@@ -363,6 +370,23 @@ bisogno di rclone vengono saltati se non è installato. Coprono: ricerca di
 rclone, impostazioni e migrazione, trasferimenti veri (copia, sync, file
 singolo) con esclusioni e cestino, prove a vuoto, coda, programmazioni ⏰ e
 loro modifica, dialog, tray ed entrambi i binding Qt.
+
+## Contribuire
+
+Segnalazioni e pull request sono benvenute su
+[GitHub](https://github.com/gradia64/Clonaut/issues). Tradurre l'interfaccia
+in una nuova lingua è un ottimo primo contributo:
+
+1. aggiungi il codice della lingua e il suo nome a `LANGUAGES` in
+   `clonaut/i18n.py`;
+2. lancia `python3 scripts/update-po.py`: crea `clonaut/locale/<codice>.po`
+   con tutti i testi dell'interfaccia;
+3. compila le righe `msgstr` (i `msgid` sono gli originali italiani; `en.po`
+   è un buon riferimento), lasciando i `{segnaposto}` come sono;
+4. provala con `CLONAUT_LANG=<codice> clonaut` e `python3 -m pytest`.
+
+Quando un testo nel codice cambia, `scripts/update-po.py` aggiorna tutti i
+cataloghi ed elenca cosa resta da tradurre.
 
 ## Licenza
 

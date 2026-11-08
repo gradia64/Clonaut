@@ -11,6 +11,7 @@ import time
 from pathlib import Path
 
 from .api import RcloneApi
+from .i18n import tr
 from .settings import cache_dir
 
 LOG_DIR = cache_dir()
@@ -45,29 +46,30 @@ def find_rclone(setting_path: str = "") -> tuple[str | None, str, list[str]]:
     """
     tried: list[str] = []
     candidates = (
-        (os.environ.get(RCLONE_ENV, "").strip(), f"variabile {RCLONE_ENV}"),
-        ((setting_path or "").strip(), "impostazioni"),
+        (os.environ.get(RCLONE_ENV, "").strip(), tr("variabile {name}").format(name=RCLONE_ENV)),
+        ((setting_path or "").strip(), tr("impostazioni")),
     )
     for raw, source in candidates:
         if not raw:
-            tried.append(f"{source}: non impostato")
+            tried.append(tr("{source}: non impostato").format(source=source))
             continue
         path = os.path.expanduser(raw)
         if _is_exe(path):
             return path, source, tried
-        tried.append(f"{source}: {path} non esiste o non è eseguibile")
+        tried.append(tr("{source}: {path} non esiste o non è eseguibile").format(
+            source=source, path=path))
 
     found = shutil.which("rclone")
     if found:
         return found, "PATH", tried
-    tried.append("PATH: rclone non trovato")
+    tried.append(tr("PATH: rclone non trovato"))
 
     appdir = os.environ.get("APPDIR", "")
     bundled = os.path.join(appdir, "usr", "bin", "rclone") if appdir else ""
     if bundled and _is_exe(bundled):
-        return bundled, "incluso nell'AppImage", tried
-    tried.append("AppImage: nessuna copia inclusa" if not appdir
-                 else f"AppImage: {bundled} assente")
+        return bundled, tr("incluso nell'AppImage"), tried
+    tried.append(tr("AppImage: nessuna copia inclusa") if not appdir
+                 else tr("AppImage: {path} assente").format(path=bundled))
     return None, "", tried
 
 
@@ -158,7 +160,7 @@ class RcdProcess:
             content = self.log_path.read_text(errors="replace").splitlines()
             return "\n".join(content[-lines:])
         except OSError:
-            return "(nessun log disponibile)"
+            return tr("(nessun log disponibile)")
 
     def stop(self) -> None:
         if self.proc is None or self.proc.poll() is not None:

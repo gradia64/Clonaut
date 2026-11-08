@@ -6,6 +6,12 @@ All notable changes to Clonaut are listed here. Versions follow
 ## [Unreleased]
 
 ### Added
+- **English user interface.** Clonaut follows the system language (Italian
+  when the system is in Italian, English otherwise); *File → Settings…* has a
+  new *Language* option and `CLONAUT_LANG=en|it` overrides both. Qt's own
+  buttons and dialogs follow too. Translations are gettext `.po` catalogs in
+  `clonaut/locale/`, read directly (no build step); `scripts/update-po.py`
+  extracts the texts and lists what is left to translate.
 - Standard Python packaging (`pyproject.toml`): `pip install .` provides the
   `clonaut` command; `python -m clonaut` works too.
 - AppStream metadata (`io.github.gradia64.Clonaut.metainfo.xml`) and PNG icons

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from ..api import ApiError
 from ..appctx import AppContext
+from ..i18n import N_, tr
 from ..qtcompat import QtCore, QtGui, QtWidgets, Signal
 from .. import settings as app_settings
 from ..util import fmt_duration, fmt_eta, human_size, human_speed
@@ -16,8 +17,8 @@ from ..worker import DryRunWorker
 from .transfer_dialog import TransferDialog
 from .trash_dialog import TrashDialog
 
-_COLS = ["Job", "Tipo", "Sorgente", "Destinazione", "Stato",
-         "Progresso", "Velocità", "ETA", "Trasferito"]
+_COLS = [N_("Job"), N_("Tipo"), N_("Sorgente"), N_("Destinazione"), N_("Stato"),
+         N_("Progresso"), N_("Velocità"), N_("ETA"), N_("Trasferito")]
 
 _GREEN = QtGui.QColor("#1a7f37")
 _RED = QtGui.QColor("#c62828")
@@ -33,7 +34,15 @@ def _rec_path() -> Path:
     return app_settings.config_dir() / "recurring.json"
 
 
-_MODE_LABEL = {"copy": "Copia", "move": "Sposta", "sync": "Sincronizza"}
+_MODE_LABEL = {"copy": N_("Copia"), "move": N_("Sposta"), "sync": N_("Sincronizza")}
+
+
+def _mode(mode: str, default: str | None = None) -> str:
+    """Nome della modalità nella lingua dell'interfaccia (o `default`)."""
+    label = _MODE_LABEL.get(mode)
+    if label:
+        return tr(label)
+    return mode if default is None else default
 
 
 class TransfersTab(QtWidgets.QWidget):
@@ -67,18 +76,18 @@ class TransfersTab(QtWidgets.QWidget):
 
         # -- barra azioni
         bar = QtWidgets.QHBoxLayout()
-        btn_new = QtWidgets.QPushButton("＋ Nuovo trasferimento")
+        btn_new = QtWidgets.QPushButton(tr("＋ Nuovo trasferimento"))
         btn_new.clicked.connect(self._on_new)
-        self.btn_stop = QtWidgets.QPushButton("⏹ Annulla")
+        self.btn_stop = QtWidgets.QPushButton(tr("⏹ Annulla"))
         self.btn_stop.setEnabled(False)
         self.btn_stop.clicked.connect(self._on_stop)
-        btn_clear = QtWidgets.QPushButton("🧹 Rimuovi completati")
+        btn_clear = QtWidgets.QPushButton(tr("🧹 Rimuovi completati"))
         btn_clear.clicked.connect(self._on_clear)
-        self.btn_trash = QtWidgets.QPushButton("🗑 Cestino")
+        self.btn_trash = QtWidgets.QPushButton(tr("🗑 Cestino"))
         self.btn_trash.setEnabled(False)
         self.btn_trash.clicked.connect(self._on_open_trash)
-        self.btn_trash.setToolTip("Apre il cestino di sicurezza del trasferimento "
-                                  "selezionato (richiede il campo «Cestino»)")
+        self.btn_trash.setToolTip(tr("Apre il cestino di sicurezza del trasferimento "
+                                  "selezionato (richiede il campo «Cestino»)"))
         bar.addWidget(btn_new)
         bar.addWidget(self.btn_stop)
         bar.addWidget(btn_clear)
@@ -91,7 +100,7 @@ class TransfersTab(QtWidgets.QWidget):
 
         # -- coda job
         self.tree = QtWidgets.QTreeWidget()
-        self.tree.setHeaderLabels(_COLS)
+        self.tree.setHeaderLabels([tr(c) for c in _COLS])
         self.tree.setRootIsDecorated(False)
         self.tree.setAllColumnsShowFocus(True)
         self.tree.setSelectionMode(
@@ -110,10 +119,10 @@ class TransfersTab(QtWidgets.QWidget):
         layout.addWidget(self.tree, 3)
 
         # -- file in corso del job selezionato
-        group = QtWidgets.QGroupBox("File in corso (job selezionato)")
+        group = QtWidgets.QGroupBox(tr("File in corso (job selezionato)"))
         g_layout = QtWidgets.QVBoxLayout(group)
         self.files = QtWidgets.QTreeWidget()
-        self.files.setHeaderLabels(["File", "Completato", "Dimensione", "Velocità"])
+        self.files.setHeaderLabels([tr("File"), tr("Completato"), tr("Dimensione"), tr("Velocità")])
         self.files.setRootIsDecorated(False)
         self.files.setAlternatingRowColors(True)
         fh = self.files.header()
@@ -126,10 +135,10 @@ class TransfersTab(QtWidgets.QWidget):
         layout.addWidget(group, 1)
 
         hint = QtWidgets.QLabel(
-            "I percorsi remoti si scrivono «nome:cartella»; quelli locali come "
+            tr("I percorsi remoti si scrivono «nome:cartella»; quelli locali come "
             "percorso del filesystem (anche un singolo file). I programmati ⏰ "
             "si gestiscono col tasto destro: avvia ora, modifica, pausa, "
-            "rimuovi (doppio clic per modificarli).")
+            "rimuovi (doppio clic per modificarli)."))
         hint.setProperty("role", "hint")
         hint.setWordWrap(True)
         layout.addWidget(hint)
@@ -184,19 +193,19 @@ class TransfersTab(QtWidgets.QWidget):
                      backup_dir: str | None = None) -> None:
         item = QtWidgets.QTreeWidgetItem()
         item.setText(0, "—")
-        item.setText(1, f"Prova · {_MODE_LABEL.get(mode, mode)}")
+        item.setText(1, tr("Prova · {mode}").format(mode=_mode(mode)))
         for col, path in ((2, src), (3, dst)):
             item.setText(col, path)
             item.setToolTip(col, path)
-        item.setText(4, "🧪 Prova in corso…")
+        item.setText(4, tr("🧪 Prova in corso…"))
         item.setForeground(4, _BLUE)
-        item.setToolTip(4, "La prova è un trasferimento vero senza scritture: "
-                           "può durare quanto il trasferimento stesso.")
+        item.setToolTip(4, tr("La prova è un trasferimento vero senza scritture: "
+                           "può durare quanto il trasferimento stesso."))
         if backup_dir:
             item.setData(0, _ROLE_BACKUP, backup_dir)
         bar = QtWidgets.QProgressBar()
         bar.setRange(0, 1000)
-        bar.setFormat("anteprima")
+        bar.setFormat(tr("anteprima"))
         item.setSizeHint(5, QtCore.QSize(0, 24))
         self.tree.addTopLevelItem(item)
         self.tree.setItemWidget(item, 5, bar)
@@ -211,14 +220,14 @@ class TransfersTab(QtWidgets.QWidget):
             return
         _item, bar = entry
         if ok:
-            item.setText(4, f"🧪 Prova completata — {message}" if message
-                         else "🧪 Prova completata")
+            item.setText(4, tr("🧪 Prova completata — {summary}").format(summary=message)
+                         if message else tr("🧪 Prova completata"))
             item.setForeground(4, _GREEN)
-            item.setToolTip(4, "Anteprima a vuoto: nessun file scritto o eliminato.")
+            item.setToolTip(4, tr("Anteprima a vuoto: nessun file scritto o eliminato."))
             bar.setValue(1000)
             bar.setFormat("%p%")
         else:
-            item.setText(4, "✕ Prova fallita")
+            item.setText(4, tr("✕ Prova fallita"))
             item.setForeground(4, _RED)
             item.setToolTip(4, message)
             bar.setStyleSheet("QProgressBar::chunk { background: #d05a5a; }")
@@ -255,13 +264,14 @@ class TransfersTab(QtWidgets.QWidget):
             if meta is None or meta.get("rec"):
                 continue   # i giri programmati notificano da _update_recurring
             ok = bool(status.get("success"))
-            what = "completato" if ok else "in errore"
-            self.job_finished.emit(
-                f"{_MODE_LABEL.get(meta.get('mode', ''), 'Trasferimento')} "
-                f"{what}: {meta.get('src', '?')} → {meta.get('dst', '?')}", ok)
+            text = (tr("{mode} completato: {src} → {dst}") if ok
+                    else tr("{mode} in errore: {src} → {dst}"))
+            self.job_finished.emit(text.format(
+                mode=_mode(meta.get("mode", ""), tr("Trasferimento")),
+                src=meta.get("src", "?"), dst=meta.get("dst", "?")), ok)
 
     def on_worker_error(self, message: str) -> None:
-        self.lbl_agg.setText(f"⚠ rcd non raggiungibile ({message})")
+        self.lbl_agg.setText(tr("⚠ rcd non raggiungibile ({error})").format(error=message))
 
     def _update_agg(self, snap: dict) -> None:
         jobs = snap.get("jobs", {})
@@ -270,7 +280,8 @@ class TransfersTab(QtWidgets.QWidget):
                      if p["status"].get("finished") and not p["status"].get("success"))
         speed = human_speed(snap.get("agg", {}).get("speed")) if active else "—"
         self.lbl_agg.setText(
-            f"⇅ {speed}   ·   {active} job attivi   ·   falliti: {failed}")
+            tr("⇅ {speed}   ·   {active} job attivi   ·   falliti: {failed}").format(
+                speed=speed, active=active, failed=failed))
 
     # ------------------------------------------------------------------ tabella
 
@@ -313,7 +324,7 @@ class TransfersTab(QtWidgets.QWidget):
                      bar: QtWidgets.QProgressBar, meta: dict,
                      status: dict, stats: dict) -> None:
         """Colonne 1–8 della riga, comuni a job normali e giri programmati."""
-        item.setText(1, _MODE_LABEL.get(meta.get("mode", ""), "—"))
+        item.setText(1, _mode(meta.get("mode", ""), "—"))
         item.setText(2, meta.get("src", "—"))
         item.setText(3, meta.get("dst", "—"))
         item.setToolTip(2, meta.get("src", ""))
@@ -324,15 +335,15 @@ class TransfersTab(QtWidgets.QWidget):
         error = status.get("error") or ""
 
         if finished and success:
-            state, color = "✓ Completato", _GREEN
+            state, color = tr("✓ Completato"), _GREEN
         elif finished and "context canceled" in error:
-            state, color = "■ Annullato", _GRAY
+            state, color = tr("■ Annullato"), _GRAY
         elif finished:
-            state, color = "✕ Errore", _RED
+            state, color = tr("✕ Errore"), _RED
         elif stats.get("totalBytes"):
-            state, color = "⇅ In corso", _BLUE
+            state, color = tr("⇅ In corso"), _BLUE
         else:
-            state, color = "… Preparazione", _BLUE
+            state, color = tr("… Preparazione"), _BLUE
 
         item.setText(4, state)
         item.setForeground(4, color)
@@ -412,7 +423,7 @@ class TransfersTab(QtWidgets.QWidget):
         return running
 
     def _paint_rec_paths(self, item: QtWidgets.QTreeWidgetItem, d: dict) -> None:
-        item.setText(1, _MODE_LABEL.get(d["mode"], d["mode"]))
+        item.setText(1, _mode(d["mode"]))
         item.setText(2, d["src"])
         item.setText(3, d["dst"])
         item.setToolTip(2, d["src"])
@@ -469,9 +480,9 @@ class TransfersTab(QtWidgets.QWidget):
     def _new_rec_row(self, def_id: str, d: dict) -> None:
         item = QtWidgets.QTreeWidgetItem()
         self._paint_rec_paths(item, d)
-        item.setToolTip(4, "Programmazione: doppio clic per modificarla; tasto "
+        item.setToolTip(4, tr("Programmazione: doppio clic per modificarla; tasto "
                            "destro per avviare ora, modificare, mettere in "
-                           "pausa o rimuovere.")
+                           "pausa o rimuovere."))
         bar = QtWidgets.QProgressBar()
         bar.setRange(0, 1000)
         bar.setFormat("%p%")
@@ -491,19 +502,20 @@ class TransfersTab(QtWidgets.QWidget):
             return
         enabled = d.get("enabled", True)
         if not enabled:
-            stato = "⏸ In pausa"
+            stato = tr("⏸ In pausa")
         elif d.get("last_start") is None:
-            stato = "⏰ Primo avvio tra poco…"
+            stato = tr("⏰ Primo avvio tra poco…")
         else:
             left = max(0.0, d["last_start"] + d["interval"] - time.time())
-            stato = f"⏰ Prossimo giro tra {fmt_eta(left)}"
+            stato = tr("⏰ Prossimo giro tra {time}").format(time=fmt_eta(left))
         last = d.get("last_status")
         if last == "ok":
-            stato += "  ·  ultimo: ✓"
+            stato += "  ·  " + tr("ultimo: ✓")
         elif last == "cancel":
-            stato += "  ·  ultimo: ■ annullato"
+            stato += "  ·  " + tr("ultimo: ■ annullato")
         elif last == "err":
-            stato += f"  ·  ultimo: ✕ {d.get('last_error', '')[:60]}"
+            stato += "  ·  " + tr("ultimo: ✕ {error}").format(
+                error=d.get("last_error", "")[:60])
         item.setText(0, "⏰")
         item.setData(0, _ROLE_JID, None)
         item.setText(4, stato)
@@ -577,11 +589,12 @@ class TransfersTab(QtWidgets.QWidget):
                 self.job_dismissed.emit(jid)
                 self._save_recurring()
                 ok = d["last_status"] == "ok"
-                what = "completato" if ok else (
-                    "annullato" if d["last_status"] == "cancel" else "in errore")
-                self.job_finished.emit(
-                    f"Programmato {_MODE_LABEL.get(d['mode'], '')} {what}: "
-                    f"{d['src']} → {d['dst']}", ok)
+                text = (tr("Programmato {mode} completato: {src} → {dst}") if ok
+                        else tr("Programmato {mode} annullato: {src} → {dst}")
+                        if d["last_status"] == "cancel"
+                        else tr("Programmato {mode} in errore: {src} → {dst}"))
+                self.job_finished.emit(text.format(
+                    mode=_mode(d["mode"], ""), src=d["src"], dst=d["dst"]), ok)
 
     def _context_menu(self, pos) -> None:
         item = self.tree.itemAt(pos)
@@ -596,14 +609,14 @@ class TransfersTab(QtWidgets.QWidget):
         act_run = act_edit = act_pause = act_del = None
         if is_rec:
             d = self._recurrent[def_id]
-            act_run = menu.addAction("▶ Avvia ora")
-            act_edit = menu.addAction("✏ Modifica…")
-            act_pause = menu.addAction("⏸ Metti in pausa" if d.get("enabled", True)
-                                       else "▶ Riattiva")
+            act_run = menu.addAction(tr("▶ Avvia ora"))
+            act_edit = menu.addAction(tr("✏ Modifica…"))
+            act_pause = menu.addAction(tr("⏸ Metti in pausa") if d.get("enabled", True)
+                                       else tr("▶ Riattiva"))
             menu.addSeparator()
-            act_del = menu.addAction("🗑 Rimuovi programmazione")
+            act_del = menu.addAction(tr("🗑 Rimuovi programmazione"))
             menu.addSeparator()
-        act_open = menu.addAction("📂 Apri cestino") if backup else None
+        act_open = menu.addAction(tr("📂 Apri cestino")) if backup else None
         chosen = menu.exec(self.tree.viewport().mapToGlobal(pos))
         if chosen is None:
             return
@@ -628,9 +641,9 @@ class TransfersTab(QtWidgets.QWidget):
 
     def _remove_recurring(self, def_id: str) -> None:
         answer = QtWidgets.QMessageBox.question(
-            self, "Rimuovere la programmazione?",
-            "Rimuovere il giro automatico? I file già sincronizzati "
-            "restano dove sono.",
+            self, tr("Rimuovere la programmazione?"),
+            tr("Rimuovere il giro automatico? I file già sincronizzati "
+            "restano dove sono."),
             QtWidgets.QMessageBox.StandardButton.Yes
             | QtWidgets.QMessageBox.StandardButton.No)
         if answer != QtWidgets.QMessageBox.StandardButton.Yes:
@@ -693,8 +706,9 @@ class TransfersTab(QtWidgets.QWidget):
         if jid is None:
             return
         answer = QtWidgets.QMessageBox.question(
-            self, "Annullare il trasferimento?",
-            f"Annullare il job #{jid}? I file già trasferiti restano dove sono.",
+            self, tr("Annullare il trasferimento?"),
+            tr("Annullare il job #{job}? I file già trasferiti restano dove sono.").format(
+                job=jid),
             QtWidgets.QMessageBox.StandardButton.Yes
             | QtWidgets.QMessageBox.StandardButton.No)
         if answer != QtWidgets.QMessageBox.StandardButton.Yes:
@@ -702,7 +716,7 @@ class TransfersTab(QtWidgets.QWidget):
         try:
             self.ctx.api.stop_job(jid)
         except ApiError as exc:
-            QtWidgets.QMessageBox.critical(self, "Annullamento fallito", str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Annullamento fallito"), str(exc))
 
     def _on_clear(self) -> None:
         for jid, (item, _bar) in list(self._rows.items()):

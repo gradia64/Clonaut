@@ -6,6 +6,7 @@ import re
 
 from ..api import ApiError
 from ..appctx import AppContext
+from ..i18n import tr
 from ..qtcompat import QtCore, QtWidgets
 from ..util import strip_html
 
@@ -48,7 +49,7 @@ class RemoteDialog(QtWidgets.QDialog):
     def __init__(self, ctx: AppContext, parent=None):
         super().__init__(parent)
         self.ctx = ctx
-        self.setWindowTitle("Nuovo remote")
+        self.setWindowTitle(tr("Nuovo remote"))
         self.resize(660, 660)
         self._fields: dict[str, tuple[QtWidgets.QWidget, dict]] = {}
         self._adv_rows: list[QtWidgets.QWidget] = []
@@ -57,7 +58,7 @@ class RemoteDialog(QtWidgets.QDialog):
             self._providers = sorted(ctx.api.providers(), key=lambda p: p.get("Name", ""))
             self._existing = set(ctx.api.list_remotes())
         except ApiError as exc:
-            QtWidgets.QMessageBox.critical(self, "Errore", str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Errore"), str(exc))
             self._providers, self._existing = [], set()
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -65,11 +66,11 @@ class RemoteDialog(QtWidgets.QDialog):
 
         # -- identità del remote
         grid = QtWidgets.QGridLayout()
-        grid.addWidget(QtWidgets.QLabel("Nome"), 0, 0)
+        grid.addWidget(QtWidgets.QLabel(tr("Nome")), 0, 0)
         self.ed_name = QtWidgets.QLineEdit()
-        self.ed_name.setPlaceholderText("es. gdrive-personale (senza «:»)")
+        self.ed_name.setPlaceholderText(tr("es. gdrive-personale (senza «:»)"))
         grid.addWidget(self.ed_name, 0, 1)
-        grid.addWidget(QtWidgets.QLabel("Tipo"), 1, 0)
+        grid.addWidget(QtWidgets.QLabel(tr("Tipo")), 1, 0)
         self.cb_type = QtWidgets.QComboBox()
         self.cb_type.setEditable(True)
         self.cb_type.setInsertPolicy(QtWidgets.QComboBox.InsertPolicy.NoInsert)
@@ -80,7 +81,8 @@ class RemoteDialog(QtWidgets.QDialog):
             entries.append((p["Name"], label, {"type": p["Name"], "alias": ""}))
         for alias, prov in _ALIASES.items():
             if any(p.get("Name") == prov for p in self._providers):
-                entries.append((alias, f"{alias} — alias di {prov}",
+                entries.append((alias, tr("{alias} — alias di {provider}").format(
+                    alias=alias, provider=prov),
                                 {"type": prov, "alias": alias}))
         for _key, label, data in sorted(entries, key=lambda e: e[0].lower()):
             self.cb_type.addItem(label, data)
@@ -113,7 +115,7 @@ class RemoteDialog(QtWidgets.QDialog):
         layout.addWidget(self.scroll, 1)
 
         self.btn_adv = QtWidgets.QToolButton()
-        self.btn_adv.setText("Mostra opzioni avanzate")
+        self.btn_adv.setText(tr("Mostra opzioni avanzate"))
         self.btn_adv.setCheckable(True)
         self.btn_adv.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextOnly)
         self.btn_adv.toggled.connect(self._toggle_advanced)
@@ -122,8 +124,8 @@ class RemoteDialog(QtWidgets.QDialog):
         btns = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.StandardButton.Ok
             | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
-        btns.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setText("Crea remote")
-        btns.button(QtWidgets.QDialogButtonBox.StandardButton.Cancel).setText("Annulla")
+        btns.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setText(tr("Crea remote"))
+        btns.button(QtWidgets.QDialogButtonBox.StandardButton.Cancel).setText(tr("Annulla"))
         btns.accepted.connect(self.accept)
         btns.rejected.connect(self.reject)
         layout.addWidget(btns)
@@ -192,10 +194,10 @@ class RemoteDialog(QtWidgets.QDialog):
         names = {o.get("Name") for o in options}
         if "token" in names:
             self.lbl_hint.setText(
-                "Backend con login OAuth (Google Drive, Dropbox, OneDrive…): la prima "
+                tr("Backend con login OAuth (Google Drive, Dropbox, OneDrive…): la prima "
                 "volta serve l'autorizzazione del browser. Crea il remote e poi esegui "
                 "nel terminale   rclone authorize \"tipo\"   e incolla il token JSON "
-                "nel campo «token».")
+                "nel campo «token»."))
             self.lbl_hint.show()
         else:
             self.lbl_hint.hide()
@@ -230,7 +232,7 @@ class RemoteDialog(QtWidgets.QDialog):
             editor.setSizeAdjustPolicy(
                 QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             editor.setMinimumContentsLength(24)
-            editor.addItem("(predefinito)", "")
+            editor.addItem(tr("(predefinito)"), "")
             for ex in examples:
                 help_txt = strip_html(str(ex.get("Help", ""))).split("\n")[0]
                 editor.addItem(f"{ex['Value']} — {help_txt}" if help_txt
@@ -255,7 +257,7 @@ class RemoteDialog(QtWidgets.QDialog):
             if opt.get("IsPassword"):
                 editor.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
             if placeholder:
-                editor.setPlaceholderText(f"predefinito: {placeholder}")
+                editor.setPlaceholderText(tr("predefinito: {value}").format(value=placeholder))
 
         self._form_layout.addRow(label, editor)
         self._fields[name] = (editor, opt)
@@ -266,8 +268,8 @@ class RemoteDialog(QtWidgets.QDialog):
     def _toggle_advanced(self, visible: bool) -> None:
         for w in self._adv_rows:
             w.setVisible(visible)
-        self.btn_adv.setText("Nascondi opzioni avanzate" if visible
-                             else "Mostra opzioni avanzate")
+        self.btn_adv.setText(tr("Nascondi opzioni avanzate") if visible
+                             else tr("Mostra opzioni avanzate"))
 
     def _collect_params(self) -> dict:
         params: dict = {}
@@ -295,21 +297,21 @@ class RemoteDialog(QtWidgets.QDialog):
 
         if not _NAME_RE.match(name):
             QtWidgets.QMessageBox.warning(
-                self, "Nome non valido",
-                "Il nome può contenere lettere, numeri, punto, trattino e "
-                "trattino basso, e non può contenere «:».")
+                self, tr("Nome non valido"),
+                tr("Il nome può contenere lettere, numeri, punto, trattino e "
+                "trattino basso, e non può contenere «:»."))
             return
         if name in self._existing:
             answer = QtWidgets.QMessageBox.question(
-                self, "Remote esistente",
-                f"Il remote «{name}» esiste già: sovrascriverlo?",
+                self, tr("Remote esistente"),
+                tr("Il remote «{name}» esiste già: sovrascriverlo?").format(name=name),
                 QtWidgets.QMessageBox.StandardButton.Yes
                 | QtWidgets.QMessageBox.StandardButton.No)
             if answer != QtWidgets.QMessageBox.StandardButton.Yes:
                 return
         if not type_:
-            QtWidgets.QMessageBox.warning(self, "Tipo mancante",
-                                          "Scegli il tipo di remote.")
+            QtWidgets.QMessageBox.warning(self, tr("Tipo mancante"),
+                                          tr("Scegli il tipo di remote."))
             return
 
         missing = []
@@ -325,10 +327,10 @@ class RemoteDialog(QtWidgets.QDialog):
             if empty:
                 missing.append(fname)
         if missing and QtWidgets.QMessageBox.question(
-                self, "Campi obbligatori vuoti",
-                "Questi campi sono marcati obbligatori ma sono vuoti:\n  • "
-                + "\n  • ".join(missing)
-                + "\n\nCreare comunque il remote?",
+                self, tr("Campi obbligatori vuoti"),
+                tr("Questi campi sono marcati obbligatori ma sono vuoti:")
+                + "\n  • " + "\n  • ".join(missing)
+                + "\n\n" + tr("Creare comunque il remote?"),
                 QtWidgets.QMessageBox.StandardButton.Yes
                 | QtWidgets.QMessageBox.StandardButton.No
                 ) != QtWidgets.QMessageBox.StandardButton.Yes:
@@ -337,6 +339,6 @@ class RemoteDialog(QtWidgets.QDialog):
         try:
             self.ctx.api.create_remote(name, type_, self._collect_params())
         except ApiError as exc:
-            QtWidgets.QMessageBox.critical(self, "Creazione fallita", str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Creazione fallita"), str(exc))
             return
         super().accept()
