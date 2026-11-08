@@ -19,7 +19,8 @@ All notable changes to Clonaut are listed here. Versions follow
   PyQt6 trimmed to what Clonaut uses, the official rclone 1.76.0 as a
   fallback, static type2 runtime (no FUSE needed), update information and
   `.zsync` for Gear Lever / AppImageUpdate. Every download is pinned by
-  SHA-256; tested on Debian 12, Ubuntu 22.04/24.04, Fedora 45, Arch and
+  SHA-256; x86_64 tested on Debian 12, Ubuntu 22.04/24.04, Fedora 45, Arch
+  and openSUSE Tumbleweed, aarch64 on Debian 13, Ubuntu 24.04, Fedora 45 and
   openSUSE Tumbleweed (`packaging/appimage/test-distros.sh`).
 - **Signed release tags** with the Clonaut release key
   (`packaging/clonaut-release-key.asc`); `scripts/verify-tag.sh` checks them

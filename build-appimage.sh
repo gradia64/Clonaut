@@ -63,6 +63,11 @@ declare -A RCLONE_SHA256=(
 )
 RCLONE_COPYING_SHA256="8cd2e9e750b90a04b7d82dbbca3930c696ae0309d7c10464f90a44f45754cd04"
 
+# patchelf (wheel PyPI con il binario statico): dà RUNPATH $ORIGIN alle
+# librerie xcb-util prese dai pacchetti Ubuntu, che non ne hanno
+PATCHELF_URL="https://files.pythonhosted.org/packages/e7/03/afd9bdd2ba5f96997196109f25dadbe5141bc6e70dffd85f3f84cc85d69c/patchelf-0.19.1.0-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.musllinux_1_1_x86_64.whl"
+PATCHELF_SHA256="a8f6331ccf40c345507279f755f4a38c2cb00b9efda746fd43c17713cce0aba4"
+
 # glibc massima richiesta dai file dell'AppImage: quella delle wheel di PyQt6
 declare -A GLIBC_MAX=([x86_64]="2.34" [aarch64]="2.39")
 
@@ -230,6 +235,20 @@ find "$PYDIR/bin" -mindepth 1 ! -name python3 ! -name "python$PYVER" -delete
 # --- Qt: solo ciò che Clonaut usa -------------------------------------------
 "$HOSTPY" -E -s packaging/appimage/trim-qt.py "$SITE/PyQt6"
 
+PATCHELF="$WORK/tools/patchelf"
+if [ ! -x "$PATCHELF" ]; then
+    whl="$(fetch "$PATCHELF_URL" "$PATCHELF_SHA256")"
+    mkdir -p "$WORK/tools"
+    "$HOSTPY" -E -s - "$whl" "$PATCHELF" <<'EOF'
+import shutil, sys, zipfile
+with zipfile.ZipFile(sys.argv[1]) as z:
+    name = next(n for n in z.namelist() if n.endswith("/scripts/patchelf"))
+    with z.open(name) as src, open(sys.argv[2], "wb") as dst:
+        shutil.copyfileobj(src, dst)
+EOF
+    chmod 755 "$PATCHELF"
+fi
+
 LIBDIR="${DEB_LIBDIR[$ARCH]}"
 XCB_TMP="$WORK/xcb-$ARCH"
 rm -rf "$XCB_TMP"
@@ -238,6 +257,10 @@ for entry in "${XCB_DEBS[@]}"; do
     deb="$(fetch "$url" "$sha")"
     dpkg-deb -x "$deb" "$XCB_TMP"
     install -m 644 "$(readlink -f "$XCB_TMP/usr/lib/$LIBDIR/$so")" "$SITE/PyQt6/Qt6/lib/$so"
+    # senza RUNPATH una di queste che ne vuole un'altra (libxcb-image →
+    # libxcb-util) la cerca solo nel sistema: su x86_64 la trova perché Qt
+    # l'ha già caricata, sulle wheel aarch64 no
+    "$PATCHELF" --set-rpath '$ORIGIN' "$SITE/PyQt6/Qt6/lib/$so"
 done
 rm -rf "$XCB_TMP"
 

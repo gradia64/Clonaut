@@ -12,18 +12,29 @@
 # (ldd), prima che la veda un utente.
 #
 # Per un'AppImage aarch64 su una macchina x86_64 serve l'emulazione di Docker
-# (binfmt + qemu-user-static): le immagini vengono prese per linux/arm64.
+# (binfmt + qemu-user-static, per esempio il pacchetto qemu-user-binfmt): le
+# immagini vengono prese per linux/arm64, e i tempi di avvio si allungano.
 set -euo pipefail
 
 APPIMAGE_FILE="$(readlink -f "${1:?uso: test-distros.sh <file .AppImage> [immagine…]}")"
 shift
 IMAGES=("$@")
-[ ${#IMAGES[@]} -gt 0 ] || IMAGES=(debian:12 ubuntu:22.04 ubuntu:24.04 fedora:latest
-                                   archlinux:latest opensuse/tumbleweed:latest)
 case "$APPIMAGE_FILE" in
-    *-aarch64.AppImage) PLATFORM=linux/arm64 ;;
-    *) PLATFORM=linux/amd64 ;;
+    *-aarch64.AppImage)
+        PLATFORM=linux/arm64 ARCH=aarch64
+        # glibc >= 2.39 (wheel PyQt6 aarch64); archlinux non ha immagini arm64
+        DEFAULT=(debian:13 ubuntu:24.04 fedora:latest opensuse/tumbleweed:latest) ;;
+    *)
+        PLATFORM=linux/amd64 ARCH=x86_64
+        DEFAULT=(debian:12 ubuntu:22.04 ubuntu:24.04 fedora:latest
+                 archlinux:latest opensuse/tumbleweed:latest) ;;
 esac
+[ ${#IMAGES[@]} -gt 0 ] || IMAGES=("${DEFAULT[@]}")
+# sotto emulazione qemu la regola binfmt vuole a zero i byte 8-10
+# dell'intestazione ELF, dove le AppImage scrivono «AI\x02»: nel container si
+# prova una copia con quei byte azzerati (il runtime non li legge)
+ZERO_MAGIC=0 RUN_SECS=10
+[ "$(uname -m)" = "$ARCH" ] || { ZERO_MAGIC=1; RUN_SECS=60; }
 
 INNER="$(mktemp)"
 trap 'rm -f "$INNER"' EXIT
@@ -45,7 +56,8 @@ elif command -v pacman >/dev/null; then
 elif command -v zypper >/dev/null; then
     q zypper --non-interactive install --no-recommends xorg-x11-server-Xvfb Mesa-libGL1 \
         Mesa-libEGL1 fontconfig libxkbcommon0 libxkbcommon-x11-0 \
-        libxcb-render0 libxcb-shape0 libdbus-1-3 libX11-xcb1 libglib-2_0-0 libgthread-2_0-0 \
+        libxcb-render0 libxcb-shape0 libSM6 libICE6 libdbus-1-3 libX11-xcb1 libglib-2_0-0 \
+        libgthread-2_0-0 \
         procps findutils dejavu-fonts
 fi
 . /etc/os-release
@@ -54,6 +66,9 @@ if command -v rclone >/dev/null; then echo "rclone nel sistema: la prova non val
 
 cd /tmp
 cp /app/Clonaut.AppImage ./a.AppImage
+if [ "$ZERO_MAGIC" = 1 ]; then
+    printf '\000\000\000' | dd of=a.AppImage bs=1 seek=8 conv=notrunc 2>/dev/null
+fi
 ./a.AppImage --appimage-extract >/dev/null
 missing="$(find squashfs-root -path '*plugins/platforms/libqxcb.so' -exec ldd {} \; | grep 'not found' || true)"
 if [ -n "$missing" ]; then echo "librerie mancanti per il plugin X11:"; echo "$missing"; exit 1; fi
@@ -66,13 +81,18 @@ export DISPLAY=:99 QT_QPA_PLATFORM=xcb XDG_CONFIG_HOME=/tmp/cfg XDG_CACHE_HOME=/
 set +e
 # il codice di uscita su file: in alcune sh «wait <pid>» dà 127 per un
 # processo già terminato, e il codice vero si perderebbe
-(timeout 10 ./a.AppImage > app.log 2>&1; echo $? > rc) &
+(timeout "$RUN_SECS" ./a.AppImage > app.log 2>&1; echo $? > rc) &
 pid=$!
-sleep 7
+sleep $((RUN_SECS * 7 / 10))
+# quale rclone gira: /proc/<pid>/exe, oppure la riga di comando sotto qemu
+# (lì exe è l'interprete qemu e il programma vero è tra gli argomenti)
 exe=""
-for p in $(pgrep -x rclone); do
-    e="$(readlink -f /proc/$p/exe)"
-    case "$e" in /tmp/appimage_extracted_*/usr/bin/rclone) exe="$e" ;; esac
+for d in /proc/[0-9]*; do
+    e="$(readlink -f "$d/exe" 2>/dev/null || true)"
+    c="$(tr '\000' ' ' < "$d/cmdline" 2>/dev/null || true)"
+    case "$e $c" in
+        */tmp/appimage_extracted_*/usr/bin/rclone*rcd*) exe="${c%% rcd*}" ;;
+    esac
 done
 wait $pid
 rc="$(cat rc)"
@@ -80,13 +100,13 @@ set -e
 if [ "$rc" -ne 124 ]; then cat app.log; echo "uscita da sola (codice $rc)"; exit 1; fi
 if grep -Eq 'Traceback|Error|error|Cannot load|could not' app.log; then cat app.log; exit 1; fi
 [ -n "$exe" ] || { echo "rclone incluso non avviato"; exit 1; }
-echo "OK: finestra su X11 per 10 s, rclone rcd dall'AppImage"
+echo "OK: finestra su X11 per $RUN_SECS s, rclone rcd dall'AppImage"
 EOF
 chmod 755 "$INNER"
 
 fail=()
 for image in "${IMAGES[@]}"; do
-    if docker run --rm --platform "$PLATFORM" \
+    if docker run --rm --platform "$PLATFORM" -e ZERO_MAGIC="$ZERO_MAGIC" -e RUN_SECS="$RUN_SECS" \
             -v "$APPIMAGE_FILE:/app/Clonaut.AppImage:ro" -v "$INNER:/inner.sh:ro" \
             "$image" /inner.sh; then
         :

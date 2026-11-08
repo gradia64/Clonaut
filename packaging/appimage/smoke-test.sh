@@ -24,6 +24,16 @@ export QT_QPA_PLATFORM=offscreen
 export XDG_CONFIG_HOME="$TMP/config" XDG_CACHE_HOME="$TMP/cache" \
        RCLONE_CONFIG="$TMP/rclone.conf"
 
+# Sotto emulazione qemu (AppImage aarch64 provata su x86_64) la regola binfmt
+# vuole a zero i byte 8-10 dell'intestazione ELF, dove le AppImage scrivono
+# «AI\x02»: con APPIMAGE_ZERO_MAGIC=1 si prova una copia con quei byte azzerati
+# (il runtime non li legge). Su una macchina ARM vera non serve.
+if [ "${APPIMAGE_ZERO_MAGIC:-}" = 1 ]; then
+    cp "$APPIMAGE_FILE" "$TMP/Clonaut.AppImage"
+    printf '\000\000\000' | dd of="$TMP/Clonaut.AppImage" bs=1 seek=8 conv=notrunc status=none
+    APPIMAGE_FILE="$TMP/Clonaut.AppImage"
+fi
+
 cd "$TMP"
 "$APPIMAGE_FILE" --appimage-extract >/dev/null
 APPDIR_X="$TMP/squashfs-root"
@@ -56,7 +66,8 @@ for f in /usr/bin/* /bin/*; do
     ln -s "$f" "$TMP/bin/" 2>/dev/null || true   # i doppioni di /bin restano a /usr/bin
 done
 
-# avvia l'AppImage per 10 secondi: deve essere ancora aperta e senza errori
+# avvia l'AppImage per 10 secondi (SMOKE_RUN/SMOKE_WAIT: tempi più lunghi
+# sotto emulazione): deve essere ancora aperta e senza errori
 run_app() {   # run_app <descrizione> [prefisso del comando…]
     local what="$1" rc
     shift
@@ -65,13 +76,17 @@ run_app() {   # run_app <descrizione> [prefisso del comando…]
     set +e
     # TMPDIR: la copia estratta dal runtime resta se il processo viene ucciso
     APPIMAGE_EXTRACT_AND_RUN=1 TMPDIR="$TMP/run" PATH="$TMP/bin" \
-        "$@" timeout 10 "$APPIMAGE_FILE" > "$TMP/app.log" 2>&1 &
-    local pid=$! exe="" p
-    # a metà strada: quale rclone ha avviato l'app? Deve essere quello incluso
-    sleep 6
-    for p in $(pgrep -x rclone); do
-        case "$(readlink -f "/proc/$p/exe" 2>/dev/null)" in
-            "$TMP/run/"*/usr/bin/rclone) exe="$(readlink -f "/proc/$p/exe")" ;;
+        "$@" timeout "${SMOKE_RUN:-10}" "$APPIMAGE_FILE" > "$TMP/app.log" 2>&1 &
+    local pid=$! exe="" d e c
+    # a metà strada: quale rclone ha avviato l'app? Deve essere quello incluso.
+    # /proc/<pid>/exe, oppure la riga di comando sotto qemu (lì exe è
+    # l'interprete e il programma vero è tra gli argomenti)
+    sleep "${SMOKE_WAIT:-6}"
+    for d in /proc/[0-9]*; do
+        e="$(readlink -f "$d/exe" 2>/dev/null || true)"
+        c="$(tr '\000' ' ' < "$d/cmdline" 2>/dev/null || true)"
+        case "$e $c" in
+            *"$TMP/run/"*/usr/bin/rclone*rcd*) exe="$TMP/run/${c##*"$TMP/run/"}"; exe="${exe%% rcd*}" ;;
         esac
     done
     wait "$pid"
