@@ -37,6 +37,7 @@ pilota via HTTP con `requests`. Il backend è rclone stesso — la GUI è solo l
 ![Remote](docs/screenshot-remote.png)
 ![Trasferimenti](docs/screenshot-trasferimenti.png)
 ![Nuovo remote](docs/screenshot-nuovo-remote.png)
+![Nuovo trasferimento](docs/screenshot-nuovo-trasferimento.png)
 
 ## Esempio: tenere allineato Nextcloud → kDrive
 

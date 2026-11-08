@@ -161,7 +161,7 @@ class TransfersTab(QtWidgets.QWidget):
         """Prova a vuoto sul backend dedicato (--dry-run), con riga in coda."""
         self._dry_seq += 1
         key = f"dry-{self._dry_seq}"
-        self._new_dry_row(key, backup_dir)
+        self._new_dry_row(key, mode, src, dst, backup_dir)
         try:
             api = self.ctx.ensure_dry_backend()
         except Exception as exc:  # noqa: BLE001 — mostra l'errore sulla riga
@@ -178,10 +178,14 @@ class TransfersTab(QtWidgets.QWidget):
         """Prove a vuoto ancora in corso (da fermare all'uscita)."""
         return list(self._dry_workers.values())
 
-    def _new_dry_row(self, key: str, backup_dir: str | None = None) -> None:
+    def _new_dry_row(self, key: str, mode: str, src: str, dst: str,
+                     backup_dir: str | None = None) -> None:
         item = QtWidgets.QTreeWidgetItem()
         item.setText(0, "—")
-        item.setText(1, "Prova")
+        item.setText(1, f"Prova · {_MODE_LABEL.get(mode, mode)}")
+        for col, path in ((2, src), (3, dst)):
+            item.setText(col, path)
+            item.setToolTip(col, path)
         item.setText(4, "🧪 Prova in corso…")
         item.setForeground(4, _BLUE)
         item.setToolTip(4, "La prova è un trasferimento vero senza scritture: "

@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 VER=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' clonaut/__init__.py)
-MAINTAINER="${MAINTAINER:-Gradia <gradia@localhost>}"
+MAINTAINER="${MAINTAINER:-Gradia <gradia@disroot.org>}"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 

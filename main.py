@@ -48,7 +48,7 @@ def _build_context(args: argparse.Namespace) -> AppContext:
     """Crea il contesto: o aggancia un rcd esistente o ne avvia uno locale."""
     if args.url:
         api = RcloneApi(args.url, args.user, args.password)
-        version = api.ping().get("version", "?")
+        version = str(api.ping().get("version", "?")).lstrip("v")
         config_desc = "gestito dal rcd esterno"
         return AppContext(api=api, version=f"v{version}", config_desc=config_desc,
                           config_path=args.config)
@@ -68,7 +68,7 @@ def _build_context(args: argparse.Namespace) -> AppContext:
         tail = rcd.log_tail(15)
         raise RuntimeError(
             "rclone rcd non si è avviato.\n\nLog recente:\n" + tail)
-    version = api.ping().get("version", "?")
+    version = str(api.ping().get("version", "?")).lstrip("v")
     config_desc = args.config if args.config else "predefinito (~/.config/rclone/rclone.conf)"
     return AppContext(api=api, rcd=rcd, version=f"v{version}", config_desc=config_desc,
                       config_path=args.config)

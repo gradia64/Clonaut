@@ -104,6 +104,8 @@ class RemoteDialog(QtWidgets.QDialog):
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         self._form_host = QtWidgets.QWidget()
+        self._form_host.setObjectName("formHost")
+        self._form_host.setStyleSheet("#formHost { background: white; }")
         self._form_layout = QtWidgets.QFormLayout(self._form_host)
         self._form_layout.setFieldGrowthPolicy(
             QtWidgets.QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
@@ -156,6 +158,7 @@ class RemoteDialog(QtWidgets.QDialog):
         while self._form_layout.count():
             item = self._form_layout.takeAt(0)
             if widget := item.widget():
+                widget.hide()          # sparisce subito, non al prossimo giro di eventi
                 widget.deleteLater()
         self._fields.clear()
         self._adv_rows.clear()
@@ -222,6 +225,11 @@ class RemoteDialog(QtWidgets.QDialog):
         examples = [e for e in (opt.get("Examples") or []) if e.get("Value")]
         if examples:
             editor: QtWidgets.QWidget = QtWidgets.QComboBox()
+            # le descrizioni degli esempi sono lunghe: senza limite il form
+            # si allarga oltre la finestra (barra di scorrimento orizzontale)
+            editor.setSizeAdjustPolicy(
+                QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+            editor.setMinimumContentsLength(24)
             editor.addItem("(predefinito)", "")
             for ex in examples:
                 help_txt = strip_html(str(ex.get("Help", ""))).split("\n")[0]

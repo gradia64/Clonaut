@@ -17,7 +17,7 @@ class TransferDialog(QtWidgets.QDialog):
         self.ctx = ctx
         self.tab = transfers_tab
         self.setWindowTitle("Nuovo trasferimento")
-        self.setMinimumWidth(580)
+        self.setMinimumWidth(720)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(10)
