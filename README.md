@@ -111,6 +111,41 @@ yay -S clonaut-git    # latest commit on main
 The packaging files and the maintainer notes are in
 [`packaging/aur/`](packaging/aur/).
 
+## Installation (AppImage, any distribution)
+
+From version 0.4.0 every release has an AppImage for **x86_64** and
+**aarch64** (ARM64): one file with Python, Qt (PyQt6) and a copy of rclone
+inside, nothing to install.
+
+```bash
+chmod +x Clonaut-0.4.0-x86_64.AppImage
+./Clonaut-0.4.0-x86_64.AppImage
+```
+
+- **Requirements:** glibc 2.34 or later on x86_64 (Debian 12, Ubuntu 22.04,
+  Fedora 35 or newer), 2.39 on aarch64 (Debian 13, Ubuntu 24.04). FUSE is
+  not needed (static runtime). The basic desktop libraries are taken from the
+  system, as with every AppImage: X11 or Wayland, GL, fontconfig,
+  `libxkbcommon` and `libxkbcommon-x11`, D-Bus, GLib — any desktop has them.
+- **rclone:** the bundled copy (currently 1.76.0) is only a fallback. If
+  `rclone` is installed on the system, or set in the settings, that one is
+  used (see [Which rclone is used](#which-rclone-is-used)).
+- **Updates:** the AppImage carries update information, so
+  [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever) or
+  AppImageUpdate can update it in place from the GitHub releases.
+- The tray icon needs the same desktop support as the other packages (an
+  AppIndicator extension on GNOME).
+
+Build it yourself (on x86_64, also for aarch64; every download is pinned by
+SHA-256):
+
+```bash
+./build-appimage.sh                  # → dist/Clonaut-<version>-x86_64.AppImage (+ .zsync)
+./build-appimage.sh aarch64          # → dist/Clonaut-<version>-aarch64.AppImage
+packaging/appimage/smoke-test.sh dist/Clonaut-<version>-x86_64.AppImage
+packaging/appimage/test-distros.sh dist/Clonaut-<version>-x86_64.AppImage   # Docker
+```
+
 ## Verifying a release
 
 From version 0.4.0 every release tag `vX.Y.Z` is signed with the **Clonaut
@@ -128,7 +163,8 @@ scripts/verify-tag.sh v0.4.0
 ```
 
 It uses a temporary keyring holding only that public key, and accepts the tag
-only if the tag subkey signed it. Release files come with `SHA256SUMS`.
+only if the tag subkey signed it. Release files (`.deb`, AppImages) come with
+`SHA256SUMS`.
 
 ## Requirements
 
@@ -145,7 +181,7 @@ found:
 1. the `CLONAUT_RCLONE` environment variable (full path);
 2. the path set in **File → Impostazioni…** (Settings) → *Programma rclone*;
 3. `rclone` in `PATH`;
-4. the copy bundled with the AppImage (planned), only as a last resort.
+4. the copy bundled with the AppImage, only as a last resort.
 
 The About dialog (**Aiuto → Informazioni su Clonaut**) shows the path in use.
 
@@ -266,6 +302,8 @@ clonaut --url http://127.0.0.1:5572 --user user --password secret
 pyproject.toml              Python package metadata (`clonaut` command)
 main.py, run.sh             run from source
 build-deb.sh                builds the .deb
+build-appimage.sh           builds the AppImages (x86_64, aarch64)
+scripts/                    release key fingerprints, signed-tag check
 packaging/                  .desktop, AppStream metainfo, icons, Debian files, man page
 tests/                      pytest suite (real rclone, Qt offscreen)
 clonaut/

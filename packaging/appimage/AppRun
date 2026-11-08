@@ -1,0 +1,18 @@
+#!/bin/sh
+# Avvio dell'AppImage di Clonaut. Il runtime monta l'immagine e imposta APPIMAGE
+# (il file .AppImage) e APPDIR (il punto di montaggio): rcd.find_rclone() usa
+# $APPDIR/usr/bin/rclone solo se rclone non è nel PATH né nelle impostazioni.
+HERE="$(dirname "$(readlink -f "$0")")"
+: "${APPDIR:=$HERE}"
+export APPDIR
+
+# solo il Python e il Qt dell'AppImage: niente moduli, plugin Qt o
+# impostazioni del sistema, che potrebbero essere di versioni diverse
+unset PYTHONHOME PYTHONPATH PYTHONSTARTUP \
+      QT_PLUGIN_PATH QT_QPA_PLATFORM_PLUGIN_PATH QML2_IMPORT_PATH
+# l'AppImage contiene solo PyQt6
+CLONAUT_QT=pyqt6
+export CLONAUT_QT
+
+# -E ignora le altre variabili PYTHON*, -s i pacchetti in ~/.local
+exec "$HERE/usr/python/bin/python3" -E -s "$HERE/usr/share/clonaut/launcher.py" "$@"

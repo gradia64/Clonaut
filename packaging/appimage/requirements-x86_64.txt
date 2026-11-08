@@ -1,0 +1,18 @@
+# Generato da ./build-appimage.sh --lock: non modificare a mano.
+# x86_64: versioni da requirements.in, dipendenze risolte da pip.
+certifi==2026.10.23 \
+    --hash=sha256:e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1
+charset-normalizer==3.5.2 \
+    --hash=sha256:3d31298449090ab8d47b7b1b2a555ff73cac7ed438a08b7ac160980c7ebed649
+idna==3.20 \
+    --hash=sha256:ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c
+PyQt6==6.11.0 \
+    --hash=sha256:8555277989fa7d114cb3c3443fd261d566909f7268ceedd41d93a5f02d37ec05
+PyQt6-Qt6==6.11.2 \
+    --hash=sha256:da7d747ad917f044d841ff834f17d2c50a0cc5d0e3b16479d8662544207d0567
+PyQt6_sip==13.13.0 \
+    --hash=sha256:7429e63fc8279a0508ed5cbc1b33da76c15a61a06a745825e807a3604fbde4f2
+requests==2.34.2 \
+    --hash=sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0
+urllib3==2.8.0 \
+    --hash=sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3

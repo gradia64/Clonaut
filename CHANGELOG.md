@@ -15,6 +15,12 @@ All notable changes to Clonaut are listed here. Versions follow
   bundled with the AppImage — in this order. The About dialog shows the path.
 - AUR packages `clonaut` (from the release tag) and `clonaut-git`, tested in
   a clean Arch container (`packaging/aur/test-in-docker.sh`).
+- **AppImage** for x86_64 and aarch64 (`build-appimage.sh`): portable Python,
+  PyQt6 trimmed to what Clonaut uses, the official rclone 1.76.0 as a
+  fallback, static type2 runtime (no FUSE needed), update information and
+  `.zsync` for Gear Lever / AppImageUpdate. Every download is pinned by
+  SHA-256; tested on Debian 12, Ubuntu 22.04/24.04, Fedora 45, Arch and
+  openSUSE Tumbleweed (`packaging/appimage/test-distros.sh`).
 - **Signed release tags** with the Clonaut release key
   (`packaging/clonaut-release-key.asc`); `scripts/verify-tag.sh` checks them
   and the AUR package verifies the tag before building.
@@ -28,6 +34,8 @@ All notable changes to Clonaut are listed here. Versions follow
 - Startup code moved from `main.py` to `clonaut/app.py`; `main.py` and
   `run.sh` still work.
 - If rclone is missing, the error lists every place that was checked.
+- If no Qt binding can be imported, the error shows the real reason for each
+  binding (often a missing system library).
 
 ## [0.3.1] — 2026-11-08
 

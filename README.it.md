@@ -106,6 +106,41 @@ yay -S clonaut-git    # ultimo commit su main
 I file di pacchettizzazione e le note per il manutentore sono in
 [`packaging/aur/`](packaging/aur/).
 
+## Installazione (AppImage, ogni distribuzione)
+
+Da 0.4.0 ogni release ha un'AppImage per **x86_64** e **aarch64** (ARM64):
+un solo file con dentro Python, Qt (PyQt6) e una copia di rclone, niente da
+installare.
+
+```bash
+chmod +x Clonaut-0.4.0-x86_64.AppImage
+./Clonaut-0.4.0-x86_64.AppImage
+```
+
+- **Requisiti:** glibc 2.34 o successiva su x86_64 (Debian 12, Ubuntu 22.04,
+  Fedora 35 o più recenti), 2.39 su aarch64 (Debian 13, Ubuntu 24.04). FUSE
+  non serve (runtime statico). Le librerie di base del desktop vengono dal
+  sistema, come in ogni AppImage: X11 o Wayland, GL, fontconfig,
+  `libxkbcommon` e `libxkbcommon-x11`, D-Bus, GLib — ogni desktop le ha.
+- **rclone:** la copia inclusa (ora la 1.76.0) è solo di riserva. Se `rclone`
+  è installato nel sistema, o indicato nelle impostazioni, si usa quello (vedi
+  [Quale rclone viene usato](#quale-rclone-viene-usato)).
+- **Aggiornamenti:** l'AppImage contiene le informazioni di aggiornamento,
+  quindi [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever) o
+  AppImageUpdate la aggiornano sul posto dalle release di GitHub.
+- L'icona nella tray richiede lo stesso supporto del desktop degli altri
+  pacchetti (un'estensione AppIndicator su GNOME).
+
+Per costruirla (su x86_64, anche quella aarch64; ogni download è fissato con
+lo SHA-256):
+
+```bash
+./build-appimage.sh                  # → dist/Clonaut-<versione>-x86_64.AppImage (+ .zsync)
+./build-appimage.sh aarch64          # → dist/Clonaut-<versione>-aarch64.AppImage
+packaging/appimage/smoke-test.sh dist/Clonaut-<versione>-x86_64.AppImage
+packaging/appimage/test-distros.sh dist/Clonaut-<versione>-x86_64.AppImage   # Docker
+```
+
 ## Verificare una release
 
 Da 0.4.0 ogni tag di rilascio `vX.Y.Z` è firmato con la **chiave di rilascio
@@ -123,8 +158,8 @@ scripts/verify-tag.sh v0.4.0
 ```
 
 Usa un portachiavi temporaneo con la sola chiave pubblica e accetta il tag
-solo se l'ha firmato la sottochiave dei tag. I file delle release hanno
-`SHA256SUMS`.
+solo se l'ha firmato la sottochiave dei tag. I file delle release (`.deb`,
+AppImage) hanno `SHA256SUMS`.
 
 ## Requisiti
 
@@ -140,7 +175,7 @@ Clonaut cerca il programma `rclone` in quest'ordine e usa il primo che trova:
 1. la variabile d'ambiente `CLONAUT_RCLONE` (percorso completo);
 2. il percorso impostato in **File → Impostazioni… → Programma rclone**;
 3. `rclone` nel `PATH`;
-4. la copia inclusa nell'AppImage (in arrivo), solo come ultima risorsa.
+4. la copia inclusa nell'AppImage, solo come ultima risorsa.
 
 La finestra **Aiuto → Informazioni su Clonaut** mostra il percorso in uso.
 
@@ -260,6 +295,8 @@ clonaut --url http://127.0.0.1:5572 --user utente --password segreta
 pyproject.toml              metadati del pacchetto Python (comando `clonaut`)
 main.py, run.sh             avvio dai sorgenti
 build-deb.sh                costruisce il .deb
+build-appimage.sh           costruisce le AppImage (x86_64, aarch64)
+scripts/                    impronte della chiave di rilascio, verifica dei tag
 packaging/                  .desktop, metadati AppStream, icone, file Debian, pagina man
 tests/                      suite pytest (rclone vero, Qt offscreen)
 clonaut/

@@ -1,0 +1,12 @@
+# Dipendenze dell'AppImage (build-appimage.sh). Versioni fissate a mano;
+# i requirements-<arch>.txt con gli hash si rigenerano con:
+#   ./build-appimage.sh --lock
+# Le dipendenze indirette (PyQt6-sip, urllib3, idna…) le sceglie pip al
+# momento del --lock: controllarne le versioni nel diff prima del commit.
+#
+# PyQt6, come il .deb e il pacchetto AUR (GPL-3 come Clonaut). 6.11 e non
+# 6.12, uscita da pochi giorni. Le wheel chiedono glibc 2.34 su x86_64 e
+# 2.39 su aarch64 (manylinux_2_34 / manylinux_2_39).
+PyQt6==6.11.0
+PyQt6-Qt6==6.11.2
+requests==2.34.2

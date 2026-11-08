@@ -9,6 +9,7 @@ import os
 _ORDER = ("pyqt6", "pyside6") if os.environ.get("CLONAUT_QT", "").lower() == "pyqt6" \
     else ("pyside6", "pyqt6")
 
+_errors = []
 for _name in _ORDER:
     try:
         if _name == "pyside6":
@@ -21,7 +22,10 @@ for _name in _ORDER:
             from PyQt6.QtCore import pyqtSignal as Signal, QThread, QTimer  # noqa: F401
             BINDING = f"PyQt6 {QtCore.PYQT_VERSION_STR}"
         break
-    except ImportError:
+    except ImportError as exc:
+        # il motivo vero (spesso una libreria di sistema mancante) va mostrato
+        _errors.append(f"{_name}: {exc}")
         continue
-else:  # pragma: no cover
-    raise ImportError("Serve un binding Qt per Python: PyQt6 oppure PySide6.")
+else:
+    raise ImportError("Serve un binding Qt per Python: PyQt6 oppure PySide6.\n"
+                      + "\n".join(_errors))

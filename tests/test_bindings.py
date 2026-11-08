@@ -23,3 +23,15 @@ def test_imports_with_binding(binding, module):
                          capture_output=True, text=True, timeout=60)
     assert out.returncode == 0, out.stderr
     assert out.stdout.startswith(module)
+
+
+def test_missing_binding_reports_the_real_reason():
+    """Senza binding l'errore dice perché: nell'AppImage è spesso una libreria mancante."""
+    code = ("import sys; sys.modules['PyQt6'] = None; sys.modules['PySide6'] = None; "
+            "import clonaut.qtcompat")
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    out = subprocess.run([sys.executable, "-c", code], cwd=root,
+                         capture_output=True, text=True, timeout=60)
+    assert out.returncode != 0
+    assert "Serve un binding Qt" in out.stderr
+    assert "pyqt6:" in out.stderr and "pyside6:" in out.stderr
