@@ -9,14 +9,34 @@ from ..appctx import AppContext
 from ..qtcompat import QtCore, QtWidgets
 
 
-class TransferDialog(QtWidgets.QDialog):
-    """Raccoglie i parametri e avvia il job tramite TransfersTab."""
+_UNITS = (("ore", 3600), ("minuti", 60), ("giorni", 86400))
 
-    def __init__(self, ctx: AppContext, transfers_tab, parent=None):
+
+def split_interval(seconds: int) -> tuple[int, int]:
+    """Intervallo in secondi → (valore, unità in secondi) nell'unità più grande esatta."""
+    seconds = max(60, int(seconds))
+    for unit in (86400, 3600, 60):
+        if seconds % unit == 0 and seconds // unit <= 999:
+            return seconds // unit, unit
+    return min(999, max(1, round(seconds / 60))), 60
+
+
+class TransferDialog(QtWidgets.QDialog):
+    """Raccoglie i parametri e avvia il job tramite TransfersTab.
+
+    Con `schedule` e `def_id` diventa «Modifica programmazione»: i campi sono
+    precompilati e «Salva» aggiorna la programmazione ⏰ esistente.
+    """
+
+    def __init__(self, ctx: AppContext, transfers_tab, parent=None,
+                 schedule: dict | None = None, def_id: str | None = None):
         super().__init__(parent)
         self.ctx = ctx
         self.tab = transfers_tab
-        self.setWindowTitle("Nuovo trasferimento")
+        self._def_id = def_id if schedule is not None else None
+        self._orig = dict(schedule or {})
+        self.setWindowTitle("Modifica programmazione" if self._def_id
+                            else "Nuovo trasferimento")
         self.setMinimumWidth(720)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -66,9 +86,8 @@ class TransferDialog(QtWidgets.QDialog):
         self.spn_repeat.setRange(1, 999)
         self.spn_repeat.setValue(6)
         self.cb_unit = QtWidgets.QComboBox()
-        self.cb_unit.addItem("ore", 3600)
-        self.cb_unit.addItem("minuti", 60)
-        self.cb_unit.addItem("giorni", 86400)
+        for label, secs in _UNITS:
+            self.cb_unit.addItem(label, secs)
         rep_lay.addWidget(self.chk_repeat)
         rep_lay.addWidget(self.spn_repeat)
         rep_lay.addWidget(self.cb_unit)
@@ -133,13 +152,34 @@ class TransferDialog(QtWidgets.QDialog):
 
         self._add_completers()
         self.ed_src.setFocus()
+        if self._def_id:
+            self._fill_from_schedule(self._orig)
+
+    def _fill_from_schedule(self, d: dict) -> None:
+        """Precompila il dialog con una programmazione esistente."""
+        index = self.cb_mode.findData(d.get("mode", "copy"))
+        self.cb_mode.setCurrentIndex(max(0, index))
+        self.ed_src.setText(d.get("src", ""))
+        self.ed_dst.setText(d.get("dst", ""))
+        self.ed_exclude.setText(", ".join(d.get("exclude") or []))
+        value, unit = split_interval(d.get("interval") or 3600)
+        self.chk_repeat.setChecked(True)
+        self.chk_repeat.setEnabled(False)   # una programmazione si ripete sempre
+        self.spn_repeat.setValue(value)
+        self.cb_unit.setCurrentIndex(max(0, self.cb_unit.findData(unit)))
+        if d.get("backup_dir"):
+            self.ed_trash.setText(d["backup_dir"])
+            self.chk_trash.setChecked(True)
+        self.chk_dry.setChecked(False)
+        self.chk_dry.hide()
+        self._btn_ok.setText("Salva")
 
     # ------------------------------------------------------------------ helper
 
     def _repeat_toggled(self, on: bool) -> None:
         self.spn_repeat.setEnabled(on)
         self.cb_unit.setEnabled(on)
-        if self._btn_ok is not None:
+        if self._btn_ok is not None and not getattr(self, "_def_id", None):
             self._btn_ok.setText("Programma" if on else "Avvia")
 
     def _trash_toggled(self, on: bool) -> None:
@@ -201,7 +241,11 @@ class TransferDialog(QtWidgets.QDialog):
                     "dalla destinazione (es. una cartella gemella «-cestino»).")
                 return
 
-        if mode in ("move", "sync") and not dry:
+        # in modifica si richiede conferma solo se cambia ciò che verrà eliminato
+        changed_scope = not self._def_id or (
+            mode != self._orig.get("mode") or src != self._orig.get("src")
+            or dst != self._orig.get("dst"))
+        if mode in ("move", "sync") and not dry and changed_scope:
             what = ("I file di ORIGINE verranno eliminati dopo il trasferimento"
                     if mode == "move" else
                     "La DESTINAZIONE verrà resa identica alla sorgente: i file "
@@ -223,6 +267,18 @@ class TransferDialog(QtWidgets.QDialog):
                 self, "Prova a vuoto avviata",
                 "La prova è in corso (senza scritture): l'esito apparirà nella coda "
                 "tra i trasferimenti, marcato «Prova».")
+            super().accept()
+            return
+
+        if self._def_id:
+            interval = self.spn_repeat.value() * self.cb_unit.currentData()
+            running = self.tab.update_recurring(
+                self._def_id, mode, src, dst, exclude, interval, backup_dir=trash)
+            if running:
+                QtWidgets.QMessageBox.information(
+                    self, "Programmazione aggiornata",
+                    "Un giro è in corso con le impostazioni precedenti: le "
+                    "modifiche valgono dal prossimo giro.")
             super().accept()
             return
 

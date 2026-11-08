@@ -47,6 +47,9 @@ def fmt_eta(seconds) -> str:
     total = int(seconds)
     h, rem = divmod(total, 3600)
     m, s = divmod(rem, 60)
+    if h >= 24:
+        d, h = divmod(h, 24)
+        return f"{d}g {h:02d}h"
     if h:
         return f"{h}h {m:02d}m"
     if m:

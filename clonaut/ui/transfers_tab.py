@@ -106,6 +106,7 @@ class TransfersTab(QtWidgets.QWidget):
         header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.Stretch)
         self.tree.itemSelectionChanged.connect(self._update_files)
+        self.tree.itemDoubleClicked.connect(self._on_double_click)
         layout.addWidget(self.tree, 3)
 
         # -- file in corso del job selezionato
@@ -127,7 +128,8 @@ class TransfersTab(QtWidgets.QWidget):
         hint = QtWidgets.QLabel(
             "I percorsi remoti si scrivono «nome:cartella»; quelli locali come "
             "percorso del filesystem (anche un singolo file). I programmati ⏰ "
-            "si gestiscono col tasto destro: avvia ora, pausa, rimuovi.")
+            "si gestiscono col tasto destro: avvia ora, modifica, pausa, "
+            "rimuovi (doppio clic per modificarli).")
         hint.setProperty("role", "hint")
         hint.setWordWrap(True)
         layout.addWidget(hint)
@@ -383,6 +385,44 @@ class TransfersTab(QtWidgets.QWidget):
         self._save_recurring()
         return def_id
 
+    def update_recurring(self, def_id: str, mode: str, src: str, dst: str,
+                         exclude: list[str] | None, interval_sec: int,
+                         backup_dir: str | None = None) -> bool:
+        """Modifica una programmazione ⏰; True se un giro è in corso.
+
+        Stato (attiva/in pausa), ultimo avvio ed esito vengono conservati:
+        il prossimo giro parte da ultimo avvio + nuovo intervallo.
+        """
+        d = self._recurrent.get(def_id)
+        if d is None:
+            return False
+        d.update({"mode": mode, "src": src, "dst": dst,
+                  "exclude": list(exclude or []),
+                  "interval": max(60, int(interval_sec)),
+                  "backup_dir": backup_dir or ""})
+        item = self._rec_item.get(def_id)
+        running = d.get("current_jid") is not None
+        if item is not None:
+            item.setData(0, _ROLE_BACKUP, d["backup_dir"] or None)
+            if not running:   # il giro in corso mostra ancora i suoi percorsi
+                self._paint_rec_paths(item, d)
+                self._paint_rec_idle(def_id, d)
+        self._save_recurring()
+        self._update_files()
+        return running
+
+    def _paint_rec_paths(self, item: QtWidgets.QTreeWidgetItem, d: dict) -> None:
+        item.setText(1, _MODE_LABEL.get(d["mode"], d["mode"]))
+        item.setText(2, d["src"])
+        item.setText(3, d["dst"])
+        item.setToolTip(2, d["src"])
+        item.setToolTip(3, d["dst"])
+
+    def _edit_recurring(self, def_id: str) -> None:
+        d = self._recurrent.get(def_id)
+        if d is not None:
+            TransferDialog(self.ctx, self, self, schedule=d, def_id=def_id).exec()
+
     def _load_recurring(self) -> None:
         try:
             data = json.loads(_rec_path().read_text())
@@ -428,13 +468,10 @@ class TransfersTab(QtWidgets.QWidget):
 
     def _new_rec_row(self, def_id: str, d: dict) -> None:
         item = QtWidgets.QTreeWidgetItem()
-        item.setText(1, _MODE_LABEL.get(d["mode"], d["mode"]))
-        item.setText(2, d["src"])
-        item.setText(3, d["dst"])
-        item.setToolTip(2, d["src"])
-        item.setToolTip(3, d["dst"])
-        item.setToolTip(4, "Programmazione: tasto destro per avviare ora, "
-                           "mettere in pausa o rimuovere.")
+        self._paint_rec_paths(item, d)
+        item.setToolTip(4, "Programmazione: doppio clic per modificarla; tasto "
+                           "destro per avviare ora, modificare, mettere in "
+                           "pausa o rimuovere.")
         bar = QtWidgets.QProgressBar()
         bar.setRange(0, 1000)
         bar.setFormat("%p%")
@@ -534,6 +571,7 @@ class TransfersTab(QtWidgets.QWidget):
                 else:
                     d["last_status"], d["last_error"] = "err", err
                 d["current_jid"] = None
+                self._paint_rec_paths(item, d)
                 self._rec_of_jid.pop(jid, None)
                 self._dismissed.add(jid)
                 self.job_dismissed.emit(jid)
@@ -555,10 +593,11 @@ class TransfersTab(QtWidgets.QWidget):
         if not is_rec and not backup:
             return
         menu = QtWidgets.QMenu(self)
-        act_run = act_pause = act_del = None
+        act_run = act_edit = act_pause = act_del = None
         if is_rec:
             d = self._recurrent[def_id]
             act_run = menu.addAction("▶ Avvia ora")
+            act_edit = menu.addAction("✏ Modifica…")
             act_pause = menu.addAction("⏸ Metti in pausa" if d.get("enabled", True)
                                        else "▶ Riattiva")
             menu.addSeparator()
@@ -572,13 +611,20 @@ class TransfersTab(QtWidgets.QWidget):
             self._open_trash(backup)
         elif is_rec:
             d = self._recurrent[def_id]
-            if chosen is act_run and d.get("current_jid") is None:
+            if chosen is act_edit:
+                self._edit_recurring(def_id)
+            elif chosen is act_run and d.get("current_jid") is None:
                 d["run_now"] = True   # parte al prossimo tick, anche se in pausa
             elif chosen is act_pause:
                 d["enabled"] = not d.get("enabled", True)
                 self._save_recurring()
             elif chosen is act_del:
                 self._remove_recurring(def_id)
+
+    def _on_double_click(self, item: QtWidgets.QTreeWidgetItem, _col: int) -> None:
+        def_id = item.data(0, _ROLE_REC)
+        if def_id and def_id in self._recurrent:
+            self._edit_recurring(def_id)
 
     def _remove_recurring(self, def_id: str) -> None:
         answer = QtWidgets.QMessageBox.question(

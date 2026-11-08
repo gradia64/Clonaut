@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import os
+import platform
+
+from .. import __version__
 from .. import settings as app_settings
 from ..appctx import AppContext
-from ..qtcompat import QtCore, QtGui, QtWidgets
+from ..qtcompat import BINDING, QtCore, QtGui, QtWidgets
 from ..util import app_icon
 from ..worker import PollWorker
 from .remotes_tab import RemotesTab
@@ -18,7 +22,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ctx = ctx
         self.settings = settings or app_settings.load()
         self._quitting = False
-        self.setWindowTitle("Clonaut")
+        self.setWindowTitle(f"Clonaut {__version__}")
         self.setWindowIcon(app_icon())
         self.resize(1150, 720)
 
@@ -37,7 +41,16 @@ class MainWindow(QtWidgets.QMainWindow):
         act_quit = QtGui.QAction("Esci", self)
         act_quit.triggered.connect(self.quit)
         menu.addAction(act_settings)
+        menu.addSeparator()
         menu.addAction(act_quit)
+
+        help_menu = self.menuBar().addMenu("&Aiuto")
+        act_about = QtGui.QAction("Informazioni su Clonaut…", self)
+        act_about.triggered.connect(self._show_about)
+        act_about_qt = QtGui.QAction("Informazioni su Qt…", self)
+        act_about_qt.triggered.connect(QtWidgets.QApplication.aboutQt)
+        help_menu.addAction(act_about)
+        help_menu.addAction(act_about_qt)
 
         # -- status bar
         self._status_lbl = QtWidgets.QLabel()
@@ -108,6 +121,33 @@ class MainWindow(QtWidgets.QMainWindow):
         if dlg.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             self.settings = dlg.values()
             app_settings.save(self.settings)
+
+    def about_text(self) -> str:
+        """Testo (HTML) della finestra «Informazioni su Clonaut»."""
+        home = os.path.expanduser("~")
+        cfg = str(app_settings.config_dir()).replace(home, "~", 1)
+        rows = (("rclone", self.ctx.version or "?"),
+                ("Qt", f"{QtCore.qVersion()} ({BINDING})"),
+                ("Python", platform.python_version()),
+                ("Config", self.ctx.config_desc),
+                ("Dati app", cfg))
+        table = "".join(
+            f"<tr><td style='white-space:nowrap; padding-right:10px'><b>{k}</b></td>"
+            f"<td>{v}</td></tr>" for k, v in rows)
+        return (
+            f"<h2 style='margin-bottom:0'>Clonaut {__version__}</h2>"
+            "<p style='margin-top:2px'><i>Il pilota grafico per rclone.</i></p>"
+            "<p>Interfaccia desktop per <a href='https://rclone.org'>rclone</a>: "
+            "remote, trasferimenti con progressi, prove a vuoto, cestino di "
+            "sicurezza e programmazioni. Tutto il lavoro sui file lo fa rclone.</p>"
+            f"<table cellspacing='0' cellpadding='2'>{table}</table>"
+            "<p>Licenza <a href='https://www.gnu.org/licenses/gpl-3.0.html'>GPL-3.0</a> "
+            "· © 2026 Gradia<br>"
+            "<a href='https://github.com/gradia64/Clonaut'>github.com/gradia64/Clonaut</a>"
+            " · <a href='https://github.com/gradia64/Clonaut/issues'>segnala un problema</a></p>")
+
+    def _show_about(self) -> None:
+        QtWidgets.QMessageBox.about(self, "Informazioni su Clonaut", self.about_text())
 
     def quit(self) -> None:
         """Uscita vera (dal menu File o dalla tray): ferma worker e rcd."""

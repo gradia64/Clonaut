@@ -37,7 +37,8 @@ the cockpit.
   files/bytes would be transferred and how many files would be deleted.
 - **Scheduled repeats ⏰** — transfers can repeat every N minutes/hours/days.
   Schedules survive restarts (`~/.config/clonaut/recurring.json`) and can be
-  paused, resumed or started immediately from the right-click menu. *Runs only
+  edited (double-click the row), paused, resumed or started immediately from
+  the right-click menu. *Runs only
   happen while the app is open (the tray is enough); if the interval expired
   while it was closed, a run starts right away on the next launch.*
 
@@ -162,8 +163,13 @@ python3 main.py --url http://127.0.0.1:5572 --user user --password secret
   app's rclone daemon.
 - **Repeat automatically** — tick «Ripeti … ogni N ore/minuti/giorni»: a ⏰ row
   appears and restarts itself at every interval (never in parallel).
-  Right-click: *Avvia ora* (run now), *Metti in pausa / Riattiva* (pause /
-  resume), *Rimuovi programmazione* (remove schedule).
+  Right-click: *Avvia ora* (run now), *Modifica…* (edit), *Metti in pausa /
+  Riattiva* (pause / resume), *Rimuovi programmazione* (remove schedule).
+  Editing (also by double-clicking the row) changes paths, mode, exclusions,
+  trash and interval; a run already in progress keeps its old settings and the
+  changes apply from the next run.
+- **Aiuto → Informazioni su Clonaut** (Help → About) shows the version of
+  Clonaut, rclone, Qt and Python, plus where the app keeps its data.
 - **Annulla** (Cancel) stops the selected job (already transferred files stay
   where they are); «🧹 Rimuovi completati» (Clear finished) cleans up the view
   (⏰ rows stay).

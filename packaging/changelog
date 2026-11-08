@@ -1,6 +1,10 @@
 clonaut (0.3.1) unstable; urgency=medium
 
   * First public release on GitHub.
+  * Scheduled transfers can be edited (right-click → Modifica…, or
+    double-click the row); changes apply from the next run.
+  * Help menu with an About dialog (Clonaut, rclone, Qt and Python
+    versions); version shown in the window title.
   * Tray: a single left click brings the window to the front (or hides it
     when it is already in front); before, only the context menu worked.
   * README in English (Italian version in README.it.md); English package

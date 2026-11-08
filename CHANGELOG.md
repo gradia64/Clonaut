@@ -7,6 +7,15 @@ All notable changes to Clonaut are listed here. Versions follow
 
 First public release.
 
+### Added
+- **Edit scheduled transfers** (⏰): right-click → *Modifica…*, or double-click
+  the row. Paths, mode, exclusions, trash and interval can be changed; a run in
+  progress keeps its settings and the changes apply from the next run.
+- **Help → About Clonaut** (*Aiuto → Informazioni su Clonaut*) with the versions
+  of Clonaut, rclone, Qt and Python and the app's data folder; *About Qt* too.
+- The window title shows the version (e.g. "Clonaut 0.3.1").
+- Long intervals are shown in days ("1g 23h" instead of "47h 59m").
+
 ### Fixed
 - **Tray icon:** a single left click now brings the window to the front, or
   hides it when it is already in front. Before, only the right-click menu

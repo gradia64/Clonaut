@@ -75,7 +75,7 @@ class RemotesTab(QtWidgets.QWidget):
         btn_add.clicked.connect(self._on_add)
         btn_del = QtWidgets.QPushButton("🗑 Elimina")
         btn_del.clicked.connect(self._on_delete)
-        btn_details = QtWidgets.QPushButton("ℹ Dettagli")
+        btn_details = QtWidgets.QPushButton("Dettagli…")
         btn_details.clicked.connect(self._on_details)
         btn_refresh = QtWidgets.QPushButton("↻ Aggiorna")
         btn_refresh.clicked.connect(self.refresh)

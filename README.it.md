@@ -32,8 +32,8 @@ pilota via HTTP con `requests`. Il backend è rclone stesso — la GUI è solo l
   sarebbero stati trasferiti e quanti file verrebbero eliminati.
 - **Ripetizione automatica ⏰** — i trasferimenti si possono ripetere ogni N
   minuti/ore/giorni: la programmazione sopravvive alla chiusura dell'app
-  (`~/.config/clonaut/recurring.json`), con pausa/riattivazione e
-  "avvia ora" dal tasto destro. *I giri partono solo con l'app aperta: se era
+  (`~/.config/clonaut/recurring.json`), con modifica (doppio clic sulla
+  riga), pausa/riattivazione e "avvia ora" dal tasto destro. *I giri partono solo con l'app aperta: se era
   chiusa, alla riapertura parte subito un giro se l'intervallo è scaduto.*
 
 ![Remote](docs/screenshot-remote.png)
@@ -158,8 +158,13 @@ python3 main.py --url http://127.0.0.1:5572 --user utente --password segreta
   o menu della tray) chiude davvero l'app e ferma il suo rclone rcd.
 - **Ripeti automaticamente** — spunta «Ripeti ogni N ore/minuti/giorni»: nasce una
   riga ⏰ in coda che si rilancia da sola a ogni intervallo (mai in parallelo).
-  Tasto destro sulla riga: *Avvia ora*, *Metti in pausa/Riattiva*, *Rimuovi
-  programmazione*.
+  Tasto destro sulla riga: *Avvia ora*, *Modifica…*, *Metti in pausa/Riattiva*,
+  *Rimuovi programmazione*. La modifica (anche con doppio clic sulla riga)
+  cambia percorsi, modalità, esclusioni, cestino e intervallo; un giro già in
+  corso prosegue con le impostazioni precedenti e le modifiche valgono dal
+  giro successivo.
+- **Aiuto → Informazioni su Clonaut** mostra le versioni di Clonaut, rclone,
+  Qt e Python e dove l'app tiene i suoi dati.
 - **Annulla** ferma il job selezionato (i file già trasferiti restano dove sono);
   «🧹 Rimuovi completati» pulisce la vista (le righe ⏰ restano).
 - **Sincronizza** rende la destinazione *identica* alla sorgente: i file presenti
