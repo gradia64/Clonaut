@@ -33,6 +33,7 @@ install -m 0755 packaging/clonaut         "$STAGE/usr/bin/clonaut"
 install -m 0644 packaging/clonaut.desktop "$STAGE/usr/share/applications/clonaut.desktop"
 install -m 0644 packaging/clonaut.svg     "$STAGE/usr/share/icons/hicolor/scalable/apps/clonaut.svg"
 install -m 0644 README.md                    "$STAGE/usr/share/doc/clonaut/README"
+install -m 0644 README.it.md                 "$STAGE/usr/share/doc/clonaut/README.it"
 install -m 0644 packaging/copyright          "$STAGE/usr/share/doc/clonaut/copyright"
 sed -e "s|@MAINTAINER@|$MAINTAINER|" packaging/changelog \
     | gzip -9n > "$STAGE/usr/share/doc/clonaut/changelog.gz"

@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: clonaut
-Source: pacchetto locale creato con build-deb.sh
+Source: https://github.com/gradia64/Clonaut
 
 Files: *
 Copyright: 2026 Gradia

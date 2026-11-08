@@ -1,3 +1,3 @@
 """Clonaut — interfaccia grafica per rclone tramite la REST API di `rclone rcd`."""
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"

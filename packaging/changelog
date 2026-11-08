@@ -1,3 +1,17 @@
+clonaut (0.3.1) unstable; urgency=medium
+
+  * First public release on GitHub.
+  * Tray: a single left click brings the window to the front (or hides it
+    when it is already in front); before, only the context menu worked.
+  * README in English (Italian version in README.it.md); English package
+    description and desktop entry, with Italian translations.
+  * UI fixes: rclone version shown as "v1.75.2" instead of "vv1.75.2",
+    dry-run rows show mode, source and destination, the new-remote form
+    no longer keeps labels of the previous type nor scrolls sideways,
+    wider new-transfer dialog.
+
+ -- @MAINTAINER@  Sun, 08 Nov 2026 21:00:00 +0100
+
 clonaut (0.3.0) unstable; urgency=medium
 
   * Nuovo nome: Clonaut (prima «GUI rclone», pacchetto gui-rclone).

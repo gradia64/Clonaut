@@ -1,0 +1,255 @@
+# Clonaut
+
+[English](README.md) · **Italiano**
+
+*Il pilota grafico per rclone.*
+
+Interfaccia grafica desktop (Qt: PySide6 o PyQt6) per [rclone](https://rclone.org), costruita
+sopra la REST API di `rclone rcd`: l'app avvia da sola un demone rclone locale e lo
+pilota via HTTP con `requests`. Il backend è rclone stesso — la GUI è solo l'interfaccia.
+
+**Funzioni:**
+
+- **Remote** — elenco con tipo e riepilogo, creazione con form dinamico generato dai
+  ~58 provider noti (`config/providers`), eliminazione, dettagli della config.
+- **Trasferimenti** — coda job con barre di avanzamento, velocità, ETA, byte
+  trasferiti, annullamento, pannello «File in corso» del job selezionato.
+  Modalità **Copia / Sposta / Sincronizza**, tra remoti, locali o misti.
+- **Esclusioni** — pattern rclone per job (es. journal dei client di sync).
+- **Cestino di sicurezza** — i file che verrebbero **eliminati o sovrascritti**
+  in destinazione vengono spostati in una cartella cestino (con il loro
+  percorso) invece di sparire. Si consulta dalla GUI: pulsante **🗑 Cestino**
+  (o tasto destro sulla riga) apre il visualizzatore con la lista dei file,
+  «Apri nel gestore file» e «Svuota cestino». Il cestino tiene l'ultima
+  versione precedente di ciascun file: svuotalo tu di tanto in tanto.
+- **Tray e impostazioni** — icona nella tray (clic per mostrare/nascondere, esci, tooltip
+  con i trasferimenti attivi). Menu **File → Impostazioni…**: chiudi/minimizza
+  nella tray, avvio ridotto nella tray e notifiche a fine trasferimento
+  (`~/.config/clonaut/settings.json`). Se l'ambiente non ha tray
+  (es. GNOME senza estensione), l'app funziona come prima.
+- **Prova a vuoto** — anteprima onesta: gira su un processo rclone avviato con
+  `--dry-run`, impossibile che scriva o elimini; mostra file/byte che
+  sarebbero stati trasferiti e quanti file verrebbero eliminati.
+- **Ripetizione automatica ⏰** — i trasferimenti si possono ripetere ogni N
+  minuti/ore/giorni: la programmazione sopravvive alla chiusura dell'app
+  (`~/.config/clonaut/recurring.json`), con pausa/riattivazione e
+  "avvia ora" dal tasto destro. *I giri partono solo con l'app aperta: se era
+  chiusa, alla riapertura parte subito un giro se l'intervallo è scaduto.*
+
+![Remote](docs/screenshot-remote.png)
+![Trasferimenti](docs/screenshot-trasferimenti.png)
+![Nuovo remote](docs/screenshot-nuovo-remote.png)
+![Nuovo trasferimento](docs/screenshot-nuovo-trasferimento.png)
+
+## Esempio: tenere allineato Nextcloud → kDrive
+
+Obiettivo: rendere specchiati i contenuti di `~/Nextcloud`
+(sincronizzata dal client Nextcloud) su `~/kDrive/Nextcloud`
+(sincronizzata dal client kDrive). La "verità" resta Nextcloud; kDrive ne è lo
+specchio:
+
+1. **Prova a vuoto** — Trasferimenti → ＋ Nuovo trasferimento → Sincronizza,
+   sorgente `~/Nextcloud`, destinazione
+   `~/kDrive/Nextcloud`, Escludi:
+   `.sync_*, .nextcloudsync.log, .lock, .resource, .sync`, cestino
+   `~/kDrive/Nextcloud-cestino`, spunta *Prova a
+   vuoto* → guarda l'esito in coda («Prova»).
+2. **Programmazione** — stessa configurazione senza la prova, con *Ripeti
+   automaticamente ogni 6 ore* (o la frequenza che preferisci) → la riga ⏰
+   si occupa di tutto; tasto destro per pausa o rimozione.
+
+I pattern suggeriti saltano i journal interni del client Nextcloud (`.sync_*.db`,
+`.nextcloudsync.log`) e i file di blocco che cambiano di continuo. Con il
+cestino attivo anche le cancellazioni sono reversibili; se il cestino sta
+dentro la cartella sincronizzata da kDrive (come nel predefinito), viene
+caricato anche sul cloud kDrive — recuperabile anche se il disco si rompe.
+Attenzione: il sync elimina in destinazione ciò che sparisce dall'origine —
+con il cestino finisce lì invece che nel nulla.
+
+## Installazione (.deb)
+
+Il modo più semplice: scarica `clonaut_<versione>_all.deb` dall'ultima
+[release](https://github.com/gradia64/Clonaut/releases/latest) e installalo con
+
+```bash
+sudo apt install ./clonaut_0.3.1_all.deb
+```
+
+Oppure costruisci il pacchetto dai sorgenti con lo script incluso (richiede `dpkg-deb`):
+
+```bash
+./build-deb.sh                       # → build/clonaut_0.3.1_all.deb
+sudo apt install ./build/clonaut_0.3.1_all.deb
+```
+
+Il pacchetto installa:
+- `/usr/share/clonaut/` — l'applicazione (sorgenti Python, GPL-3)
+- `/usr/bin/clonaut` — comando da terminale (con le stesse opzioni di `main.py`)
+- voce «Clonaut» nel menu delle applicazioni, icona e pagina man (`man clonaut`)
+
+Dipendenze dichiarate: `python3`, `python3-requests`, `python3-pyqt6`, `rclone`
+(l'app usa PySide6 se presente sul sistema, altrimenti PyQt6 — il codice è
+scritto per entrambi). Disinstallazione: `sudo apt remove clonaut`.
+Ricompilazione dopo modifiche: `./build-deb.sh` (metadati in `packaging/`;
+per personalizzare il campo Maintainer: `MAINTAINER="Nome <email>" ./build-deb.sh`).
+
+## Requisiti
+
+- Linux, Python ≥ 3.10
+- [PySide6](https://pypi.org/project/PySide6/) e `requests` oppure PyQt6, e `requests`
+  (vedi `requirements.txt`)
+- `rclone` nel PATH (testato con v1.75.2)
+
+## Avvio
+
+```bash
+./run.sh                    # oppure: python3 main.py
+```
+
+All'avvio l'app:
+
+1. sceglie una porta libera su 127.0.0.1 e genera credenziali casuali;
+2. avvia `rclone rcd` come processo figlio (muore con la GUI, grazie a PR_SET_PDEATHSIG);
+3. apre la finestra e inizia il polling dello stato (≈1 volta al secondo).
+
+Opzioni:
+
+```bash
+python3 main.py --config /percorso/rclone.conf   # usa un file di config specifico
+python3 main.py --port 5572                      # porta fissa per il rcd locale
+
+# aggancio a un rclone rcd già avviato altrove (non viene avviato nessun processo):
+python3 main.py --url http://127.0.0.1:5572 --user utente --password segreta
+```
+
+## Come si usa
+
+- **Tab Remote** — «＋ Aggiungi…» apre un form costruito sui campi reali del backend
+  scelto (i campi obbligatori sono marcati con `*`, i predefiniti appaiono come
+  segnaposto, le scelte a numero chiuso come `vendor` sono menu a tendina, le
+  opzioni avanzate sono nascoste dietro un pulsante). Il menu **Tipo** include
+  alias comuni che rclone non espone: cercando **nextcloud** (o owncloud, gdrive,
+  ssh…) si arriva al backend giusto e i campi corrispondenti si preselezionano da
+  soli. «Elimina» rimuove solo la voce di configurazione, **non** tocca i dati.
+  Doppio clic = dettagli (i valori sensibili sono mascherati con `XXX` da rclone).
+- **Nextcloud in due passi** — Tipo «nextcloud», poi URL
+  `https://tuoserver/remote.php/dav/files/NOMEUTENTE`, utente e password (meglio
+  una *password per app* creata dalle impostazioni di Nextcloud): il campo
+  vendor è già impostato su «Nextcloud».
+- **Tab Trasferimenti** — «＋ Nuovo trasferimento»: sorgente e destinazione possono
+  essere `nome-remote:percorso` oppure percorsi locali (anche un singolo file);
+  «Sfoglia…» sceglie cartelle locali. I remoti esistenti vengono suggeriti mentre
+  digiti. Il campo **Escludi** accetta pattern rclone separati da virgola (es.
+  `.sync_*, .nextcloudsync.log, *.log`). «Sposta» e «Sincronizza» chiedono
+  conferma esplicita perché eliminano file.
+- **Prova a vuoto** — il checkbox esegue il trasferimento identico (stessi filtri
+  e stesso cestino) su un processo dedicato con `--dry-run`: l'esito — «N file,
+  X MiB, M da eliminare in Ys» — appare in coda marcato «Prova», senza che nessun file venga
+  toccato.
+- **Cestino di sicurezza** — spunta «Cestino» nel dialog: viene proposta
+  `<destinazione>-cestino` (modificabile; **non** dentro la destinazione).
+  Con la spunta attiva, i file eliminati o sovrascritti dal sync finiscono
+  lì invece di essere cancellati. Li vedi col pulsante **🗑 Cestino** della
+  coda (attivo sulle righe che hanno un cestino: trasferimenti, prove e
+  programmati ⏰) o col tasto destro sulla riga.
+- **Tray** — chiudi (o minimizza) la finestra: resta solo l'icona nella tray e
+  i giri ⏰ continuano; un clic sull'icona la riporta in primo piano (un
+  altro clic la nasconde). *Esci* (menu File
+  o menu della tray) chiude davvero l'app e ferma il suo rclone rcd.
+- **Ripeti automaticamente** — spunta «Ripeti ogni N ore/minuti/giorni»: nasce una
+  riga ⏰ in coda che si rilancia da sola a ogni intervallo (mai in parallelo).
+  Tasto destro sulla riga: *Avvia ora*, *Metti in pausa/Riattiva*, *Rimuovi
+  programmazione*.
+- **Annulla** ferma il job selezionato (i file già trasferiti restano dove sono);
+  «🧹 Rimuovi completati» pulisce la vista (le righe ⏰ restano).
+- **Sincronizza** rende la destinazione *identica* alla sorgente: i file presenti
+  solo in destinazione vengono eliminati, anche se corrispondono ai pattern di
+  esclusione (verificato su rclone 1.75).
+
+## Note e limiti
+
+- **OAuth** (Google Drive, Dropbox, OneDrive…): il consenso richiede un browser.
+  Crea il remote e completa l'accesso da terminale con
+  `rclone authorize "<tipo>"`, poi incolla il token JSON nel campo «token».
+- **Modifica di un remote esistente** non è inclusa di proposito: rclone maschera i
+  segreti, quindi riscriverli li corromperebbe. Usa `rclone config` (o ricrea il remote).
+- Un trasferimento avviato **fuori** dalla GUI viene mostrato solo mentre ha file in
+  corso (rilevato dalle stats aggregate); a processo finito sparisce dalla coda.
+- «Sincronizza» su file singolo non è consentita (lo stesso rclone lo richiede:
+  sync/move operano su cartelle); per un file usa «Copia».
+- Non c'è pausa/ripresa del singolo job (rclone non la espone via rc) né
+  limitazione di banda dalla GUI (si può avviare rcd con `--bwlimit` esternamente
+  in modalità `--url`).
+
+## Sicurezza
+
+- Il demone `rclone rcd` resta **solo su 127.0.0.1** con credenziali casuali
+  usa-e-getta (HTTP Basic); nessuna porta esposta sulla rete.
+- Le credenziali del demone passano per variabili d'ambiente
+  (`RCLONE_RC_USER`/`RCLONE_RC_PASS`), non per la riga di comando: non sono
+  visibili ad altri utenti con `ps`.
+- Il log del demone finisce in `~/.cache/clonaut/rcd-<porta>.log` (contiene le
+  righe di attività di rclone, non le password); i log più vecchi di 7 giorni
+  vengono rimossi automaticamente.
+- Chi aggiorna dalla versione chiamata «GUI rclone» ritrova impostazioni e
+  programmazioni: al primo avvio vengono copiate da `~/.config/rclone-gui/`.
+
+## Struttura
+
+```
+main.py                     avvio, argomenti CLI, QApplication
+run.sh                      lanciatore
+clonaut/
+├── api.py                  client REST (Basic auth, endpoint config/sync/job/stats/list/purge)
+├── rcd.py                  gestione processo `rclone rcd` (porta, credenziali, stop)
+├── worker.py               thread di polling (watch-list) + DryRunWorker
+├── appctx.py               contesto condiviso (+ backend dedicato alle prove)
+├── settings.py             impostazioni persistenti (tray, notifiche)
+├── qtcompat.py             import Qt con fallback PySide6 → PyQt6
+├── util.py                 formattazioni (size/ETA), QSS globale, icona
+└── ui/
+    ├── main_window.py      finestra, tab, tray, menu File→Impostazioni, status bar
+    ├── remotes_tab.py      elenco remote + dettagli
+    ├── remote_dialog.py    form dinamico da config/providers (+ alias, menu enum)
+    ├── transfers_tab.py    coda trasferimenti, progressi, programmati ⏰, pulsante cestino
+    ├── transfer_dialog.py  dialog nuovo trasferimento (esclusioni, cestino, ripetizione)
+    ├── trash_dialog.py     visualizzatore del cestino (lista, apri, svuota)
+    └── settings_dialog.py  impostazioni tray/notifiche
+```
+
+## Dettagli tecnici curiosi
+
+- In rclone **ogni chiamata rc crea un job**, compresi `job/status` e `core/stats`:
+  usare `job/list` come fonte della coda farebbe esplodere l'elenco con le chiamate
+  di polling stesso. Il worker usa una *watch-list*: i job avviati dalla GUI, quelli
+  trovati al primo avvio (validati per scartare il rumore interno) e i job esterni
+  scoperti mentre trasferiscono.
+- Le statistiche di un job vivono nel gruppo `job/<id>` e sopravvivono al termine:
+  la lettura finale dà il 100% esatto anche a job già conclusi.
+- `sync/copy` via API accetta solo filesystem di directory (a differenza del CLI):
+  i file singoli locali passano per `operations/copyfile` con `_async: true`.
+- `config/providers` non espone alias di backend (Nextcloud non esiste come tipo:
+  è webdav con `vendor=nextcloud`); gli alias comuni sono mantenuti nel dialog.
+- Le esclusioni per-job passano dal blocco `_filter: {ExcludeRule: [...]}` e il
+  cestino da `_config: {BackupDir: ...}`; i parametri `_exclude`,
+  `_filters-exclude`, `_filter.BackupDir` e `_dry_run` di rc sono ignorati
+  da rclone 1.75 (verificati uno a uno).
+- Per lo stesso motivo le prove a vuoto girano su un secondo `rclone rcd` avviato al primo utilizzo
+  con `--dry-run` globale — la prova non può alterare nessun file.
+- Le programmazioni ⏰ vivono in `~/.config/clonaut/recurring.json`
+  (override per test: env `CLONAUT_CONFIG_HOME`) e vengono riavviate dal
+  timer della GUI: l'app deve restare aperta (anche solo nella tray) perché i
+  giri partano.
+
+## Test eseguiti
+
+Con rclone 1.75.2 reale e config isolata in /tmp: creazione/eliminazione remote,
+trasferimenti copy (cartelle, sottocartelle, file singolo → cartella e file → file
+rinominato), errori (remote inesistente), annullamento di un job in volo, stats in
+corso e finali, thread di polling (nessuna crescita dei job), GUI offscreen con
+screenshot (tab, dialoghi, stati Completato/Errore/In corso).
+
+## Licenza
+
+GPL-3: vedi `/usr/share/common-licenses/GPL-3` su Debian o
+<https://www.gnu.org/licenses/gpl-3.0.html>.

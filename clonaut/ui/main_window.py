@@ -68,7 +68,8 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         self.tray = QtWidgets.QSystemTrayIcon(app_icon(), self)
         self.tray.setToolTip("Clonaut")
-        menu = QtWidgets.QMenu()
+        menu = QtWidgets.QMenu(self)
+        self._tray_menu = menu   # il tray non ne prende possesso: teniamo il riferimento
         act_show = menu.addAction("Mostra / Nascondi")
         act_show.triggered.connect(self._toggle_visible)
         menu.addSeparator()
@@ -79,16 +80,28 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tray.show()
 
     def _on_tray_activated(self, reason) -> None:
-        if reason == QtWidgets.QSystemTrayIcon.ActivationReason.DoubleClick:
-            self._toggle_visible()
+        reasons = QtWidgets.QSystemTrayIcon.ActivationReason
+        if reason == reasons.Trigger:
+            # clic sinistro: porta in primo piano, o nasconde se lo è già
+            if self.isVisible() and not self.isMinimized() and self.isActiveWindow():
+                self.hide()
+            else:
+                self._bring_to_front()
+        elif reason == reasons.DoubleClick:
+            # alcuni ambienti inviano anche Trigger: il doppio clic mostra soltanto,
+            # così non si ottiene un «mostra e subito nascondi»
+            self._bring_to_front()
+
+    def _bring_to_front(self) -> None:
+        self.showNormal()
+        self.raise_()
+        self.activateWindow()
 
     def _toggle_visible(self) -> None:
         if self.isVisible() and not self.isMinimized():
             self.hide()
         else:
-            self.showNormal()
-            self.raise_()
-            self.activateWindow()
+            self._bring_to_front()
 
     def _open_settings(self) -> None:
         dlg = SettingsDialog(self.settings, self)

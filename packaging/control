@@ -9,10 +9,13 @@ Replaces: gui-rclone
 Conflicts: gui-rclone
 Provides: gui-rclone
 Maintainer: @MAINTAINER@
-Description: interfaccia grafica per rclone con trasferimenti e programmazioni
- GUI desktop (Qt) che pilota rclone tramite la sua REST API (rclone rcd):
- gestione dei remote con form dinamico, trasferimenti copia/sposta/
- sincronizza con barre di avanzamento, prove a vuoto, cestino di sicurezza,
- trasferimenti ripetuti programmati, esclusioni per job, icona nella tray.
+Homepage: https://github.com/gradia64/Clonaut
+Description: desktop GUI for rclone with transfers and schedules
+ Clonaut is a Qt desktop application that drives rclone through its REST
+ API (rclone rcd): manage remotes with a dynamic form, copy/move/sync
+ transfers with progress bars, honest dry runs, a safety trash for
+ deleted or overwritten files, persistent scheduled transfers, per-job
+ exclusions and a system tray icon.
  .
- I file li gestisce rclone; la GUI è solo l'interfaccia.
+ rclone does all the file handling; Clonaut is just the interface.
+ The user interface is currently in Italian.
