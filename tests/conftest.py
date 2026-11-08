@@ -7,6 +7,7 @@ CLONAUT_QT=pyqt6|pyside6: lanciare la suite con entrambi.
 
 from __future__ import annotations
 
+import gc
 import os
 import shutil
 import tempfile
@@ -22,7 +23,7 @@ os.environ["XDG_CONFIG_HOME"] = str(_ROOT / "xdg-config")
 os.environ.pop("CLONAUT_RCLONE", None)
 os.environ.pop("APPDIR", None)
 
-from clonaut.qtcompat import QtWidgets  # noqa: E402
+from clonaut.qtcompat import QtCore, QtWidgets  # noqa: E402
 
 RCLONE = shutil.which("rclone")
 needs_rclone = pytest.mark.skipif(RCLONE is None, reason="rclone non installato")
@@ -41,6 +42,15 @@ def pytest_sessionfinish(session, exitstatus):
 def qapp():
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(["clonaut"])
     yield app
+    # finestre e dialoghi rimasti vanno distrutti finché Qt è vivo: lasciati
+    # all'uscita dell'interprete, PySide6 6.12 li cancella dopo la
+    # QApplication («shared QObject was deleted directly») e va in segfault
+    for widget in QtWidgets.QApplication.topLevelWidgets():
+        widget.close()
+        widget.deleteLater()
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+    app.processEvents()
+    gc.collect()
 
 
 @pytest.fixture(autouse=True)
