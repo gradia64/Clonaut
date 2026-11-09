@@ -316,9 +316,16 @@ jobs:
     # secret dell'AUR
     environment: release
     steps:
+      # lo script dal ramo del dispatch (un tag vecchio può non averlo), i
+      # PKGBUILD dal tag: quelli collaudati dal job arch
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ inputs.aur_tag }}
+
+      - name: PKGBUILD del tag
+        env:
+          TAG: ${{ inputs.aur_tag }}
+        run: |
+          git fetch --depth=1 origin "refs/tags/$TAG:refs/tags/$TAG"
+          git checkout "$TAG" -- packaging/aur
 
       - name: Pubblica su AUR
         env:

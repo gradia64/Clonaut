@@ -64,6 +64,15 @@ gh workflow run release.yml -R gradia64/Clonaut -f aur_tag=v0.4.0
 ```
 
 It runs `verify`, `arch` and, after approval, only the AUR upload.
+The `release` environment only accepts `v*` tags, so this manual run is
+refused unless the environment's deployment policy also allows the branch
+it runs on. Alternatively publish from your machine with the same key (that
+is how 0.4.0 went out):
+
+```bash
+AUR_SSH_PRIVATE_KEY="$(cat ~/.ssh/aur_clonaut_ci)" \
+  scripts/publish-aur.sh packaging/aur/clonaut packaging/aur/clonaut-git
+```
 
 ## On every release (stable package)
 
