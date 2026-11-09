@@ -192,3 +192,9 @@ def test_dialogs_in_english(english, rcd, qapp, dialogs):
                        (SettingsDialog({}, rclone_in_use="/usr/bin/rclone"), "Settings")):
         assert dlg.windowTitle() == title
         assert _untranslated(_texts(dlg)) == [], title
+
+
+def test_default_config_description_follows_the_language(english):
+    # il predefinito si traduce alla creazione, non all'import del modulo
+    from clonaut.appctx import AppContext
+    assert AppContext(api=None).config_desc == CATALOG["predefinito (~/.config/rclone/rclone.conf)"]

@@ -3,7 +3,7 @@
 All notable changes to Clonaut are listed here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.4.0] — 2026-11-09
 
 ### Added
 - **English user interface.** Clonaut follows the system language (Italian
@@ -17,7 +17,7 @@ All notable changes to Clonaut are listed here. Versions follow
 - AppStream metadata (`io.github.gradia64.Clonaut.metainfo.xml`) and PNG icons
   (48–256 px) next to the SVG.
 - **Choose which rclone to use**: `CLONAUT_RCLONE` environment variable, a new
-  *Programma rclone* field in *Impostazioni* (Settings), `PATH`, or a copy
+  *rclone program* field in *Settings*, `PATH`, or a copy
   bundled with the AppImage — in this order. The About dialog shows the path.
 - AUR packages `clonaut` (from the release tag) and `clonaut-git`, tested in
   a clean Arch container (`packaging/aur/test-in-docker.sh`).
@@ -42,6 +42,9 @@ All notable changes to Clonaut are listed here. Versions follow
   Qt bindings on rclone 1.75.2 and 1.76.0.
 
 ### Changed
+- README and AppStream screenshots show the English interface (the Italian
+  README keeps Italian ones), and the English README uses the English menu
+  and button names.
 - Desktop ID is now `io.github.gradia64.Clonaut` (`.desktop` file and icon
   name); menu shortcuts to the old `clonaut.desktop` are recreated.
 - Startup code moved from `main.py` to `clonaut/app.py`; `main.py` and
@@ -114,6 +117,7 @@ First public release.
 
 First packaged version (as "GUI rclone").
 
+[0.4.0]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.0
 [0.3.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.3.1
 [0.3.0]: https://github.com/gradia64/Clonaut/commit/5f69e4a
 [0.2.0]: https://github.com/gradia64/Clonaut/commit/5f69e4a

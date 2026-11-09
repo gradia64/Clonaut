@@ -1,3 +1,24 @@
+clonaut (0.4.0) unstable; urgency=medium
+
+  * English user interface: follows the system language, with a Language
+    option in Settings and CLONAUT_LANG=en|it; Qt's own dialogs follow too.
+  * AppImage for x86_64 and aarch64, with the official rclone as a fallback.
+  * AUR packages clonaut and clonaut-git; signed release tags.
+  * Choose which rclone to use: CLONAUT_RCLONE, a setting, PATH, or the
+    AppImage copy, in this order; the About dialog shows the path.
+  * Standard Python packaging (pip install ., python -m clonaut); AppStream
+    metadata and PNG icons; desktop ID io.github.gradia64.Clonaut.
+  * GitHub Actions: CI on every push, release workflow on signed tags with
+    SHA256SUMS and build-provenance attestations.
+  * Fix: scheduled transfers stopped running after closing the window (the
+    tray kept the app alive without the rclone daemon); closing now quits.
+  * Fix: an unresponsive rclone daemon is shown as an error instead of
+    failing silently.
+  * Fix: possible crash with PySide6 6.12.0 when Python's garbage collector
+    ran in a background thread.
+
+ -- @MAINTAINER@  Mon, 09 Nov 2026 09:52:40 +0100
+
 clonaut (0.3.1) unstable; urgency=medium
 
   * First public release on GitHub.

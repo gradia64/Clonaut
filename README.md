@@ -25,7 +25,7 @@ More languages are welcome — see [Contributing](#contributing).
 - **Exclusions** — per-job rclone patterns (e.g. sync-client journals).
 - **Safety trash** — files that would be **deleted or overwritten** at the
   destination are moved to a trash folder (keeping their path) instead of
-  disappearing. Browse it from the GUI: the **🗑 Cestino** (Trash) button, or a
+  disappearing. Browse it from the GUI: the **🗑 Trash** button, or a
   right-click on the row, opens a viewer with the file list, "open in file
   manager" and "empty trash". The trash keeps the latest previous version of
   each file: empty it from time to time.
@@ -44,10 +44,10 @@ More languages are welcome — see [Contributing](#contributing).
   happen while the app is open (the tray is enough); if the interval expired
   while it was closed, a run starts right away on the next launch.*
 
-![Remotes](docs/screenshot-remote.png)
-![Transfers](docs/screenshot-trasferimenti.png)
-![New remote](docs/screenshot-nuovo-remote.png)
-![New transfer](docs/screenshot-nuovo-trasferimento.png)
+![Remotes](docs/screenshot-remotes.png)
+![Transfers](docs/screenshot-transfers.png)
+![New remote](docs/screenshot-new-remote.png)
+![New transfer](docs/screenshot-new-transfer.png)
 
 ## Example: mirroring Nextcloud → kDrive
 
@@ -55,15 +55,14 @@ Goal: keep `~/Nextcloud` (synced by the Nextcloud client) mirrored to
 `~/kDrive/Nextcloud` (synced by the kDrive client). Nextcloud stays the source
 of truth; kDrive is the mirror:
 
-1. **Dry run** — Trasferimenti (Transfers) → ＋ Nuovo trasferimento (New
-   transfer) → Sincronizza (Sync), source `~/Nextcloud`, destination
-   `~/kDrive/Nextcloud`, exclude
+1. **Dry run** — Transfers → ＋ New transfer → Sync, source `~/Nextcloud`,
+   destination `~/kDrive/Nextcloud`, exclude
    `.sync_*, .nextcloudsync.log, .lock, .resource, .sync`, trash
-   `~/kDrive/Nextcloud-cestino`, tick *Prova a vuoto* (dry run) → check the
-   result in the queue (row marked «Prova»).
-2. **Schedule** — same settings without the dry run, ticking *Ripeti
-   automaticamente ogni 6 ore* (repeat every 6 hours) → the ⏰ row takes care of
-   everything; right-click to pause or remove it.
+   `~/kDrive/Nextcloud-trash`, tick *Dry run* → check the result in the queue
+   (row marked «Dry run»).
+2. **Schedule** — same settings without the dry run, ticking *Repeat
+   automatically every 6 hours* → the ⏰ row takes care of everything;
+   right-click to pause or remove it.
 
 The suggested patterns skip the Nextcloud client's internal journals
 (`.sync_*.db`, `.nextcloudsync.log`) and lock files that change constantly.
@@ -187,11 +186,11 @@ Clonaut looks for the `rclone` program in this order and uses the first one
 found:
 
 1. the `CLONAUT_RCLONE` environment variable (full path);
-2. the path set in **File → Impostazioni…** (Settings) → *Programma rclone*;
+2. the path set in **File → Settings…** → *rclone program*;
 3. `rclone` in `PATH`;
 4. the copy bundled with the AppImage, only as a last resort.
 
-The About dialog (**Aiuto → Informazioni su Clonaut**) shows the path in use.
+The About dialog (**Help → About Clonaut**) shows the path in use.
 
 ## Running from source
 
@@ -229,48 +228,48 @@ clonaut --url http://127.0.0.1:5572 --user user --password secret
 
 ## Usage
 
-- **Remote tab** — «＋ Aggiungi…» (Add) opens a form built from the real fields of
+- **Remotes tab** — «＋ Add…» opens a form built from the real fields of
   the selected backend: required fields are marked `*`, defaults appear as
   placeholders, fixed choices such as `vendor` are drop-downs (editable when
   rclone accepts custom values), advanced options are behind a button. The
-  **Tipo** (Type) menu includes common aliases rclone does not expose: searching
+  **Type** menu includes common aliases rclone does not expose: searching
   **nextcloud** (or owncloud, gdrive, ssh…) leads to the right backend with the
-  matching fields preselected. «Elimina» (Delete) only removes the configuration
+  matching fields preselected. «Delete» only removes the configuration
   entry — it **does not** touch your data. Double-click shows details (secrets
   are masked by rclone as `XXX`).
 - **Nextcloud in two steps** — Type «nextcloud», then the URL
   `https://yourserver/remote.php/dav/files/USERNAME`, user and password (an *app
   password* created in Nextcloud's settings is better): the vendor is already
   set to «Nextcloud».
-- **Transfers tab** — «＋ Nuovo trasferimento» (New transfer): source and
+- **Transfers tab** — «＋ New transfer»: source and
   destination can be `remote-name:path` or local paths (even a single file);
-  «Sfoglia…» (Browse) picks local folders, and existing remotes are suggested as
-  you type. **Escludi** (Exclude) takes comma-separated rclone patterns (e.g.
+  «Browse…» picks local folders, and existing remotes are suggested as
+  you type. **Exclude** takes comma-separated rclone patterns (e.g.
   `.sync_*, .nextcloudsync.log, *.log`). Move and Sync ask for explicit
   confirmation because they delete files.
 - **Dry run** — runs the identical transfer (same filters, same trash) on a
   dedicated `--dry-run` process: the result — "N files, X MiB, M to delete in
-  Ys" — appears in the queue marked «Prova», without touching any file.
-- **Safety trash** — tick «Cestino» in the dialog: `<destination>-cestino` is
+  Ys" — appears in the queue marked «Dry run», without touching any file.
+- **Safety trash** — tick «Trash» in the dialog: `<destination>-trash` is
   proposed (editable; it must **not** be inside the destination). Files deleted
   or overwritten by the transfer go there instead of being removed. Browse them
-  with the **🗑 Cestino** button (enabled on rows that have a trash: transfers,
+  with the **🗑 Trash** button (enabled on rows that have a trash: transfers,
   dry runs and ⏰ schedules) or via right-click.
 - **Tray** — close (or minimize) the window: only the tray icon remains and ⏰
   runs keep going; click the icon to bring the window back (click again to hide
-  it). *Esci* (Quit, in the File menu or tray menu) really exits and stops the
+  it). *Quit* (in the File menu or tray menu) really exits and stops the
   app's rclone daemon.
-- **Repeat automatically** — tick «Ripeti … ogni N ore/minuti/giorni»: a ⏰ row
-  appears and restarts itself at every interval (never in parallel).
-  Right-click: *Avvia ora* (run now), *Modifica…* (edit), *Metti in pausa /
-  Riattiva* (pause / resume), *Rimuovi programmazione* (remove schedule).
+- **Repeat automatically** — tick «Repeat automatically every N
+  minutes/hours/days»: a ⏰ row appears and restarts itself at every interval
+  (never in parallel). Right-click: *Run now*, *Edit…*, *Pause* / *Resume*,
+  *Remove schedule*.
   Editing (also by double-clicking the row) changes paths, mode, exclusions,
   trash and interval; a run already in progress keeps its old settings and the
   changes apply from the next run.
-- **Aiuto → Informazioni su Clonaut** (Help → About) shows the version of
+- **Help → About Clonaut** shows the version of
   Clonaut, rclone, Qt and Python, plus where the app keeps its data.
-- **Annulla** (Cancel) stops the selected job (already transferred files stay
-  where they are); «🧹 Rimuovi completati» (Clear finished) cleans up the view
+- **Cancel** stops the selected job (already transferred files stay
+  where they are); «🧹 Remove finished» cleans up the view
   (⏰ rows stay).
 - **Sync** makes the destination *identical* to the source: files that exist
   only at the destination are deleted, even if they match the exclude patterns

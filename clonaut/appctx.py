@@ -14,7 +14,9 @@ class AppContext:
     api: RcloneApi
     rcd: RcdProcess | None = None      # presente solo se il processo è nostro
     version: str = ""
-    config_desc: str = "predefinito (~/.config/rclone/rclone.conf)"
+    # tradotto alla creazione, non all'import: la lingua è scelta dopo
+    config_desc: str = field(
+        default_factory=lambda: tr("predefinito (~/.config/rclone/rclone.conf)"))
     config_path: str | None = None     # per creare il backend delle prove
     extras: dict = field(default_factory=dict)
     # backend dedicato alle prove a vuoto (--dry-run globale), creato al primo uso

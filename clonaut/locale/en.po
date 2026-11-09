@@ -76,7 +76,7 @@ msgstr "Recent log:"
 msgid "rclone rcd non si è avviato."
 msgstr "rclone rcd did not start."
 
-#: clonaut/app.py:102
+#: clonaut/app.py:102 clonaut/appctx.py:19
 msgid "predefinito (~/.config/rclone/rclone.conf)"
 msgstr "default (~/.config/rclone/rclone.conf)"
 
@@ -88,11 +88,11 @@ msgstr "Starting rclone rcd…"
 msgid "Avvio fallito"
 msgstr "Startup failed"
 
-#: clonaut/appctx.py:38
+#: clonaut/appctx.py:40
 msgid "rclone non trovato: indicane il percorso in File → Impostazioni."
 msgstr "rclone not found: set its path in File → Settings."
 
-#: clonaut/appctx.py:50
+#: clonaut/appctx.py:52
 msgid ""
 "Il backend delle prove non si è avviato.\n"
 "\n"

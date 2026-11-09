@@ -45,19 +45,19 @@
   <screenshots>
     <screenshot type="default">
       <caption>Transfer queue with progress, a dry run and a scheduled sync</caption>
-      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-trasferimenti.png</image>
+      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-transfers.png</image>
     </screenshot>
     <screenshot>
       <caption>Configured remotes</caption>
-      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-remote.png</image>
+      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-remotes.png</image>
     </screenshot>
     <screenshot>
       <caption>New remote form generated from the rclone backend</caption>
-      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-nuovo-remote.png</image>
+      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-new-remote.png</image>
     </screenshot>
     <screenshot>
       <caption>New transfer with exclusions, safety trash and repeat</caption>
-      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-nuovo-trasferimento.png</image>
+      <image>https://raw.githubusercontent.com/gradia64/Clonaut/main/docs/screenshot-new-transfer.png</image>
     </screenshot>
   </screenshots>
 
@@ -83,6 +83,16 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.4.0" date="2026-11-09">
+      <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.4.0</url>
+      <description>
+        <p>English interface (following the system language), AppImage for x86_64
+        and aarch64, AUR packages and a choice of which rclone to use.</p>
+        <p>Fixes: scheduled transfers no longer stop after closing the window, an
+        unresponsive rclone daemon is reported, and a possible crash with
+        PySide6 6.12 is gone.</p>
+      </description>
+    </release>
     <release version="0.3.1" date="2026-11-08">
       <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.3.1</url>
       <description>
