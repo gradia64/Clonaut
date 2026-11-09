@@ -1,6 +1,8 @@
-# Clonaut
+<p align="center">
+  <a href="README.it.md"><img src="https://img.shields.io/badge/Lang-Italiano-blue?style=for-the-badge" alt="Italiano"></a>
+</p>
 
-**English** · [Italiano](README.it.md)
+# Clonaut
 
 *The graphical pilot for rclone.*
 
