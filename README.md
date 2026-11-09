@@ -310,8 +310,8 @@ pyproject.toml              Python package metadata (`clonaut` command)
 main.py, run.sh             run from source
 build-deb.sh                builds the .deb
 build-appimage.sh           builds the AppImages (x86_64, aarch64)
-scripts/                    release key fingerprints, signed-tag check, release notes
-.github/workflows/          CI (tests, metadata, .deb) and release builds
+scripts/                    release key fingerprints, signed-tag check, release notes, AUR upload
+.github/workflows/          CI (tests, metadata, .deb) and release builds (+ AUR)
 packaging/                  .desktop, AppStream metainfo, icons, Debian files, man page
 tests/                      pytest suite (real rclone, Qt offscreen)
 clonaut/

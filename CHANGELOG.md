@@ -3,6 +3,13 @@
 All notable changes to Clonaut are listed here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- The release workflow also builds the AUR package in a clean Arch container
+  from the signed GitHub tag, and after approval publishes `clonaut` and
+  `clonaut-git` to the AUR (`scripts/publish-aur.sh`).
+
 ## [0.4.0] — 2026-11-09
 
 ### Added

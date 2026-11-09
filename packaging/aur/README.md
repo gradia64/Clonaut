@@ -25,43 +25,63 @@ repository and takes the release key's place in `validpgpkeys`, so the
 signature check really runs and this works before the real tag exists. At the end it refreshes `.SRCINFO` next to
 each `PKGBUILD`.
 
-## First publication (once)
+## Publishing (from the release workflow)
 
-1. Create an account on <https://aur.archlinux.org> and add your **SSH public
-   key** in *My Account*.
-2. Configure SSH for the AUR (`~/.ssh/config`):
+The AUR repositories are updated by `.github/workflows/release.yml`, the
+same way as the maintainer's other projects (Plico, OllaDesk):
 
-   ```
-   Host aur.archlinux.org
-     IdentityFile ~/.ssh/aur
-     User aur
-   ```
+- the `arch` job builds the real `PKGBUILD` in a clean `archlinux:base-devel`
+  container: `makepkg` clones the tag from GitHub and **verifies its
+  signature** with the release key, runs the tests in `check()`, then namcap
+  (errors only), install, a test start, and a check that `.SRCINFO` in the
+  repository matches the `PKGBUILD`;
+- after your approval in the `release` environment, `publish` creates the
+  GitHub release and then pushes `PKGBUILD` and `.SRCINFO` of both packages
+  with `scripts/publish-aur.sh` (pinned AUR host key; a package whose files
+  did not change is skipped).
 
-3. For each package, clone the (empty) AUR repository and copy the files:
+The SSH key is a dedicated one, `~/.ssh/aur_clonaut_ci`, stored only as the
+secret `AUR_SSH_PRIVATE_KEY` of the `release` environment. Without the secret
+the step is skipped with a notice. One-time setup:
+
+1. Add `~/.ssh/aur_clonaut_ci.pub` to your AUR account (*My Account* → *SSH
+   Public Key*, one key per line next to the existing ones).
+2. Store the private key in the environment:
 
    ```bash
-   git clone ssh://aur@aur.archlinux.org/clonaut.git aur-clonaut
-   cp packaging/aur/clonaut/{PKGBUILD,.SRCINFO} aur-clonaut/
-   cd aur-clonaut && git add PKGBUILD .SRCINFO
-   git commit -m "Initial release 0.4.0" && git push
+   gh secret set AUR_SSH_PRIVATE_KEY --env release -R gradia64/Clonaut < ~/.ssh/aur_clonaut_ci
    ```
 
-   Same for `clonaut-git` (its `pkgver` is refreshed by `makepkg`, no need to
-   bump it by hand).
+The key gives access to the whole AUR account: the environment approval is
+the last check before anything reaches the AUR. If it leaks, remove it from
+the AUR account and generate a new one.
+
+To put an **already released** tag on the AUR (e.g. the first publication),
+run the workflow by hand with `aur_tag` set to the tag:
+
+```bash
+gh workflow run release.yml -R gradia64/Clonaut -f aur_tag=v0.4.0
+```
+
+It runs `verify`, `arch` and, after approval, only the AUR upload.
 
 ## On every release (stable package)
 
 The source is the signed git tag, so there is no checksum to update
 (`sha256sums=('SKIP')` is correct: the tag signature covers it) and
 `validpgpkeys` holds the release key's primary fingerprint, which a subkey
-rotation does not change. After the signed tag `vX.Y.Z` is pushed to GitHub:
+rotation does not change. Before tagging `vX.Y.Z`:
 
 ```bash
-cd packaging/aur/clonaut
-sed -i 's/^pkgver=.*/pkgver=X.Y.Z/; s/^pkgrel=.*/pkgrel=1/' PKGBUILD
-makepkg --printsrcinfo > .SRCINFO
+sed -i 's/^pkgver=.*/pkgver=X.Y.Z/; s/^pkgrel=.*/pkgrel=1/' packaging/aur/clonaut/PKGBUILD
+packaging/aur/test-in-docker.sh      # also refreshes .SRCINFO
 ```
 
-Then copy `PKGBUILD` and `.SRCINFO` to the AUR clone, commit and push. Users
-need the public key once: `gpg --import packaging/clonaut-release-key.asc`
-(or `gpg --recv-keys` from a keyserver, once it is published there).
+`scripts/check-version.sh` (job `verify`) refuses a tag whose `pkgver`
+differs, and `scripts/publish-aur.sh` refuses a stale `.SRCINFO`. Users need
+the public key once: `gpg --import packaging/clonaut-release-key.asc` (or
+`gpg --recv-keys` from a keyserver, once it is published there).
+
+Publishing by hand still works: `scripts/publish-aur.sh packaging/aur/clonaut
+packaging/aur/clonaut-git` uses your own SSH configuration when
+`AUR_SSH_PRIVATE_KEY` is not set.
