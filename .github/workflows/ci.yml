@@ -80,8 +80,9 @@ jobs:
         env:
           CLONAUT_QT: ${{ matrix.qt }}
         run: |
-          set -o pipefail   # un rclone che non parte deve fermare il job qui
-          rclone version | head -1
+          # Niente pipe verso head: chiudendosi presto manderebbe SIGPIPE (exit 141) a rclone.
+          ver="$(rclone version)"   # un rclone che non parte ferma il job qui (bash -e)
+          echo "${ver%%$'\n'*}"
           python -m pytest -q -rs
 
   metadata:
