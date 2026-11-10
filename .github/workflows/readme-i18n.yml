@@ -1,0 +1,66 @@
+# README.md (inglese, predefinito) e README.it.md (sorgente) devono restare
+# allineati: stesso scheletro e stessi contenuti, non solo stessa lunghezza.
+#
+# Lo script del controllo di contenuto è `.github/readme-i18n-content.py`: la
+# configurazione (varianti, eccezioni) sta in cima al file e si può lanciare
+# anche a mano. Nessun input non fidato entra in questi comandi: i file sono
+# quelli del repository.
+name: README i18n check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: readme-i18n-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: README bilingue (switcher + struttura + contenuto)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Verifica varianti e switcher
+        run: |
+          python3 - <<'PY'
+          import os, re, sys
+          files = ["README.md", "README.it.md"]
+          missing = [f for f in files if not os.path.exists(f)]
+          if missing:
+              print("MANCANO:", missing)
+              sys.exit(1)
+
+          stats = {}
+          for f in files:
+              text = open(f, encoding="utf-8").read()
+              split_key = "# Clonaut" if "# Clonaut" in text else "# "
+              head = text.split(split_key, 1)[0] if split_key in text else text[:500]
+              links = set(re.findall(r'href="(README[^"]*\.md)"', head)) | set(re.findall(r'\]\((README[^)]*\.md)\)', head))
+              expected = {x for x in files if x != f}
+              if links != expected:
+                  print(f"{f}: switcher incoerente -> attesi {expected}, trovati {links}")
+                  sys.exit(1)
+              stats[f] = {
+                  "h2": len(re.findall(r'^## ', text, re.M)),
+                  "h3": len(re.findall(r'^### ', text, re.M)),
+                  "fences": len(re.findall(r'^```', text, re.M)),
+              }
+
+          if stats["README.md"] != stats["README.it.md"]:
+              print(f"struttura non allineata -> {stats['README.md']} vs {stats['README.it.md']}")
+              sys.exit(1)
+
+          print("OK: 2 varianti presenti, switcher coerenti, struttura allineata")
+          for f in files:
+              print(f"  {f}: {stats[f]}")
+          PY
+
+      - name: Contenuto delle varianti (identificatori, voci, blocchi)
+        run: python3 .github/readme-i18n-content.py
