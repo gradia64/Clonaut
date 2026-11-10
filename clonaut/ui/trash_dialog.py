@@ -8,7 +8,7 @@ from ..api import is_remote
 from ..appctx import AppContext
 from ..i18n import tr
 from ..qtcompat import QtCore, QtGui, QtWidgets
-from ..util import human_size
+from ..util import esc, human_size
 
 
 def _fmt_modtime(value: str) -> str:
@@ -99,7 +99,7 @@ class TrashDialog(QtWidgets.QDialog):
                 human_size(entry.get("Size")),
                 _fmt_modtime(str(entry.get("ModTime", ""))),
             ])
-            item.setToolTip(0, str(entry.get("Path", "")))
+            item.setToolTip(0, esc(entry.get("Path", "")))
             self.tree.addTopLevelItem(item)
 
     def _show_placeholder(self, text: str) -> None:
@@ -138,6 +138,6 @@ class TrashDialog(QtWidgets.QDialog):
         try:
             self.ctx.api.purge(self.backup_dir)
         except Exception as exc:  # noqa: BLE001 — anche rcd giù
-            QtWidgets.QMessageBox.critical(self, tr("Svuotamento fallito"), str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Svuotamento fallito"), esc(exc))
             return
         self.refresh()

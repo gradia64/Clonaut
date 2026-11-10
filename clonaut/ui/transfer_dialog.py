@@ -8,6 +8,7 @@ from ..api import ApiError, is_remote
 from ..appctx import AppContext
 from ..i18n import N_, tr
 from ..qtcompat import QtCore, QtWidgets
+from ..util import esc
 
 
 _UNITS = ((N_("ore"), 3600), (N_("minuti"), 60), (N_("giorni"), 86400))
@@ -263,7 +264,7 @@ class TransferDialog(QtWidgets.QDialog):
             try:
                 self.tab.start_dry(mode, src, dst, exclude, trash)
             except ApiError as exc:
-                QtWidgets.QMessageBox.critical(self, tr("Prova non riuscita"), str(exc))
+                QtWidgets.QMessageBox.critical(self, tr("Prova non riuscita"), esc(exc))
                 return
             QtWidgets.QMessageBox.information(
                 self, tr("Prova a vuoto avviata"),
@@ -300,7 +301,7 @@ class TransferDialog(QtWidgets.QDialog):
             jobid = self.tab.start_transfer(mode, src, dst, exclude=exclude,
                                             backup_dir=trash or None)
         except ApiError as exc:
-            QtWidgets.QMessageBox.critical(self, tr("Avvio fallito"), str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Avvio fallito"), esc(exc))
             return
         QtWidgets.QMessageBox.information(
             self, tr("Trasferimento avviato"),

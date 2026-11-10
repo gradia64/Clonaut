@@ -8,6 +8,7 @@ from ..api import ApiError
 from ..appctx import AppContext
 from ..i18n import N_, tr
 from ..qtcompat import QtCore, QtWidgets, Signal
+from ..util import esc
 from .remote_dialog import RemoteDialog
 
 # campi "interessanti" da mostrare nella colonna Riepilogo, in ordine di preferenza
@@ -26,7 +27,7 @@ def _summary(params: dict) -> str:
 
 
 def _show_error(parent, exc: Exception, title: str = N_("Errore")) -> None:
-    QtWidgets.QMessageBox.critical(parent, tr(title), str(exc))
+    QtWidgets.QMessageBox.critical(parent, tr(title), esc(exc))
 
 
 class RemoteDetailsDialog(QtWidgets.QDialog):
