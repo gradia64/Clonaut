@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+from urllib.parse import urlsplit
 
 import requests
 
@@ -36,6 +37,10 @@ class RcloneApi:
         self.url = url.rstrip("/")
         self.timeout = timeout
         self.session = requests.Session()
+        if urlsplit(self.url).hostname in ("127.0.0.1", "localhost", "::1"):
+            # demone sulla stessa macchina: niente proxy dell'ambiente (vedrebbe
+            # le chiamate e le credenziali) né credenziali da ~/.netrc
+            self.session.trust_env = False
         if user:
             self.session.auth = (user, password)
 

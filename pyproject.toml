@@ -11,7 +11,7 @@ license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 authors = [{ name = "Gradia", email = "gradia@disroot.org" }]
 requires-python = ">=3.10"
-dependencies = ["requests>=2.28"]
+dependencies = ["requests>=2.33"]
 keywords = ["rclone", "gui", "qt", "sync", "backup", "cloud-storage"]
 classifiers = [
     "Development Status :: 4 - Beta",

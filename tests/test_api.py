@@ -82,3 +82,13 @@ def test_dead_daemon_is_an_api_error():
     api = RcloneApi(f"http://127.0.0.1:{free_port()}", "u", "p", timeout=2)
     with pytest.raises(ApiError, match="non risponde"):
         api.start_transfer("copy", "/tmp", "/tmp/x")
+
+
+def test_demone_locale_ignora_proxy_e_netrc(monkeypatch):
+    """Il rcd locale non passa da un proxy dell'ambiente né usa ~/.netrc."""
+    from clonaut.api import RcloneApi
+    monkeypatch.setenv("HTTP_PROXY", "http://proxy.invalid:3128")
+    assert RcloneApi("http://127.0.0.1:5572", "u", "p").session.trust_env is False
+    assert RcloneApi("http://localhost:5572").session.trust_env is False
+    # un rcd agganciato altrove segue le impostazioni dell'utente (proxy, CA)
+    assert RcloneApi("https://nas.example:5572", "u", "p").session.trust_env is True
