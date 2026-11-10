@@ -7,13 +7,19 @@ Avvio normale (avvia da solo rclone rcd in locale):
     clonaut
 
 Aggancio a un rclone rcd già in esecuzione:
-    clonaut --url http://127.0.0.1:5572 --user utente --password segreta
+    CLONAUT_RC_PASS=segreta clonaut --url http://127.0.0.1:5572 --user utente
+
+La password dell'API rc arriva dalla variabile CLONAUT_RC_PASS o, da
+terminale, viene chiesta a schermo. `--password` resta accettata, ma sulla
+riga di comando è leggibile da ogni utente con `ps`.
 """
 
 from __future__ import annotations
 
 import argparse
 import gc
+import getpass
+import os
 import sys
 
 from clonaut.api import RcloneApi
@@ -64,10 +70,40 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         prog="clonaut", description=tr("Interfaccia grafica per rclone (rcd REST API)"))
     parser.add_argument("--url", help=tr("aggancia un rcd già avviato (es. http://127.0.0.1:5572)"))
     parser.add_argument("--user", default="", help=tr("utente per l'API rc"))
-    parser.add_argument("--password", default="", help=tr("password per l'API rc"))
+    parser.add_argument("--password", default="", help=tr(
+        "password per l'API rc (visibile a ogni utente con `ps`: meglio la "
+        "variabile CLONAUT_RC_PASS, oppure niente per digitarla)"))
     parser.add_argument("--config", help=tr("file di configurazione rclone da usare"))
     parser.add_argument("--port", type=int, help=tr("porta per il rcd locale (default: casuale)"))
     return parser.parse_args(argv)
+
+
+RC_PASS_ENV = "CLONAUT_RC_PASS"
+
+
+def _resolve_rc_password(args: argparse.Namespace) -> str:
+    """Password rc per l'aggancio: variabile d'ambiente o prompt, non argv.
+
+    Gli argomenti del processo sono leggibili da ogni utente con `ps` (per
+    questo anche il rcd locale riceve le credenziali dall'ambiente, vedi
+    rcd.py). Senza --password si usa CLONAUT_RC_PASS; se manca, da terminale
+    la password viene chiesta a schermo.
+    """
+    if not args.url or not args.user:
+        return args.password
+    if args.password:
+        print(tr("Attenzione: la password passata con --password è visibile a ogni "
+                 "utente con `ps`; usa la variabile CLONAUT_RC_PASS."), file=sys.stderr)
+        return args.password
+    password = os.environ.get(RC_PASS_ENV, "")
+    if password:
+        return password
+    if sys.stdin is not None and sys.stdin.isatty():
+        return getpass.getpass(tr("Password per l'API rc:") + " ")
+    raise RuntimeError(
+        tr("Manca la password dell'API rc: indicala con la variabile d'ambiente "
+           "CLONAUT_RC_PASS (quella sulla riga di comando è leggibile da ogni "
+           "utente con `ps`)."))
 
 
 def _build_context(args: argparse.Namespace, values: dict) -> AppContext:
@@ -108,6 +144,12 @@ def main(argv: list[str] | None = None) -> int:
     values = app_settings.load()
     i18n.setup(i18n.detect(values.get("language", "")))
     args = _parse_args(argv if argv is not None else sys.argv[1:])
+    # il prompt della password va chiesto prima che compaiano le finestre
+    password_error: RuntimeError | None = None
+    try:
+        args.password = _resolve_rc_password(args)
+    except RuntimeError as exc:
+        password_error = exc
 
     app = make_app()
 
@@ -122,6 +164,8 @@ def main(argv: list[str] | None = None) -> int:
     QtWidgets.QApplication.processEvents()
 
     try:
+        if password_error is not None:
+            raise password_error
         ctx = _build_context(args, values)
     except Exception as exc:  # noqa: BLE001 — errore di avvio mostrato all'utente
         progress.cancel()
