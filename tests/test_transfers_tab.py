@@ -126,3 +126,46 @@ def test_schedule_with_dead_daemon_records_the_error(rcd, qapp, tree):
     assert "ultimo: ✕" in tab._rec_item[def_id].text(4)
     saved = json.loads((settings.config_dir() / "recurring.json").read_text())
     assert saved["definitions"][0]["last_status"] == "err"
+
+
+def test_recurring_con_valori_sbagliati_si_carica_corretto(qapp):
+    """Penetration test Strix (vuln-0006): un campo strano non blocca l'avvio."""
+    from clonaut.ui.transfers_tab import TransfersTab
+    path = settings.config_dir() / "recurring.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"definitions": [
+        {"id": "rec-1", "mode": "copy", "src": "/a", "dst": "/b",
+         "interval": "ogni ora", "exclude": "*.log", "last_start": "ieri",
+         "last_status": {"x": 1}, "backup_dir": None},
+        {"id": "rec-2", "mode": "cancella-tutto", "src": ["/x"], "dst": 5,
+         "interval": 1e300, "enabled": "no", "last_start": float("nan")},
+        {"id": "rec-٣", "src": "/c", "dst": "/d"},            # cifra non ASCII
+        {"id": 7, "src": "/e", "dst": "/f"},
+    ]}).replace("NaN", '"NaN"'))
+    tab = TransfersTab(_Ctx())
+    assert sorted(tab._recurrent) == ["rec-1", "rec-2"]
+    one, two = tab._recurrent["rec-1"], tab._recurrent["rec-2"]
+    assert (one["interval"], one["exclude"], one["last_start"], one["last_status"],
+            one["backup_dir"]) == (3600, [], None, None, "")
+    assert (two["mode"], two["src"], two["dst"]) == ("copy", "", "5")
+    assert two["interval"] == 999 * 86400
+    from clonaut.api import ApiError
+
+    class _ApiGiu(_OfflineApi):
+        def start_transfer(self, *_a, **_k):
+            raise ApiError("rcd giù")
+
+    tab.ctx = type("Ctx", (_Ctx,), {"api": _ApiGiu()})()
+    tab._on_rec_tick()                    # il timer non deve cadere
+    assert tab._recurrent["rec-1"]["last_status"] == "err"
+    tab._save_recurring()
+    again = TransfersTab(_Ctx())
+    assert again._recurrent["rec-1"]["interval"] == 3600
+
+
+def test_recurring_annidato_all_infinito(qapp):
+    from clonaut.ui.transfers_tab import TransfersTab
+    path = settings.config_dir() / "recurring.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("[" * 100000 + "]" * 100000)
+    assert TransfersTab(_Ctx()).tree.topLevelItemCount() == 0

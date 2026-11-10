@@ -45,6 +45,52 @@ def _mode(mode: str, default: str | None = None) -> str:
     return mode if default is None else default
 
 
+_MAX_INTERVAL = 999 * 86400   # il massimo che il dialogo permette (999 giorni)
+
+
+def _text(value) -> str:
+    return str(value) if isinstance(value, (str, int, float)) else ""
+
+
+def _parse_recurring(d) -> tuple[str, dict] | None:
+    """Una programmazione letta da recurring.json, con ogni campo del tipo giusto.
+
+    Il file si può modificare a mano o rovinare: una voce strana viene
+    saltata o corretta qui, all'unico punto d'ingresso, invece di far
+    cadere l'avvio o il timer delle programmazioni più tardi.
+    """
+    if not isinstance(d, dict):
+        return None
+    def_id = d.get("id")
+    if (not isinstance(def_id, str) or not def_id.startswith("rec-")
+            or not def_id[4:].isascii() or not def_id[4:].isdecimal()):
+        return None
+    mode = d.get("mode", "copy")
+    interval = d.get("interval")
+    if isinstance(interval, bool) or not isinstance(interval, (int, float)):
+        interval = 3600
+    elif interval != interval or interval in (float("inf"), float("-inf")):
+        interval = 3600                          # NaN o infinito
+    last_start = d.get("last_start")
+    if (isinstance(last_start, bool) or not isinstance(last_start, (int, float))
+            or last_start != last_start or abs(last_start) == float("inf")):
+        last_start = None
+    last_status = d.get("last_status")
+    exclude = d.get("exclude")
+    return def_id, {
+        "mode": mode if mode in _MODE_LABEL else "copy",
+        "src": _text(d.get("src")), "dst": _text(d.get("dst")),
+        "exclude": [_text(x) for x in exclude] if isinstance(exclude, list) else [],
+        "interval": min(_MAX_INTERVAL, max(60, int(interval))),
+        "backup_dir": _text(d.get("backup_dir")),
+        "enabled": bool(d.get("enabled", True)),
+        "last_start": last_start,
+        "last_status": last_status if last_status in ("ok", "err") else None,
+        "last_error": _text(d.get("last_error")),
+        "current_jid": None,   # il rcd è nuovo: nessun giro in corso
+    }
+
+
 class TransfersTab(QtWidgets.QWidget):
     """Coda dei trasferimenti con barre di avanzamento aggiornate dal PollWorker."""
 
@@ -439,27 +485,14 @@ class TransfersTab(QtWidgets.QWidget):
     def _load_recurring(self) -> None:
         try:
             data = json.loads(_rec_path().read_text())
-        except (OSError, ValueError):
+        except (OSError, ValueError, RecursionError):
             return
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) or not isinstance(data.get("definitions"), list):
             return   # file estraneo o corrotto: si riparte da zero
-        for d in data.get("definitions") or []:
-            if not isinstance(d, dict):
-                continue
-            def_id = str(d.get("id") or "")
-            if not def_id.startswith("rec-") or not def_id[4:].isdigit():
-                continue
-            self._recurrent[def_id] = {
-                "mode": d.get("mode", "copy"), "src": d.get("src", ""),
-                "dst": d.get("dst", ""), "exclude": d.get("exclude") or [],
-                "interval": max(60, int(d.get("interval") or 3600)),
-                "backup_dir": d.get("backup_dir", ""),
-                "enabled": bool(d.get("enabled", True)),
-                "last_start": d.get("last_start"),
-                "last_status": d.get("last_status"),
-                "last_error": d.get("last_error", ""),
-                "current_jid": None,   # il rcd è nuovo: nessun giro in corso
-            }
+        for d in data["definitions"]:
+            parsed = _parse_recurring(d)
+            if parsed is not None:
+                self._recurrent[parsed[0]] = parsed[1]
         if self._recurrent:
             self._rec_next_id = max(int(k.rsplit("-", 1)[-1])
                                     for k in self._recurrent) + 1
@@ -473,9 +506,8 @@ class TransfersTab(QtWidgets.QWidget):
                 "definitions": [{"id": k, **{f: d[f] for f in keys}}
                                 for k, d in self._recurrent.items()]}
         try:
-            path = _rec_path()
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+            app_settings.write_private(
+                _rec_path(), json.dumps(data, indent=2, ensure_ascii=False))
         except OSError:
             pass
 
