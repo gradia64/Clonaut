@@ -88,7 +88,7 @@ def test_errore_del_remote_non_diventa_un_link(qapp, monkeypatch):
     seen = []
     monkeypatch.setattr(QtWidgets.QMessageBox, "critical",
                         staticmethod(lambda _p, title, text, *a, **k: seen.append(text)))
-    remotes_tab._show_error(None, RuntimeError(
-        'config/delete → HTTP 500: <a href="https://evil.example">dettagli</a>'))
+    message = 'config/delete → HTTP 500: <a href="https://evil.example">dettagli</a>'
+    remotes_tab._show_error(None, RuntimeError(message))
     assert seen and "<a " not in seen[0]
-    assert "https://evil.example" in _as_shown(seen[0])
+    assert _as_shown(seen[0]) == message      # mostrato com'è, link compreso
