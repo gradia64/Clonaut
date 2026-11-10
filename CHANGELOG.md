@@ -5,6 +5,8 @@ All notable changes to Clonaut are listed here. Versions follow
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-11-10
+
 ### Security
 Fixes from a white-box penetration test (Strix):
 - Attach mode: the rc password is read from `CLONAUT_RC_PASS` or asked in the
@@ -143,6 +145,7 @@ First public release.
 
 First packaged version (as "GUI rclone").
 
+[0.4.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.1
 [0.4.0]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.0
 [0.3.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.3.1
 [0.3.0]: https://github.com/gradia64/Clonaut/commit/5f69e4a

@@ -1,3 +1,17 @@
+clonaut (0.4.1) unstable; urgency=medium
+
+  * Security fixes from a white-box penetration test (Strix):
+    - Attach mode reads the rc password from CLONAUT_RC_PASS or asks in the
+      terminal; --password still works but warns (visible in ps).
+    - The local rclone rcd is trusted only if Clonaut started the process
+      listening on the port; with a random port, startup retries elsewhere.
+    - Errors and paths from rclone are never rendered as HTML.
+    - settings.json, recurring.json and the rcd logs are owner-only (0600).
+    - A damaged recurring.json no longer prevents startup.
+    - Calls to the local rcd ignore proxy settings and ~/.netrc.
+
+ -- @MAINTAINER@  Tue, 10 Nov 2026 17:30:34 +0100
+
 clonaut (0.4.0) unstable; urgency=medium
 
   * English user interface: follows the system language, with a Language

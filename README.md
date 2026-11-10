@@ -121,8 +121,8 @@ From version 0.4.0 every release has an AppImage for **x86_64** and
 inside, nothing to install.
 
 ```bash
-chmod +x Clonaut-0.4.0-x86_64.AppImage
-./Clonaut-0.4.0-x86_64.AppImage
+chmod +x Clonaut-0.4.1-x86_64.AppImage
+./Clonaut-0.4.1-x86_64.AppImage
 ```
 
 - **Requirements:** glibc 2.34 or later on x86_64 (Debian 12, Ubuntu 22.04,
@@ -162,7 +162,7 @@ The AUR package `clonaut` builds from the signed tag and `makepkg` checks the
 signature (`validpgpkeys`). To check a tag yourself:
 
 ```bash
-scripts/verify-tag.sh v0.4.0
+scripts/verify-tag.sh v0.4.1
 ```
 
 It uses a temporary keyring holding only that public key, and accepts the tag
@@ -172,7 +172,7 @@ attestation:
 
 ```bash
 sha256sum -c SHA256SUMS --ignore-missing
-gh attestation verify Clonaut-0.4.0-x86_64.AppImage -R gradia64/Clonaut
+gh attestation verify Clonaut-0.4.1-x86_64.AppImage -R gradia64/Clonaut
 ```
 
 ## Requirements

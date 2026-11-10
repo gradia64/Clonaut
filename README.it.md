@@ -120,8 +120,8 @@ un solo file con dentro Python, Qt (PyQt6) e una copia di rclone, niente da
 installare.
 
 ```bash
-chmod +x Clonaut-0.4.0-x86_64.AppImage
-./Clonaut-0.4.0-x86_64.AppImage
+chmod +x Clonaut-0.4.1-x86_64.AppImage
+./Clonaut-0.4.1-x86_64.AppImage
 ```
 
 - **Requisiti:** glibc 2.34 o successiva su x86_64 (Debian 12, Ubuntu 22.04,
@@ -161,7 +161,7 @@ Il pacchetto AUR `clonaut` si costruisce dal tag firmato e `makepkg` ne
 verifica la firma (`validpgpkeys`). Per verificare un tag a mano:
 
 ```bash
-scripts/verify-tag.sh v0.4.0
+scripts/verify-tag.sh v0.4.1
 ```
 
 Usa un portachiavi temporaneo con la sola chiave pubblica e accetta il tag
@@ -171,7 +171,7 @@ un'attestazione di provenienza:
 
 ```bash
 sha256sum -c SHA256SUMS --ignore-missing
-gh attestation verify Clonaut-0.4.0-x86_64.AppImage -R gradia64/Clonaut
+gh attestation verify Clonaut-0.4.1-x86_64.AppImage -R gradia64/Clonaut
 ```
 
 ## Requisiti

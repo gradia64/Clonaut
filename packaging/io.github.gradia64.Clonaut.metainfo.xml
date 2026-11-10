@@ -83,6 +83,15 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.4.1" date="2026-11-10">
+      <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.4.1</url>
+      <description>
+        <p>Security fixes from a penetration test: the rc password is kept off
+        the command line in attach mode, only the rclone daemon started by
+        Clonaut is trusted, messages from rclone are never shown as HTML, and
+        settings, schedules and logs are readable by the owner only.</p>
+      </description>
+    </release>
     <release version="0.4.0" date="2026-11-09">
       <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.4.0</url>
       <description>
