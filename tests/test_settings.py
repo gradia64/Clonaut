@@ -37,3 +37,37 @@ def test_migration_from_rclone_gui(tmp_path, monkeypatch):
     assert new == tmp_path / "clonaut"
     assert (new / "recurring.json").exists()
     assert settings.load()["close_to_tray"] is False
+
+
+# --- permessi dei file di stato (penetration test Strix, vuln-0003) ---
+
+def _mode(path):
+    import stat
+    return stat.S_IMODE(path.stat().st_mode)
+
+
+def test_settings_e_programmazioni_solo_per_il_proprietario(qapp):
+    from clonaut.ui.transfers_tab import TransfersTab
+    import test_transfers_tab as ttt
+    settings.save(dict(settings.DEFAULTS))
+    assert _mode(settings.settings_path()) == 0o600
+    tab = TransfersTab(ttt._Ctx())
+    tab._save_recurring()
+    assert _mode(settings.config_dir() / "recurring.json") == 0o600
+
+
+def test_file_vecchi_larghi_vengono_sistemati():
+    path = settings.settings_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{}")
+    path.chmod(0o644)
+    settings.save(dict(settings.DEFAULTS))
+    assert _mode(path) == 0o600
+
+
+def test_log_del_demone_solo_per_il_proprietario(tmp_path):
+    from clonaut.rcd import RcdProcess
+    proc = RcdProcess("/bin/true", 1, "u", "p", log_path=tmp_path / "rcd-1.log")
+    proc.start()
+    proc.proc.wait()
+    assert _mode(tmp_path / "rcd-1.log") == 0o600

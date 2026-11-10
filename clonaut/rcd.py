@@ -12,7 +12,7 @@ from pathlib import Path
 
 from .api import RcloneApi
 from .i18n import tr
-from .settings import cache_dir
+from .settings import cache_dir, make_private
 
 LOG_DIR = cache_dir()
 LOG_KEEP_DAYS = 7      # i log dei demoni più vecchi di così vengono rimossi
@@ -190,6 +190,9 @@ class RcdProcess:
     def start(self) -> None:
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         prune_logs(self.log_path.parent)
+        # creato qui a 0600: rclone scrive in un file esistente senza
+        # cambiarne i permessi (il log elenca ogni file sincronizzato)
+        make_private(self.log_path)
         cmd = [
             self.exe, "rcd",
             f"--rc-addr=127.0.0.1:{self.port}",
