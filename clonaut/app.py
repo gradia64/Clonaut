@@ -30,6 +30,7 @@ from clonaut.qtcompat import QtCore, QtWidgets
 from clonaut import settings as app_settings
 from clonaut.rcd import RcdStartError, find_rclone, launch_rcd
 from clonaut.ui.main_window import MainWindow
+from clonaut.util import esc
 
 
 def collect_garbage_in_main_thread(app: QtWidgets.QApplication,
@@ -166,7 +167,7 @@ def main(argv: list[str] | None = None) -> int:
         ctx = _build_context(args, values)
     except Exception as exc:  # noqa: BLE001 — errore di avvio mostrato all'utente
         progress.cancel()
-        QtWidgets.QMessageBox.critical(None, tr("Avvio fallito"), str(exc))
+        QtWidgets.QMessageBox.critical(None, tr("Avvio fallito"), esc(exc))
         return 1
     progress.cancel()
 

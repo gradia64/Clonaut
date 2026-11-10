@@ -12,7 +12,7 @@ from ..appctx import AppContext
 from ..i18n import N_, tr
 from ..qtcompat import QtCore, QtGui, QtWidgets, Signal
 from .. import settings as app_settings
-from ..util import fmt_duration, fmt_eta, human_size, human_speed
+from ..util import esc, fmt_duration, fmt_eta, human_size, human_speed
 from ..worker import DryRunWorker
 from .transfer_dialog import TransferDialog
 from .trash_dialog import TrashDialog
@@ -95,6 +95,8 @@ class TransfersTab(QtWidgets.QWidget):
         bar.addStretch(1)
         self.lbl_agg = QtWidgets.QLabel("")
         self.lbl_agg.setProperty("role", "hint")
+        # può contenere il testo di un errore: mai interpretarlo come HTML
+        self.lbl_agg.setTextFormat(QtCore.Qt.TextFormat.PlainText)
         bar.addWidget(self.lbl_agg)
         layout.addLayout(bar)
 
@@ -196,7 +198,7 @@ class TransfersTab(QtWidgets.QWidget):
         item.setText(1, tr("Prova · {mode}").format(mode=_mode(mode)))
         for col, path in ((2, src), (3, dst)):
             item.setText(col, path)
-            item.setToolTip(col, path)
+            item.setToolTip(col, esc(path))
         item.setText(4, tr("🧪 Prova in corso…"))
         item.setForeground(4, _BLUE)
         item.setToolTip(4, tr("La prova è un trasferimento vero senza scritture: "
@@ -229,7 +231,7 @@ class TransfersTab(QtWidgets.QWidget):
         else:
             item.setText(4, tr("✕ Prova fallita"))
             item.setForeground(4, _RED)
-            item.setToolTip(4, message)
+            item.setToolTip(4, esc(message))
             bar.setStyleSheet("QProgressBar::chunk { background: #d05a5a; }")
         # marcata come finita: «Rimuovi completati» può toglierla
         item.setData(4, QtCore.Qt.ItemDataRole.UserRole, True)
@@ -327,8 +329,8 @@ class TransfersTab(QtWidgets.QWidget):
         item.setText(1, _mode(meta.get("mode", ""), "—"))
         item.setText(2, meta.get("src", "—"))
         item.setText(3, meta.get("dst", "—"))
-        item.setToolTip(2, meta.get("src", ""))
-        item.setToolTip(3, meta.get("dst", ""))
+        item.setToolTip(2, esc(meta.get("src", "")))
+        item.setToolTip(3, esc(meta.get("dst", "")))
 
         finished = bool(status.get("finished"))
         success = bool(status.get("success"))
@@ -347,7 +349,7 @@ class TransfersTab(QtWidgets.QWidget):
 
         item.setText(4, state)
         item.setForeground(4, color)
-        item.setToolTip(4, error or state)
+        item.setToolTip(4, esc(error) or state)
 
         bytes_done = stats.get("bytes") or 0
         total = stats.get("totalBytes") or 0
@@ -426,8 +428,8 @@ class TransfersTab(QtWidgets.QWidget):
         item.setText(1, _mode(d["mode"]))
         item.setText(2, d["src"])
         item.setText(3, d["dst"])
-        item.setToolTip(2, d["src"])
-        item.setToolTip(3, d["dst"])
+        item.setToolTip(2, esc(d["src"]))
+        item.setToolTip(3, esc(d["dst"]))
 
     def _edit_recurring(self, def_id: str) -> None:
         d = self._recurrent.get(def_id)
@@ -717,7 +719,7 @@ class TransfersTab(QtWidgets.QWidget):
         try:
             self.ctx.api.stop_job(jid)
         except ApiError as exc:
-            QtWidgets.QMessageBox.critical(self, tr("Annullamento fallito"), str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Annullamento fallito"), esc(exc))
 
     def _on_clear(self) -> None:
         for jid, (item, _bar) in list(self._rows.items()):

@@ -8,7 +8,7 @@ from ..api import ApiError
 from ..appctx import AppContext
 from ..i18n import tr
 from ..qtcompat import QtCore, QtWidgets
-from ..util import strip_html
+from ..util import esc, strip_html
 
 _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 
@@ -58,7 +58,7 @@ class RemoteDialog(QtWidgets.QDialog):
             self._providers = sorted(ctx.api.providers(), key=lambda p: p.get("Name", ""))
             self._existing = set(ctx.api.list_remotes())
         except ApiError as exc:
-            QtWidgets.QMessageBox.critical(self, tr("Errore"), str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Errore"), esc(exc))
             self._providers, self._existing = [], set()
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -339,6 +339,6 @@ class RemoteDialog(QtWidgets.QDialog):
         try:
             self.ctx.api.create_remote(name, type_, self._collect_params())
         except ApiError as exc:
-            QtWidgets.QMessageBox.critical(self, tr("Creazione fallita"), str(exc))
+            QtWidgets.QMessageBox.critical(self, tr("Creazione fallita"), esc(exc))
             return
         super().accept()

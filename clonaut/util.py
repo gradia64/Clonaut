@@ -84,6 +84,22 @@ def strip_html(text: str) -> str:
     return "\n".join(ln for ln in lines if ln)[:500]
 
 
+def esc(text) -> str:
+    """Testo arbitrario (errori di rclone, percorsi) per message box e tooltip.
+
+    Qt mostra come HTML un testo che «sembra» HTML: un errore o un nome di
+    file venuto da un remote potrebbe così inserire link o immagini. Senza
+    «<» il testo non può contenere tag e resta com'è; altrimenti viene
+    convertito e marcato come HTML in modo esplicito (con <qt>, perché Qt
+    guarda solo la prima riga per decidere), conservando a capo e spazi.
+    """
+    text = str(text or "")
+    if "<" not in text:
+        return text
+    body = html.escape(text, quote=False).replace("  ", "&nbsp; ").replace("\n", "<br>")
+    return f"<qt>{body}</qt>"
+
+
 APP_QSS = """
 * { font-size: 13px; }
 QMainWindow, QDialog { background: #f4f5f7; }
