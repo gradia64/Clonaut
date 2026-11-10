@@ -36,6 +36,30 @@ def cache_dir() -> Path:
     return Path(base) / "clonaut"
 
 
+def make_private(path: Path) -> None:
+    """Crea il file (se manca) e lo rende leggibile solo dal proprietario.
+
+    Impostazioni, programmazioni e log del demone contengono nomi dei remote
+    e percorsi sincronizzati: con l'umask tipico nascerebbero 0644, leggibili
+    dagli altri utenti se la home lo permette. Va chiamata prima di scrivere;
+    sistema anche i file creati larghi dalle versioni precedenti. Niente
+    umask globale: rclone la erediterebbe e cambierebbe i permessi dei file
+    sincronizzati.
+    """
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
+    try:
+        os.fchmod(fd, 0o600)
+    finally:
+        os.close(fd)
+
+
+def write_private(path: Path, text: str) -> None:
+    """Scrive un file di stato con permessi 0600 (vedi make_private)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    make_private(path)
+    path.write_text(text)
+
+
 def _migrate_legacy(old: Path, new: Path) -> None:
     """Copia i file del vecchio nome «GUI rclone» se la nuova cartella non esiste."""
     if new.exists() or not old.is_dir():
@@ -45,7 +69,7 @@ def _migrate_legacy(old: Path, new: Path) -> None:
         for name in ("settings.json", "recurring.json"):
             src = old / name
             if src.is_file():
-                (new / name).write_bytes(src.read_bytes())
+                write_private(new / name, src.read_text())
     except OSError:
         pass
 
@@ -76,6 +100,4 @@ def _coerce(key: str, value):
 
 def save(values: dict) -> None:
     data = {key: _coerce(key, values.get(key, DEFAULTS[key])) for key in DEFAULTS}
-    path = settings_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2))
+    write_private(settings_path(), json.dumps(data, indent=2))
