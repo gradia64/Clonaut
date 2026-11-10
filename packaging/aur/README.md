@@ -8,8 +8,11 @@ Two packages for the [Arch User Repository](https://aur.archlinux.org):
 | [`clonaut-git`](clonaut-git/PKGBUILD) | the latest commit on `main` | from `git describe`, e.g. `0.4.0.r3.gabc1234` |
 
 Both build a wheel with `python-build`, run the test suite in `check()`
-(Qt offscreen, PyQt6, the system `rclone`) and install the desktop entry,
-AppStream metadata, icons, man page and license.
+(Qt offscreen, PyQt6, the system `rclone`; `tests/test_publish_aur.py` and
+`tests/test_aur_release.py` are excluded, because they compare `.SRCINFO` with
+the `PKGBUILD` and `test-in-docker.sh` regenerates it only after the build) and
+install the desktop entry, AppStream metadata, icons, man page, license and the
+`README.md`, `README.it.md` and `CHANGELOG.md` files in `/usr/share/doc/$pkgname`.
 
 ## Test locally (any distribution with Docker)
 
@@ -27,8 +30,8 @@ each `PKGBUILD`.
 
 ## Publishing (from the maintainer's machine)
 
-The release workflow `.github/workflows/release.yml` tests, the maintainer
-publishes:
+The release workflow `.github/workflows/release.yml` tests the packages; the
+maintainer publishes them:
 
 - the `arch` job builds the real `PKGBUILD` in a clean `archlinux:base-devel`
   container: `makepkg` clones the tag from GitHub and **verifies its
