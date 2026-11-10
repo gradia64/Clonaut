@@ -5,22 +5,22 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: en\n"
 
-#: clonaut/api.py:52
+#: clonaut/api.py:57
 #, python-brace-format
 msgid "rclone rcd non risponde ({endpoint}): {error}"
 msgstr "rclone rcd is not responding ({endpoint}): {error}"
 
-#: clonaut/api.py:63
+#: clonaut/api.py:68
 #, python-brace-format
 msgid "{endpoint}: risposta non JSON ({error})"
 msgstr "{endpoint}: response is not JSON ({error})"
 
-#: clonaut/api.py:106
+#: clonaut/api.py:111
 #, python-brace-format
 msgid "modalità di trasferimento sconosciuta: {mode}"
 msgstr "unknown transfer mode: {mode}"
 
-#: clonaut/api.py:115
+#: clonaut/api.py:120
 msgid ""
 "«Sposta» e «Sincronizza» operano su cartelle: per un file singolo usa la "
 "modalità «Copia»."
