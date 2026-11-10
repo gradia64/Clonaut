@@ -68,3 +68,17 @@ def test_srcinfo_in_the_repo_matches_the_pkgbuild():
         ver = [line.split("=", 1)[1] for line in (d / "PKGBUILD").read_text().splitlines()
                if line.startswith("pkgver=")]
         assert f"\tpkgver = {ver[0]}" in (d / ".SRCINFO").read_text(), name
+
+
+def test_pkgbuild_check_skips_the_aur_publishing_tests():
+    """Il check() dei PKGBUILD non deve dipendere dal .SRCINFO.
+
+    test-in-docker.sh rigenera il .SRCINFO solo dopo makepkg: se il check()
+    eseguisse i test che lo confrontano col PKGBUILD, dopo un cambio di
+    versione la build fallirebbe prima di poterlo rigenerare.
+    """
+    for name in ("clonaut", "clonaut-git"):
+        text = (ROOT / "packaging" / "aur" / name / "PKGBUILD").read_text()
+        check = text.split("check() {", 1)[1].split("\n}", 1)[0]
+        for test in ("tests/test_publish_aur.py", "tests/test_aur_release.py"):
+            assert f"--ignore={test}" in check, (name, test)
