@@ -8,12 +8,12 @@
 
 Clonaut is a desktop GUI (Qt: PySide6 or PyQt6) for [rclone](https://rclone.org),
 built on top of the `rclone rcd` REST API: the app starts its own local rclone
-daemon and drives it over HTTP. rclone does all the real work — Clonaut is just
-the cockpit.
+daemon and drives it over HTTP with `requests`. rclone does all the real work —
+Clonaut is just the cockpit.
 
 The interface is available in **English** and **Italian**. It follows the
 system language (Italian when the system is in Italian, English otherwise);
-**File → Settings…** can pick one, and `CLONAUT_LANG=en|it` overrides both.
+**File → Settings…** can pick one, and `CLONAUT_LANG=it|en` overrides both.
 More languages are welcome — see [Contributing](#contributing).
 
 **Features:**
@@ -28,8 +28,8 @@ More languages are welcome — see [Contributing](#contributing).
 - **Safety trash** — files that would be **deleted or overwritten** at the
   destination are moved to a trash folder (keeping their path) instead of
   disappearing. Browse it from the GUI: the **🗑 Trash** button, or a
-  right-click on the row, opens a viewer with the file list, "open in file
-  manager" and "empty trash". The trash keeps the latest previous version of
+  right-click on the row, opens a viewer with the file list, «Open in file
+  manager» and «Empty trash». The trash keeps the latest previous version of
   each file: empty it from time to time.
 - **Tray and settings** — tray icon (click to show/hide, quit, tooltip with
   active transfers). **File → Settings…**: close/minimize to
@@ -98,9 +98,9 @@ The package installs:
 
 Declared dependencies: `python3`, `python3-requests`, `python3-pyqt6`, `rclone`
 (the app uses PySide6 if available, otherwise PyQt6 — the code supports both).
-It replaces the older `gui-rclone` package. Uninstall with
-`sudo apt remove clonaut`. To set the Maintainer field when rebuilding:
-`MAINTAINER="Name <email>" ./build-deb.sh`.
+Uninstall with `sudo apt remove clonaut`. Rebuilding after changes:
+`./build-deb.sh` (metadata in `packaging/`; to set the Maintainer field:
+`MAINTAINER="Name <email>" ./build-deb.sh`).
 
 ## Installation (Arch Linux, AUR)
 
@@ -339,7 +339,7 @@ clonaut/
     └── settings_dialog.py  tray, notification, rclone-path and language settings
 ```
 
-## Technical notes
+## Curious technical details
 
 - In rclone **every rc call creates a job**, including `job/status` and
   `core/stats`: using `job/list` as the queue source would flood it with the
@@ -395,4 +395,5 @@ and lists what is left to translate.
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE).
+GPL-3 — see `/usr/share/common-licenses/GPL-3` on Debian or
+<https://www.gnu.org/licenses/gpl-3.0.html>.
