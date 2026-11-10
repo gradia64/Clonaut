@@ -26,39 +26,65 @@ msgid ""
 "modalità «Copia»."
 msgstr "«Move» and «Sync» work on folders: for a single file use «Copy»."
 
-#: clonaut/app.py:64
+#: clonaut/app.py:70
 msgid "Interfaccia grafica per rclone (rcd REST API)"
 msgstr "Graphical interface for rclone (rcd REST API)"
 
-#: clonaut/app.py:65
+#: clonaut/app.py:71
 msgid "aggancia un rcd già avviato (es. http://127.0.0.1:5572)"
 msgstr "attach to an rcd that is already running (e.g. http://127.0.0.1:5572)"
 
-#: clonaut/app.py:66
+#: clonaut/app.py:72
 msgid "utente per l'API rc"
 msgstr "user for the rc API"
 
-#: clonaut/app.py:67
-msgid "password per l'API rc"
-msgstr "password for the rc API"
+#: clonaut/app.py:73
+msgid ""
+"password per l'API rc (visibile a ogni utente con `ps`: meglio la "
+"variabile CLONAUT_RC_PASS, oppure niente per digitarla)"
+msgstr ""
+"password for the rc API (visible to every user via `ps`: prefer the "
+"CLONAUT_RC_PASS variable, or leave it out to type it)"
 
-#: clonaut/app.py:68
+#: clonaut/app.py:76
 msgid "file di configurazione rclone da usare"
 msgstr "rclone configuration file to use"
 
-#: clonaut/app.py:69
+#: clonaut/app.py:77
 msgid "porta per il rcd locale (default: casuale)"
 msgstr "port for the local rcd (default: random)"
 
-#: clonaut/app.py:79
+#: clonaut/app.py:95
+msgid ""
+"Attenzione: la password passata con --password è visibile a ogni utente "
+"con `ps`; usa la variabile CLONAUT_RC_PASS."
+msgstr ""
+"Warning: a password given with --password is visible to every user via "
+"`ps`; use the CLONAUT_RC_PASS variable."
+
+#: clonaut/app.py:102
+msgid "Password per l'API rc:"
+msgstr "Password for the rc API:"
+
+#: clonaut/app.py:104
+msgid ""
+"Manca la password dell'API rc: indicala con la variabile d'ambiente "
+"CLONAUT_RC_PASS (quella sulla riga di comando è leggibile da ogni utente "
+"con `ps`)."
+msgstr ""
+"The rc API password is missing: set it with the CLONAUT_RC_PASS "
+"environment variable (one on the command line is readable by every user "
+"via `ps`)."
+
+#: clonaut/app.py:115
 msgid "gestito dal rcd esterno"
 msgstr "managed by the external rcd"
 
-#: clonaut/app.py:87
+#: clonaut/app.py:123
 msgid "rclone non trovato. Fonti provate:"
 msgstr "rclone not found. Sources tried:"
 
-#: clonaut/app.py:88
+#: clonaut/app.py:124
 msgid ""
 "Installalo (es. `sudo apt install rclone`, `sudo pacman -S rclone` o da "
 "https://rclone.org), oppure indica il percorso con la variabile "
@@ -68,23 +94,23 @@ msgstr ""
 "from https://rclone.org), or set its path with the CLONAUT_RCLONE "
 "environment variable."
 
-#: clonaut/app.py:100
+#: clonaut/app.py:136
 msgid "Log recente:"
 msgstr "Recent log:"
 
-#: clonaut/app.py:100
+#: clonaut/app.py:136
 msgid "rclone rcd non si è avviato."
 msgstr "rclone rcd did not start."
 
-#: clonaut/app.py:102 clonaut/appctx.py:19
+#: clonaut/app.py:138 clonaut/appctx.py:19
 msgid "predefinito (~/.config/rclone/rclone.conf)"
 msgstr "default (~/.config/rclone/rclone.conf)"
 
-#: clonaut/app.py:116
+#: clonaut/app.py:158
 msgid "Avvio di rclone rcd…"
 msgstr "Starting rclone rcd…"
 
-#: clonaut/app.py:128 clonaut/ui/transfer_dialog.py:303
+#: clonaut/app.py:172 clonaut/ui/transfer_dialog.py:303
 msgid "Avvio fallito"
 msgstr "Startup failed"
 

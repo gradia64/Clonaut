@@ -225,7 +225,9 @@ clonaut --config /path/to/rclone.conf   # use a specific rclone config file
 clonaut --port 5572                     # fixed port for the local rcd
 
 # attach to an rclone rcd that is already running (no process is started):
-clonaut --url http://127.0.0.1:5572 --user user --password secret
+CLONAUT_RC_PASS=secret clonaut --url http://127.0.0.1:5572 --user user
+# without CLONAUT_RC_PASS the rc password is asked in the terminal;
+# --password still works, but every user on the machine can read it with `ps`
 ```
 
 ## Usage

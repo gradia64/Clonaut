@@ -24,9 +24,20 @@ Porta fissa per il demone locale (predefinito: una porta libera casuale).
 Aggancia un rclone rcd già avviato, invece di avviarne uno.
 .TP
 .BI "\-\-user " UTENTE
+Utente per il rcd esterno agganciato con \-\-url. La password arriva da
+.B CLONAUT_RC_PASS
+oppure, da terminale, viene chiesta a schermo.
+.TP
 .BI "\-\-password " PASSWORD
-Credenziali per il rcd esterno agganciato con \-\-url.
+Password del rcd esterno sulla riga di comando: sconsigliata, perché ogni
+utente della macchina la legge con
+.BR ps .
+Meglio
+.BR CLONAUT_RC_PASS .
 .SH ENVIRONMENT
+.TP
+.B CLONAUT_RC_PASS
+Password dell'API rc per l'aggancio con \-\-url e \-\-user.
 .TP
 .B CLONAUT_LANG
 Lingua dell'interfaccia:
