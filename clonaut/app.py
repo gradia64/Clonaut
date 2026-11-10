@@ -28,7 +28,7 @@ from clonaut import i18n
 from clonaut.i18n import tr
 from clonaut.qtcompat import QtCore, QtWidgets
 from clonaut import settings as app_settings
-from clonaut.rcd import RcdProcess, find_rclone, free_port, random_creds
+from clonaut.rcd import RcdStartError, find_rclone, launch_rcd
 from clonaut.ui.main_window import MainWindow
 
 
@@ -125,15 +125,12 @@ def _build_context(args: argparse.Namespace, values: dict) -> AppContext:
                           "rclone` o da https://rclone.org), oppure indica il percorso con "
                           "la variabile CLONAUT_RCLONE."))
 
-    port = args.port or free_port()
-    user, password = random_creds()
-    rcd = RcdProcess(exe, port, user, password, config_path=args.config)
-    api = RcloneApi(rcd.url, user, password)
-    rcd.start()
-    if not rcd.wait_ready(api):
-        tail = rcd.log_tail(15)
+    try:
+        rcd, api = launch_rcd(exe, port=args.port, config_path=args.config)
+    except RcdStartError as exc:
         raise RuntimeError(
-            tr("rclone rcd non si è avviato.") + "\n\n" + tr("Log recente:") + "\n" + tail)
+            tr("rclone rcd non si è avviato.") + "\n\n" + tr("Log recente:") + "\n"
+            + str(exc)) from exc
     version = str(api.ping().get("version", "?")).lstrip("v")
     config_desc = args.config if args.config else tr("predefinito (~/.config/rclone/rclone.conf)")
     return AppContext(api=api, rcd=rcd, version=f"v{version}", config_desc=config_desc,
