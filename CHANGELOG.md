@@ -5,6 +5,23 @@ All notable changes to Clonaut are listed here. Versions follow
 
 ## [Unreleased]
 
+### Security
+Fixes from a white-box penetration test (Strix):
+- Attach mode: the rc password is read from `CLONAUT_RC_PASS` or asked in the
+  terminal. `--password` still works but prints a warning, because every user
+  on the machine can read command-line arguments with `ps`.
+- The local rclone rcd is trusted only if the listening socket belongs to the
+  process Clonaut started: another local process can no longer grab the port
+  and pose as the daemon. With a random port, startup retries on a new port.
+- Error messages and paths coming from rclone are never rendered as HTML in
+  dialogs and tooltips, so a remote cannot inject links or images.
+- `settings.json`, `recurring.json` and the rcd logs are created readable by
+  the owner only (0600); files from older versions are fixed on next write.
+- A damaged `recurring.json` no longer prevents startup: invalid entries are
+  skipped and values are checked when the file is loaded.
+- Calls to the local rcd ignore proxy settings and `~/.netrc` from the
+  environment; the pip dependency floor is now `requests>=2.33`.
+
 ### Changed
 - The release workflow also builds the AUR package in a clean Arch container
   from the signed GitHub tag, and after approval publishes `clonaut` and
