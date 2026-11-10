@@ -17,14 +17,15 @@
 # lì), SHA256SUMS. Le note vengono da CHANGELOG.md (scripts/release-notes.sh).
 #
 # AUR: il job arch costruisce il PKGBUILD in un Arch pulito clonando il tag da
-# GitHub e verificandone la firma, come farà ogni utente; dopo l'approvazione
-# publish carica clonaut e clonaut-git sull'AUR (scripts/publish-aur.sh) con
-# il secret AUR_SSH_PRIVATE_KEY dell'environment release.
+# GitHub e verificandone la firma, come farà ogni utente. Sull'AUR non
+# pubblica la CI: la chiave SSH dell'AUR vale per tutto l'account e non sta
+# qui. Il maintainer pubblica dalla sua macchina con scripts/aur-release.sh,
+# che verifica il tag e controlla che questo job sia riuscito.
 #
 # A mano (workflow_dispatch) costruisce e collauda gli stessi pacchetti dal
 # ramo scelto, senza pubblicare niente: per provare il packaging prima di un
 # tag. Con aur_tag (un tag già pubblicato, es. v0.4.0) fa invece solo
-# verify, arch e la pubblicazione sull'AUR, dopo l'approvazione.
+# verify e arch su quel tag, anche questo senza pubblicare.
 name: Release
 
 on:
@@ -33,7 +34,7 @@ on:
   workflow_dispatch:
     inputs:
       aur_tag:
-        description: "Solo AUR: tag già pubblicato da mettere sull'AUR (es. v0.4.0); vuoto = prova dei pacchetti"
+        description: "Solo prova AUR: tag già pubblicato da costruire su Arch (es. v0.4.0); vuoto = prova dei pacchetti"
         required: false
         default: ""
 
@@ -295,44 +296,3 @@ jobs:
             gh release create "$tag" release/* --verify-tag --title "Clonaut ${tag#v}" \
               --notes-file "$RUNNER_TEMP/note.md"
           fi
-
-      # dopo la release: il PKGBUILD stabile clona il tag, ormai pubblico
-      - name: Pubblica su AUR
-        env:
-          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-        run: |
-          if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
-            echo "::notice::secret AUR_SSH_PRIVATE_KEY assente: pubblicazione su AUR saltata"
-            exit 0
-          fi
-          scripts/publish-aur.sh packaging/aur/clonaut packaging/aur/clonaut-git
-
-  aur:
-    name: Solo AUR (a mano)
-    needs: [verify, arch]
-    if: github.event_name == 'workflow_dispatch' && inputs.aur_tag != ''
-    runs-on: ubuntu-24.04
-    # come publish: aspetta l'approvazione del maintainer, e solo qui c'è il
-    # secret dell'AUR
-    environment: release
-    steps:
-      # lo script dal ramo del dispatch (un tag vecchio può non averlo), i
-      # PKGBUILD dal tag: quelli collaudati dal job arch
-      - uses: actions/checkout@v5
-
-      - name: PKGBUILD del tag
-        env:
-          TAG: ${{ inputs.aur_tag }}
-        run: |
-          git fetch --depth=1 origin "refs/tags/$TAG:refs/tags/$TAG"
-          git checkout "$TAG" -- packaging/aur
-
-      - name: Pubblica su AUR
-        env:
-          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-        run: |
-          if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
-            echo "::error::secret AUR_SSH_PRIVATE_KEY assente nell'environment release"
-            exit 1
-          fi
-          scripts/publish-aur.sh packaging/aur/clonaut packaging/aur/clonaut-git

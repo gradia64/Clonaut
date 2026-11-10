@@ -1,11 +1,11 @@
 #!/bin/bash
 # Pubblica PKGBUILD e .SRCINFO di un pacchetto (packaging/aur/<nome>/) nel
-# suo repository AUR. Stesso schema di Plico e OllaDesk.
+# suo repository AUR. Di solito lo chiama scripts/aur-release.sh, che prima
+# verifica il tag e prende i PKGBUILD dal suo contenuto.
 #
-# Chiave SSH dell'account AUR:
-#   AUR_SSH_PRIVATE_KEY   chiave privata (secret della CI), scritta in un file
-#                         temporaneo 0600 e cancellata alla fine
-#   altrimenti            la configurazione SSH dell'utente (uso locale)
+# Chiave SSH dell'account AUR: quella della configurazione SSH dell'utente
+# (~/.ssh/config, Host aur.archlinux.org). Non sta nella CI: vale per tutti
+# i pacchetti dell'account.
 #
 # La chiave host di aur.archlinux.org è fissata qui sotto (impronte pubblicate
 # su https://aur.archlinux.org): niente fiducia al primo contatto. Il primo
@@ -22,12 +22,7 @@ AUR_HOSTKEY="aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 printf '%s\n' "$AUR_HOSTKEY" > "$TMP/known_hosts"
-SSH_CMD="ssh -o UserKnownHostsFile=$TMP/known_hosts -o StrictHostKeyChecking=yes"
-if [ -n "${AUR_SSH_PRIVATE_KEY:-}" ]; then
-    (umask 077 && printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$TMP/id_aur")
-    SSH_CMD="$SSH_CMD -i $TMP/id_aur -o IdentitiesOnly=yes"
-fi
-export GIT_SSH_COMMAND="$SSH_CMD"
+export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=$TMP/known_hosts -o StrictHostKeyChecking=yes"
 
 for dir in "$@"; do
     for f in PKGBUILD .SRCINFO; do

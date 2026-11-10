@@ -24,8 +24,10 @@ Fixes from a white-box penetration test (Strix):
 
 ### Changed
 - The release workflow also builds the AUR package in a clean Arch container
-  from the signed GitHub tag, and after approval publishes `clonaut` and
-  `clonaut-git` to the AUR (`scripts/publish-aur.sh`).
+  from the signed GitHub tag. The AUR itself is updated from the maintainer's
+  machine with `scripts/aur-release.sh`, which verifies the tag, takes both
+  PKGBUILDs from the tagged content and checks that the Arch build passed:
+  the AUR SSH key gives access to the whole account, so it is not kept in CI.
 
 ## [0.4.0] — 2026-11-09
 

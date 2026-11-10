@@ -25,54 +25,49 @@ repository and takes the release key's place in `validpgpkeys`, so the
 signature check really runs and this works before the real tag exists. At the end it refreshes `.SRCINFO` next to
 each `PKGBUILD`.
 
-## Publishing (from the release workflow)
+## Publishing (from the maintainer's machine)
 
-The AUR repositories are updated by `.github/workflows/release.yml`, the
-same way as the maintainer's other projects (Plico, OllaDesk):
+The release workflow `.github/workflows/release.yml` tests, the maintainer
+publishes:
 
 - the `arch` job builds the real `PKGBUILD` in a clean `archlinux:base-devel`
   container: `makepkg` clones the tag from GitHub and **verifies its
   signature** with the release key, runs the tests in `check()`, then namcap
   (errors only), install, a test start, and a check that `.SRCINFO` in the
   repository matches the `PKGBUILD`;
-- after your approval in the `release` environment, `publish` creates the
-  GitHub release and then pushes `PKGBUILD` and `.SRCINFO` of both packages
-  with `scripts/publish-aur.sh` (pinned AUR host key; a package whose files
-  did not change is skipped).
+- after the GitHub release, publish both packages from your machine:
 
-The SSH key is a dedicated one, `~/.ssh/aur_clonaut_ci`, stored only as the
-secret `AUR_SSH_PRIVATE_KEY` of the `release` environment. Without the secret
-the step is skipped with a notice. One-time setup:
+  ```bash
+  scripts/aur-release.sh vX.Y.Z
+  ```
 
-1. Add `~/.ssh/aur_clonaut_ci.pub` to your AUR account (*My Account* → *SSH
-   Public Key*, one key per line next to the existing ones).
-2. Store the private key in the environment:
+  It verifies the tag with `scripts/verify-tag.sh`, takes `PKGBUILD` and
+  `.SRCINFO` of both packages from the **tagged content** (not the working
+  tree), checks that the stable `pkgver` is the tag's version and that the
+  `arch` job of the tag's run succeeded (via `gh`), then pushes with
+  `scripts/publish-aur.sh` (pinned AUR host key; a package whose files did
+  not change is skipped, so it can be re-run).
 
-   ```bash
-   gh secret set AUR_SSH_PRIVATE_KEY --env release -R gradia64/Clonaut < ~/.ssh/aur_clonaut_ci
-   ```
+The AUR SSH key is not in CI: an AUR key gives access to every package of the
+account, so whoever read a CI secret could publish any PKGBUILD. The key lives
+on your machine, preferably with a passphrase, in `~/.ssh/config`:
 
-The key gives access to the whole AUR account: the environment approval is
-the last check before anything reaches the AUR. If it leaks, remove it from
-the AUR account and generate a new one.
-
-To put an **already released** tag on the AUR (e.g. the first publication),
-run the workflow by hand with `aur_tag` set to the tag:
-
-```bash
-gh workflow run release.yml -R gradia64/Clonaut -f aur_tag=v0.4.0
+```
+Host aur.archlinux.org
+    User aur
+    IdentityFile ~/.ssh/<your AUR key>
+    IdentitiesOnly yes
 ```
 
-It runs `verify`, `arch` and, after approval, only the AUR upload.
-The `release` environment only accepts `v*` tags, so this manual run is
-refused unless the environment's deployment policy also allows the branch
-it runs on. Alternatively publish from your machine with the same key (that
-is how 0.4.0 went out):
+Up to 0.4.0 the workflow pushed with the secret `AUR_SSH_PRIVATE_KEY`
+(`~/.ssh/aur_clonaut_ci`); that secret and the key on the AUR account are
+gone.
 
-```bash
-AUR_SSH_PRIVATE_KEY="$(cat ~/.ssh/aur_clonaut_ci)" \
-  scripts/publish-aur.sh packaging/aur/clonaut packaging/aur/clonaut-git
-```
+`gh workflow run release.yml -R gradia64/Clonaut -f aur_tag=vX.Y.Z` still
+runs `verify` and `arch` on an already published tag, without publishing:
+useful to re-test a PKGBUILD. For a tag whose run predates the `arch` job
+(0.4.0), `CLONAUT_SKIP_CI_CHECK=1 scripts/aur-release.sh v0.4.0` skips that
+check.
 
 ## On every release (stable package)
 
@@ -90,7 +85,3 @@ packaging/aur/test-in-docker.sh      # also refreshes .SRCINFO
 differs, and `scripts/publish-aur.sh` refuses a stale `.SRCINFO`. Users need
 the public key once: `gpg --import packaging/clonaut-release-key.asc` (or
 `gpg --recv-keys` from a keyserver, once it is published there).
-
-Publishing by hand still works: `scripts/publish-aur.sh packaging/aur/clonaut
-packaging/aur/clonaut-git` uses your own SSH configuration when
-`AUR_SSH_PRIVATE_KEY` is not set.

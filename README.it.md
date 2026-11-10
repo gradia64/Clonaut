@@ -311,8 +311,8 @@ pyproject.toml              metadati del pacchetto Python (comando `clonaut`)
 main.py, run.sh             avvio dai sorgenti
 build-deb.sh                costruisce il .deb
 build-appimage.sh           costruisce le AppImage (x86_64, aarch64)
-scripts/                    impronte della chiave di rilascio, verifica dei tag, note di rilascio, invio all'AUR
-.github/workflows/          CI (test, metadati, .deb) e build delle release (+ AUR)
+scripts/                    impronte della chiave di rilascio, verifica dei tag, note di rilascio, invio all'AUR dalla macchina del maintainer
+.github/workflows/          CI (test, metadati, .deb) e build delle release (+ prova del pacchetto AUR)
 packaging/                  .desktop, metadati AppStream, icone, file Debian, pagina man
 tests/                      suite pytest (rclone vero, Qt offscreen)
 clonaut/
