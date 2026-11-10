@@ -99,6 +99,74 @@ def _pdeathsig() -> None:  # pragma: no cover — gira nel figlio appena creato
         pass
 
 
+def _process_tree(pid: int) -> set[int]:
+    """Il processo <pid> e tutti i suoi discendenti (letti da /proc).
+
+    rclone può essere lanciato da uno script che fa fork invece di exec: il
+    socket in ascolto sta allora in un processo figlio di quello avviato.
+    """
+    children: dict[int, list[int]] = {}
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit():
+            continue
+        try:
+            with open(f"/proc/{entry}/stat") as stat:
+                # il nome del comando sta fra parentesi e può contenerne altre
+                ppid = int(stat.read().rsplit(")", 1)[1].split()[1])
+        except (OSError, ValueError, IndexError):
+            continue
+        children.setdefault(ppid, []).append(int(entry))
+    tree, todo = set(), [pid]
+    while todo:
+        current = todo.pop()
+        if current not in tree:
+            tree.add(current)
+            todo.extend(children.get(current, []))
+    return tree
+
+
+def _socket_inodes(pid: int) -> set[str]:
+    inodes = set()
+    try:
+        names = os.listdir(f"/proc/{pid}/fd")
+    except OSError:
+        return inodes   # processo finito o non leggibile
+    for name in names:
+        try:
+            link = os.readlink(f"/proc/{pid}/fd/{name}")
+        except OSError:
+            continue    # descrittore chiuso un istante fa
+        if link.startswith("socket:["):
+            inodes.add(link[len("socket:["):-1])
+    return inodes
+
+
+def port_owned_by(pid: int, port: int) -> bool:
+    """True se il socket in ascolto su 127.0.0.1:<porta> è del processo <pid>.
+
+    free_port() occupa la porta e la libera subito: prima che rclone la
+    prenda, un altro processo della macchina potrebbe occuparla e fingersi
+    il demone. Si legge quindi l'inode del socket in ascolto da
+    /proc/net/tcp e si controlla che stia fra i descrittori del processo
+    avviato da noi (o di un suo discendente). Senza /proc non c'è nulla da
+    controllare e si prosegue come prima.
+    """
+    local = f"0100007F:{port:04X}"        # 127.0.0.1 come lo scrive /proc
+    try:
+        with open("/proc/net/tcp") as table:
+            listening = {parts[9] for parts in map(str.split, table)
+                         if len(parts) > 9 and parts[3] == "0A"   # 0A = LISTEN
+                         and parts[1] == local}
+    except OSError:
+        return True    # niente /proc: controllo impossibile
+    if not listening:
+        return False   # risponde qualcuno che /proc non mostra: meglio fermarsi
+    owned: set[str] = set()
+    for member in _process_tree(pid):
+        owned |= _socket_inodes(member)
+    return listening <= owned   # ogni socket in ascolto dev'essere nostro
+
+
 class RcdProcess:
     """Avvia e gestisce un'istanza di `rclone rcd` su 127.0.0.1:<port>."""
 
@@ -143,16 +211,21 @@ class RcdProcess:
                                      **kwargs)
 
     def wait_ready(self, api: RcloneApi, timeout: float = 20.0) -> bool:
-        """Attendere che l'API risponda; False se il processo muore o scade il tempo."""
+        """Attende che l'API risponda.
+
+        False se il processo muore, se a rispondere è un altro processo che
+        ha preso la porta prima di rclone, o se scade il tempo.
+        """
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             if self.proc is not None and self.proc.poll() is not None:
                 return False
             try:
                 api.ping()
-                return True
             except Exception:
                 time.sleep(0.2)
+                continue
+            return self.proc is not None and port_owned_by(self.proc.pid, self.port)
         return False
 
     def log_tail(self, lines: int = 15) -> str:
@@ -171,3 +244,31 @@ class RcdProcess:
         except subprocess.TimeoutExpired:
             self.proc.kill()
             self.proc.wait(timeout=5)
+
+
+def launch_rcd(exe: str, *, port: int | None = None, config_path: str | None = None,
+               extra_args: list[str] | None = None, timeout: float = 20.0,
+               attempts: int = 3) -> tuple[RcdProcess, RcloneApi]:
+    """Avvia un rcd locale e attende che sia pronto; restituisce (processo, API).
+
+    Con la porta scelta a caso, se rclone non parte (per esempio perché un
+    altro processo ha preso la porta) si riprova con porta e credenziali
+    nuove. Con una porta fissa (--port) il tentativo è uno solo. Se
+    nessun tentativo riesce solleva RcdStartError con il log dell'ultimo.
+    """
+    tries = 1 if port else max(1, attempts)
+    proc: RcdProcess | None = None
+    for _ in range(tries):
+        user, password = random_creds()
+        proc = RcdProcess(exe, port or free_port(), user, password,
+                          config_path=config_path, extra_args=extra_args)
+        api = RcloneApi(proc.url, user, password)
+        proc.start()
+        if proc.wait_ready(api, timeout=timeout):
+            return proc, api
+        proc.stop()
+    raise RcdStartError(proc.log_tail(15) if proc is not None else "")
+
+
+class RcdStartError(RuntimeError):
+    """rclone rcd non è partito; l'argomento è la coda del suo log."""

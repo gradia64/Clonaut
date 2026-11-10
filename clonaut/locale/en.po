@@ -94,23 +94,23 @@ msgstr ""
 "from https://rclone.org), or set its path with the CLONAUT_RCLONE "
 "environment variable."
 
-#: clonaut/app.py:136
+#: clonaut/app.py:132
 msgid "Log recente:"
 msgstr "Recent log:"
 
-#: clonaut/app.py:136
+#: clonaut/app.py:132
 msgid "rclone rcd non si è avviato."
 msgstr "rclone rcd did not start."
 
-#: clonaut/app.py:138 clonaut/appctx.py:19
+#: clonaut/app.py:135 clonaut/appctx.py:19
 msgid "predefinito (~/.config/rclone/rclone.conf)"
 msgstr "default (~/.config/rclone/rclone.conf)"
 
-#: clonaut/app.py:158
+#: clonaut/app.py:155
 msgid "Avvio di rclone rcd…"
 msgstr "Starting rclone rcd…"
 
-#: clonaut/app.py:172 clonaut/ui/transfer_dialog.py:303
+#: clonaut/app.py:169 clonaut/ui/transfer_dialog.py:303
 msgid "Avvio fallito"
 msgstr "Startup failed"
 
@@ -118,7 +118,7 @@ msgstr "Startup failed"
 msgid "rclone non trovato: indicane il percorso in File → Impostazioni."
 msgstr "rclone not found: set its path in File → Settings."
 
-#: clonaut/appctx.py:52
+#: clonaut/appctx.py:47
 msgid ""
 "Il backend delle prove non si è avviato.\n"
 "\n"
@@ -162,7 +162,7 @@ msgstr "AppImage: no bundled copy"
 msgid "AppImage: {path} assente"
 msgstr "AppImage: {path} missing"
 
-#: clonaut/rcd.py:163
+#: clonaut/rcd.py:236
 msgid "(nessun log disponibile)"
 msgstr "(no log available)"
 

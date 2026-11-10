@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 from .api import RcloneApi
 from .i18n import tr
-from .rcd import RcdProcess, find_rclone, free_port, random_creds
+from .rcd import RcdProcess, RcdStartError, find_rclone, launch_rcd
 
 
 @dataclass
@@ -39,16 +39,11 @@ class AppContext:
         if not exe:
             raise RuntimeError(tr("rclone non trovato: indicane il percorso in "
                                "File → Impostazioni."))
-        port = free_port()
-        user, password = random_creds()
-        self.rcd_dry = RcdProcess(exe, port, user, password,
-                                  config_path=self.config_path,
-                                  extra_args=["--dry-run"])
-        api = RcloneApi(self.rcd_dry.url, user, password)
-        self.rcd_dry.start()
-        if not self.rcd_dry.wait_ready(api, timeout=20):
-            tail = self.rcd_dry.log_tail(10)
-            self.rcd_dry = None
-            raise RuntimeError(tr("Il backend delle prove non si è avviato.\n\n") + tail)
+        try:
+            self.rcd_dry, api = launch_rcd(exe, config_path=self.config_path,
+                                           extra_args=["--dry-run"])
+        except RcdStartError as exc:
+            raise RuntimeError(
+                tr("Il backend delle prove non si è avviato.\n\n") + str(exc)) from exc
         self.api_dry = api
         return api
