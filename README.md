@@ -22,7 +22,8 @@ More languages are welcome — see [Contributing](#contributing).
   form generated from rclone's ~58 known providers (`config/providers`); delete;
   view configuration details.
 - **Transfers** — job queue with progress bars, speed, ETA, bytes transferred,
-  cancel, and a "files in progress" panel for the selected job.
+  cancel, and a "files in progress" panel for the selected job (files being
+  copied or compared, with copied/compared counters).
   **Copy / Move / Sync** between remotes, local paths, or a mix of both.
 - **Exclusions** — per-job rclone patterns (e.g. sync-client journals).
 - **Safety trash** — files that would be **deleted or overwritten** at the
@@ -41,9 +42,9 @@ More languages are welcome — see [Contributing](#contributing).
   files/bytes would be transferred and how many files would be deleted.
 - **Scheduled repeats ⏰** — transfers can repeat every N minutes/hours/days.
   Schedules survive restarts (`~/.config/clonaut/recurring.json`) and can be
-  edited (double-click the row), paused, resumed or started immediately from
-  the right-click menu. *Runs only
-  happen while the app is open (the tray is enough); if the interval expired
+  edited (double-click the row), paused, resumed or started immediately with
+  the «⏰ Schedule» buttons above the queue or from the right-click menu. *Runs
+  only happen while the app is open (the tray is enough); if the interval expired
   while it was closed, a run starts right away on the next launch.*
 
 ![Remotes](docs/screenshot-remotes.png)
@@ -64,7 +65,7 @@ of truth; kDrive is the mirror:
    (row marked «Dry run»).
 2. **Schedule** — same settings without the dry run, ticking *Repeat
    automatically every 6 hours* → the ⏰ row takes care of everything;
-   right-click to pause or remove it.
+   pause or remove it with the «⏰ Schedule» buttons or right-click.
 
 The suggested patterns skip the Nextcloud client's internal journals
 (`.sync_*.db`, `.nextcloudsync.log`) and lock files that change constantly.
@@ -265,7 +266,8 @@ CLONAUT_RC_PASS=secret clonaut --url http://127.0.0.1:5572 --user user
   app's rclone daemon.
 - **Repeat automatically** — tick «Repeat automatically every N
   minutes/hours/days»: a ⏰ row appears and restarts itself at every interval
-  (never in parallel). Right-click: *Run now*, *Edit…*, *Pause* / *Resume*,
+  (never in parallel). Select it and use the «⏰ Schedule» buttons above the
+  queue, or right-click: *Run now*, *Edit…*, *Pause* / *Resume*,
   *Remove schedule*.
   Editing (also by double-clicking the row) changes paths, mode, exclusions,
   trash and interval; a run already in progress keeps its old settings and the

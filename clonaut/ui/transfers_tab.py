@@ -627,6 +627,8 @@ class TransfersTab(QtWidgets.QWidget):
                 item.setText(0, f"#{jid}")
                 item.setData(0, _ROLE_JID, jid)
             self._save_recurring()
+        # senza snapshot (rcd irraggiungibile) nessun altro riaccende i pulsanti
+        self._update_rec_actions()
 
     def _update_recurring(self, snap: dict) -> None:
         for jid, def_id in list(self._rec_of_jid.items()):

@@ -20,7 +20,8 @@ su entrambe.
 - **Remote** — elenco con tipo e riepilogo, creazione con form dinamico generato dai
   ~58 provider noti (`config/providers`), eliminazione, dettagli della config.
 - **Trasferimenti** — coda job con barre di avanzamento, velocità, ETA, byte
-  trasferiti, annullamento, pannello «File in corso» del job selezionato.
+  trasferiti, annullamento, pannello «File in corso» del job selezionato (file
+  in copia o in confronto, con i contatori di copiati e confrontati).
   Modalità **Copia / Sposta / Sincronizza**, tra remoti, locali o misti.
 - **Esclusioni** — pattern rclone per job (es. journal dei client di sync).
 - **Cestino di sicurezza** — i file che verrebbero **eliminati o sovrascritti**
@@ -40,7 +41,8 @@ su entrambe.
 - **Ripetizione automatica ⏰** — i trasferimenti si possono ripetere ogni N
   minuti/ore/giorni: la programmazione sopravvive alla chiusura dell'app
   (`~/.config/clonaut/recurring.json`), con modifica (doppio clic sulla
-  riga), pausa/riattivazione e "avvia ora" dal tasto destro. *I giri partono solo con l'app aperta: se era
+  riga), pausa/riattivazione e "avvia ora" dai pulsanti «⏰ Programmazione»
+  sopra la coda o dal tasto destro. *I giri partono solo con l'app aperta: se era
   chiusa, alla riapertura parte subito un giro se l'intervallo è scaduto.*
 
 ![Remote](docs/screenshot-remote.png)
@@ -63,7 +65,8 @@ specchio:
    vuoto* → guarda l'esito in coda («Prova»).
 2. **Programmazione** — stessa configurazione senza la prova, con *Ripeti
    automaticamente ogni 6 ore* (o la frequenza che preferisci) → la riga ⏰
-   si occupa di tutto; tasto destro per pausa o rimozione.
+   si occupa di tutto; pausa o rimozione dai pulsanti «⏰ Programmazione» o
+   col tasto destro.
 
 I pattern suggeriti saltano i journal interni del client Nextcloud (`.sync_*.db`,
 `.nextcloudsync.log`) e i file di blocco che cambiano di continuo. Con il
@@ -263,8 +266,9 @@ CLONAUT_RC_PASS=segreta clonaut --url http://127.0.0.1:5572 --user utente
   o menu della tray) chiude davvero l'app e ferma il suo rclone rcd.
 - **Ripeti automaticamente** — spunta «Ripeti ogni N ore/minuti/giorni»: nasce una
   riga ⏰ in coda che si rilancia da sola a ogni intervallo (mai in parallelo).
-  Tasto destro sulla riga: *Avvia ora*, *Modifica…*, *Metti in pausa/Riattiva*,
-  *Rimuovi programmazione*. La modifica (anche con doppio clic sulla riga)
+  Selezionala e usa i pulsanti «⏰ Programmazione» sopra la coda, oppure il
+  tasto destro sulla riga: *Avvia ora*, *Modifica…*, *Metti in
+  pausa/Riattiva*, *Rimuovi programmazione*. La modifica (anche con doppio clic sulla riga)
   cambia percorsi, modalità, esclusioni, cestino e intervallo; un giro già in
   corso prosegue con le impostazioni precedenti e le modifiche valgono dal
   giro successivo.

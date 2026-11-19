@@ -221,3 +221,27 @@ def test_schedule_buttons_in_the_bar(qapp, dialogs):
     assert dialogs == ["Rimuovere la programmazione?"]
     assert def_id not in tab._recurrent and tab.tree.topLevelItemCount() == 0
     assert not any(b.isEnabled() for b in buttons)
+
+
+def test_run_now_button_comes_back_when_the_daemon_is_down(qapp):
+    """Con il rcd giù non arrivano snapshot: dopo un «Avvia ora» fallito il
+    pulsante deve tornare attivo dal tick stesso."""
+    from clonaut.api import ApiError
+    from clonaut.ui.transfers_tab import TransfersTab
+
+    class _DeadApi(_OfflineApi):
+        def start_transfer(self, *_a, **_k):
+            raise ApiError("rclone rcd non risponde")
+
+    ctx = _Ctx()
+    ctx.api = _DeadApi()
+    tab = TransfersTab(ctx)
+    tab._rec_timer.stop()
+    def_id = tab.add_recurring("copy", "/a", "/b", [], 3600)
+    tab._recurrent[def_id]["last_start"] = 10**12   # niente giro automatico
+    tab.tree.setCurrentItem(tab._rec_item[def_id])
+    tab.btn_run_now.click()
+    assert not tab.btn_run_now.isEnabled()
+    tab._on_rec_tick()
+    assert tab._recurrent[def_id]["last_status"] == "err"
+    assert tab.btn_run_now.isEnabled()
