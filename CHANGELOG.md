@@ -40,6 +40,10 @@ All notable changes to Clonaut are listed here. Versions follow
 - Boolean settings written as text in `settings.json` are read correctly:
   `"false"`, `"no"` and `"0"` used to count as true. Unknown values fall
   back to the default.
+- New remote dialog: typing a type or an alias such as «nextcloud» in the
+  «Type» box now rebuilds the form for it (before, only picking an entry from
+  the list did, and a typed name silently kept the previous type). An unknown
+  type is refused with a message.
 
 ## [0.4.1] — 2026-11-10
 

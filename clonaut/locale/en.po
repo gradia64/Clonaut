@@ -275,7 +275,7 @@ msgstr "Type"
 msgid "{alias} — alias di {provider}"
 msgstr "{alias} — alias of {provider}"
 
-#: clonaut/ui/remote_dialog.py:118 clonaut/ui/remote_dialog.py:272
+#: clonaut/ui/remote_dialog.py:118 clonaut/ui/remote_dialog.py:291
 msgid "Mostra opzioni avanzate"
 msgstr "Show advanced options"
 
@@ -287,7 +287,7 @@ msgstr "Create remote"
 msgid "Annulla"
 msgstr "Cancel"
 
-#: clonaut/ui/remote_dialog.py:197
+#: clonaut/ui/remote_dialog.py:217
 msgid ""
 "Backend con login OAuth (Google Drive, Dropbox, OneDrive…): la prima volta "
 "serve l'autorizzazione del browser. Crea il remote e poi esegui nel "
@@ -299,24 +299,24 @@ msgstr ""
 "rclone authorize \"type\"   in a terminal and paste the JSON token into "
 "the «token» field."
 
-#: clonaut/ui/remote_dialog.py:235
+#: clonaut/ui/remote_dialog.py:254
 msgid "(predefinito)"
 msgstr "(default)"
 
-#: clonaut/ui/remote_dialog.py:260
+#: clonaut/ui/remote_dialog.py:279
 #, python-brace-format
 msgid "predefinito: {value}"
 msgstr "default: {value}"
 
-#: clonaut/ui/remote_dialog.py:271
+#: clonaut/ui/remote_dialog.py:290
 msgid "Nascondi opzioni avanzate"
 msgstr "Hide advanced options"
 
-#: clonaut/ui/remote_dialog.py:300
+#: clonaut/ui/remote_dialog.py:319
 msgid "Nome non valido"
 msgstr "Invalid name"
 
-#: clonaut/ui/remote_dialog.py:301
+#: clonaut/ui/remote_dialog.py:320
 msgid ""
 "Il nome può contenere lettere, numeri, punto, trattino e trattino basso, e "
 "non può contenere «:»."
@@ -324,36 +324,45 @@ msgstr ""
 "The name may contain letters, digits, dot, dash and underscore, and cannot "
 "contain «:»."
 
-#: clonaut/ui/remote_dialog.py:306
+#: clonaut/ui/remote_dialog.py:325
 msgid "Remote esistente"
 msgstr "Remote already exists"
 
-#: clonaut/ui/remote_dialog.py:307
+#: clonaut/ui/remote_dialog.py:326
 #, python-brace-format
 msgid "Il remote «{name}» esiste già: sovrascriverlo?"
 msgstr "The remote «{name}» already exists: overwrite it?"
 
-#: clonaut/ui/remote_dialog.py:313
+#: clonaut/ui/remote_dialog.py:335
+msgid "Tipo sconosciuto"
+msgstr "Unknown type"
+
+#: clonaut/ui/remote_dialog.py:336
+#, python-brace-format
+msgid "«{type}» non è un tipo di remote di rclone: scegline uno dall'elenco."
+msgstr "«{type}» is not an rclone remote type: pick one from the list."
+
+#: clonaut/ui/remote_dialog.py:339
 msgid "Tipo mancante"
 msgstr "Type missing"
 
-#: clonaut/ui/remote_dialog.py:314
+#: clonaut/ui/remote_dialog.py:340
 msgid "Scegli il tipo di remote."
 msgstr "Choose the type of remote."
 
-#: clonaut/ui/remote_dialog.py:330
+#: clonaut/ui/remote_dialog.py:356
 msgid "Campi obbligatori vuoti"
 msgstr "Required fields are empty"
 
-#: clonaut/ui/remote_dialog.py:331
+#: clonaut/ui/remote_dialog.py:357
 msgid "Questi campi sono marcati obbligatori ma sono vuoti:"
 msgstr "These fields are marked as required but are empty:"
 
-#: clonaut/ui/remote_dialog.py:333
+#: clonaut/ui/remote_dialog.py:359
 msgid "Creare comunque il remote?"
 msgstr "Create the remote anyway?"
 
-#: clonaut/ui/remote_dialog.py:342
+#: clonaut/ui/remote_dialog.py:368
 msgid "Creazione fallita"
 msgstr "Creation failed"
 

@@ -130,7 +130,10 @@ class RemoteDialog(QtWidgets.QDialog):
         btns.rejected.connect(self.reject)
         layout.addWidget(btns)
 
-        self.cb_type.currentIndexChanged.connect(self._rebuild)
+        # il menu è modificabile: il modulo segue anche il testo digitato
+        # (currentTextChanged scatta sia per la scelta sia per la scrittura)
+        self._built: tuple[str, str] | None = None
+        self.cb_type.currentTextChanged.connect(self._on_type_text)
         # selezione iniziale: il primo provider non nascosto
         if self.cb_type.count():
             self.cb_type.setCurrentIndex(0)
@@ -141,21 +144,38 @@ class RemoteDialog(QtWidgets.QDialog):
     def _provider_by_name(self, name: str) -> dict | None:
         return next((p for p in self._providers if p.get("Name") == name), None)
 
-    def _current_type(self) -> str:
-        """Nome del provider scelto (direttamente, digitato o tramite alias)."""
+    def _resolve_type(self) -> tuple[str, str]:
+        """(provider, alias) del testo nel menu Tipo; ("", "") se sconosciuto.
+
+        Vale sia per una voce scelta dall'elenco sia per un nome digitato:
+        «webdav», «WebDAV — …» o un alias come «nextcloud». Il dato della
+        voce selezionata non basta: scrivendo, resta quello della voce
+        precedente.
+        """
         text = self.cb_type.currentText().split(" — ")[0].strip().lower()
+        if not text:
+            return "", ""
         for p in self._providers:
             if p.get("Name", "").lower() == text:
-                return p["Name"]
-        data = self.cb_type.currentData()
-        if isinstance(data, dict):
-            return str(data.get("type") or "")
-        return str(data or "")
+                return p["Name"], ""
+        prov = _ALIASES.get(text)
+        if prov and self._provider_by_name(prov):
+            return prov, text
+        return "", ""
+
+    def _current_type(self) -> str:
+        """Nome del provider scelto (direttamente, digitato o tramite alias)."""
+        return self._resolve_type()[0]
 
     def _current_provider(self) -> dict | None:
         return self._provider_by_name(self._current_type())
 
+    def _on_type_text(self, _text: str) -> None:
+        if self._resolve_type() != self._built:
+            self._rebuild()   # solo se cambia davvero tipo: non a ogni tasto
+
     def _rebuild(self) -> None:
+        self._built = self._resolve_type()
         # svuota il form
         while self._form_layout.count():
             item = self._form_layout.takeAt(0)
@@ -203,9 +223,8 @@ class RemoteDialog(QtWidgets.QDialog):
             self.lbl_hint.hide()
         self._toggle_advanced(self.btn_adv.isChecked())
 
-        # alias scelto (es. «nextcloud»): preseleziona i campi corrispondenti
-        data = self.cb_type.currentData()
-        alias = data.get("alias", "") if isinstance(data, dict) else ""
+        # alias scelto o digitato (es. «nextcloud»): preseleziona i campi
+        alias = self._built[1]
         if alias:
             for _name, (editor, _opt) in self._fields.items():
                 if isinstance(editor, QtWidgets.QComboBox):
@@ -310,8 +329,15 @@ class RemoteDialog(QtWidgets.QDialog):
             if answer != QtWidgets.QMessageBox.StandardButton.Yes:
                 return
         if not type_:
-            QtWidgets.QMessageBox.warning(self, tr("Tipo mancante"),
-                                          tr("Scegli il tipo di remote."))
+            typed = self.cb_type.currentText().strip()
+            if typed:
+                QtWidgets.QMessageBox.warning(
+                    self, tr("Tipo sconosciuto"),
+                    esc(tr("«{type}» non è un tipo di remote di rclone: "
+                           "scegline uno dall'elenco.").format(type=typed)))
+            else:
+                QtWidgets.QMessageBox.warning(self, tr("Tipo mancante"),
+                                              tr("Scegli il tipo di remote."))
             return
 
         missing = []
