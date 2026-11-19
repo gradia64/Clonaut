@@ -37,6 +37,9 @@ All notable changes to Clonaut are listed here. Versions follow
   restart) no longer stays «running» forever: after about 20 s without the
   job the run is marked as failed with a clear message and the next run can
   start.
+- Boolean settings written as text in `settings.json` are read correctly:
+  `"false"`, `"no"` and `"0"` used to count as true. Unknown values fall
+  back to the default.
 
 ## [0.4.1] — 2026-11-10
 

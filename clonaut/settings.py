@@ -120,10 +120,30 @@ def load() -> dict:
     return data
 
 
+_TRUE = {"true", "1", "yes", "on"}
+_FALSE = {"false", "0", "no", "off", ""}
+
+
 def _coerce(key: str, value):
-    """Converte un valore al tipo del suo predefinito (bool o testo)."""
-    if isinstance(DEFAULTS[key], bool):
-        return bool(value)
+    """Converte un valore al tipo del suo predefinito (bool o testo).
+
+    Per i booleani `bool("false")` sarebbe True: i testi si interpretano
+    esplicitamente (true/false, 1/0, yes/no, on/off) e un valore che non
+    si capisce lascia il predefinito.
+    """
+    default = DEFAULTS[key]
+    if isinstance(default, bool):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)) and value in (0, 1):
+            return bool(value)
+        if isinstance(value, str):
+            text = value.strip().lower()
+            if text in _TRUE:
+                return True
+            if text in _FALSE:
+                return False
+        return default
     return str(value or "").strip()
 
 

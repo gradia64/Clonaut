@@ -102,3 +102,19 @@ def test_scrittura_atomica_resta_privata():
     settings.save(dict(settings.DEFAULTS, language="en"))
     assert path.stat().st_ino != inode   # file nuovo rinominato al posto del vecchio
     assert _mode(path) == 0o600
+
+
+def test_booleani_scritti_come_testo():
+    """«false» scritto a mano diventava True (bool di una stringa non vuota)."""
+    path = settings.settings_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"close_to_tray": "false", "minimize_to_tray": "Yes",
+                                "start_in_tray": "0", "notify_finished": "boh"}))
+    values = settings.load()
+    assert values["close_to_tray"] is False
+    assert values["minimize_to_tray"] is True
+    assert values["start_in_tray"] is False
+    assert values["notify_finished"] is settings.DEFAULTS["notify_finished"]
+    for raw, expected in (("true", True), ("no", False), ("1", True), (0, False),
+                          (1, True), (True, True), (False, False)):
+        assert settings._coerce("start_in_tray", raw) is expected
