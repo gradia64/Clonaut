@@ -15,6 +15,9 @@ All notable changes to Clonaut are listed here. Versions follow
   (typical of a sync with little to copy): it now lists the files being
   compared too, with a summary of copied/compared files above the list.
   Such jobs show «Comparing files» instead of «Preparing».
+- The rclone daemon no longer inherits `RCLONE_DRY_RUN` from the environment:
+  with that variable set, every transfer finished as «Done» without writing
+  anything.
 
 ## [0.4.1] — 2026-11-10
 

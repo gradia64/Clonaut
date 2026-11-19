@@ -215,3 +215,23 @@ def test_launch_rcd_porta_fissa_un_solo_tentativo(tmp_path):
                                timeout=3)
     finally:
         impostore.close()
+
+
+@needs_rclone
+def test_rclone_dry_run_nell_ambiente_non_rende_muto_il_demone(tmp_path, tree, monkeypatch):
+    """Con RCLONE_DRY_RUN=true nell'ambiente rclone «completava» le copie
+    senza scrivere nulla: il demone normale non deve ereditarlo."""
+    from conftest import RCLONE
+    monkeypatch.setenv("RCLONE_DRY_RUN", "true")
+    conf = tmp_path / "rclone.conf"
+    conf.write_text("")
+    proc, api = rcd_mod.launch_rcd(RCLONE, config_path=str(conf))
+    try:
+        jid = api.start_transfer("copy", str(tree / "a"), str(tree / "copia"))
+        end = time.monotonic() + 15
+        while not api.job_status(jid).get("finished") and time.monotonic() < end:
+            time.sleep(0.2)
+        assert api.job_status(jid).get("success")
+        assert (tree / "copia" / "new.txt").read_text() == "nuovo"
+    finally:
+        proc.stop()

@@ -200,6 +200,10 @@ class RcdProcess:
             *self.extra_args,
         ]
         env = os.environ.copy()
+        # RCLONE_DRY_RUN nell'ambiente dell'utente renderebbe muto anche il
+        # demone normale: i job finirebbero «completati» senza scrivere nulla.
+        # Il demone delle prove usa già --dry-run sulla riga di comando.
+        env.pop("RCLONE_DRY_RUN", None)
         # credenziali via ambiente, non sulla riga di comando: gli argomenti
         # sono leggibili da tutti gli utenti con `ps`, l'ambiente no
         env["RCLONE_RC_USER"] = self.user
