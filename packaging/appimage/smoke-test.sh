@@ -77,17 +77,23 @@ run_app() {   # run_app <descrizione> [prefisso del comando…]
     # TMPDIR: la copia estratta dal runtime resta se il processo viene ucciso
     APPIMAGE_EXTRACT_AND_RUN=1 TMPDIR="$TMP/run" PATH="$TMP/bin" \
         "$@" timeout "${SMOKE_RUN:-10}" "$APPIMAGE_FILE" > "$TMP/app.log" 2>&1 &
-    local pid=$! exe="" d e c
-    # a metà strada: quale rclone ha avviato l'app? Deve essere quello incluso.
+    local pid=$! exe="" d e c waited=0
+    # quale rclone ha avviato l'app? Deve essere quello incluso.
     # /proc/<pid>/exe, oppure la riga di comando sotto qemu (lì exe è
-    # l'interprete e il programma vero è tra gli argomenti)
-    sleep "${SMOKE_WAIT:-6}"
-    for d in /proc/[0-9]*; do
-        e="$(readlink -f "$d/exe" 2>/dev/null || true)"
-        c="$(tr '\000' ' ' < "$d/cmdline" 2>/dev/null || true)"
-        case "$e $c" in
-            *"$TMP/run/"*/usr/bin/rclone*rcd*) exe="$TMP/run/${c##*"$TMP/run/"}"; exe="${exe%% rcd*}" ;;
-        esac
+    # l'interprete e il programma vero è tra gli argomenti). Si guarda ogni
+    # mezzo secondo finché l'app è viva, al più SMOKE_WAIT secondi: con
+    # xvfb-run l'avvio del server X si mangia una parte del tempo
+    while [ -z "$exe" ] && kill -0 "$pid" 2>/dev/null \
+            && [ "$waited" -lt "$(( ${SMOKE_WAIT:-6} * 2 ))" ]; do
+        sleep 0.5
+        waited=$((waited + 1))
+        for d in /proc/[0-9]*; do
+            e="$(readlink -f "$d/exe" 2>/dev/null || true)"
+            c="$(tr '\000' ' ' < "$d/cmdline" 2>/dev/null || true)"
+            case "$e $c" in
+                *"$TMP/run/"*/usr/bin/rclone*rcd*) exe="$TMP/run/${c##*"$TMP/run/"}"; exe="${exe%% rcd*}" ;;
+            esac
+        done
     done
     wait "$pid"
     rc=$?
@@ -104,6 +110,13 @@ run_app() {   # run_app <descrizione> [prefisso del comando…]
     fi
     if [ -z "$exe" ]; then
         pgrep -a rclone >&2 || true
+        echo "--- output dell'app" >&2
+        cat "$TMP/app.log" >&2
+        for d in "$XDG_CACHE_HOME"/clonaut/rcd-*.log; do
+            [ -e "$d" ] || continue
+            echo "--- $d" >&2
+            tail -20 "$d" >&2
+        done
         echo "l'app non ha avviato il rclone incluso nell'AppImage" >&2
         exit 1
     fi
