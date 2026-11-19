@@ -275,14 +275,21 @@ class TransfersTab(QtWidgets.QWidget):
             return key
         worker = DryRunWorker(api, key, mode, src, dst, exclude, backup_dir)
         worker.done.connect(self._on_dry_done)
-        worker.finished.connect(worker.deleteLater)
+        # il riferimento si lascia solo a thread finito: «done» arriva prima
+        # della fine di run(), e un QThread distrutto mentre gira fa abortire
+        worker.finished.connect(lambda k=key: self._drop_dry_worker(k))
         self._dry_workers[key] = worker
         worker.start()
         return key
 
     def dry_workers(self) -> list[DryRunWorker]:
-        """Prove a vuoto ancora in corso (da fermare all'uscita)."""
+        """Thread delle prove a vuoto non ancora finiti (da fermare all'uscita)."""
         return list(self._dry_workers.values())
+
+    def _drop_dry_worker(self, key: str) -> None:
+        worker = self._dry_workers.pop(key, None)
+        if worker is not None:
+            worker.wait()   # «finished» precede di poco la vera fine del thread
 
     def _new_dry_row(self, key: str, mode: str, src: str, dst: str,
                      backup_dir: str | None = None) -> None:
@@ -308,7 +315,6 @@ class TransfersTab(QtWidgets.QWidget):
         self._dry_rows[key] = item
 
     def _on_dry_done(self, key: str, ok: bool, message: str) -> None:
-        self._dry_workers.pop(key, None)
         item = self._dry_rows.pop(key, None)
         entry = self._rows.get(key)
         if item is None or entry is None:

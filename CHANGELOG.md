@@ -28,6 +28,11 @@ All notable changes to Clonaut are listed here. Versions follow
   A failed save of the schedules now shows a warning on the «⏰ Schedule» row
   instead of being ignored, and an unreadable `recurring.json` is
   kept as `recurring.json.corrupt-<timestamp>` instead of being overwritten.
+- Quitting no longer waits up to 20 s per call or risks a crash: the polling
+  thread uses a short timeout (5 s), stops between one job and the next, and
+  a thread still inside an rc call is kept alive until it ends instead of
+  being destroyed while running. Dry-run threads are also released only once
+  they have really finished.
 
 ## [0.4.1] — 2026-11-10
 

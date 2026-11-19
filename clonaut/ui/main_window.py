@@ -11,7 +11,7 @@ from ..appctx import AppContext
 from ..i18n import tr
 from ..qtcompat import BINDING, QtCore, QtGui, QtWidgets
 from ..util import app_icon
-from ..worker import PollWorker
+from ..worker import POLL_TIMEOUT, PollWorker, stop_thread
 from .remotes_tab import RemotesTab
 from .settings_dialog import SettingsDialog
 from .transfers_tab import TransfersTab
@@ -225,15 +225,21 @@ class MainWindow(QtWidgets.QMainWindow):
             event.accept()
             return
         self._shut_down = True
-        self.worker.stop()
-        self.worker.wait(2500)
-        for dry in list(self.transfers_tab.dry_workers()):
-            dry.stop()
-            dry.wait(1500)
+        threads = [self.worker, *self.transfers_tab.dry_workers()]
+        for thread in threads:
+            thread.stop()
+        # di solito il thread è in pausa tra due tick e finisce subito; se è
+        # dentro una chiamata rc, fermare i demoni locali la fa fallire al
+        # volo, altrimenti (demone esterno) scade al più in POLL_TIMEOUT
+        self.worker.wait(500)
         if self.ctx.rcd is not None:
             self.ctx.rcd.stop()
         if self.ctx.rcd_dry is not None:
             self.ctx.rcd_dry.stop()
+        for thread in threads:
+            # se non basta, il thread non viene distrutto mentre gira:
+            # app.main lo aspetta dopo la fine del ciclo degli eventi
+            stop_thread(thread, int((POLL_TIMEOUT + 1) * 1000))
         super().closeEvent(event)
         event.accept()
         # senza demone l'app non serve più: si esce anche se l'icona nella

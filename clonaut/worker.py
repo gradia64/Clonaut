@@ -24,6 +24,37 @@ from .util import fmt_duration, human_size
 
 INTERVAL = 0.9          # secondi tra un tick e l'altro
 MAX_WATCHED = 200       # quanti job osservati tenere nello snapshot (i più recenti)
+# timeout delle chiamate di polling: corto, perché all'uscita si aspetta la
+# fine della chiamata in corso (quello generale dell'API è di 20 s)
+POLL_TIMEOUT = 5.0
+
+# thread non ancora finiti all'uscita: restano referenziati qui, perché
+# distruggere un QThread in esecuzione fa abortire il processo
+_lingering: list[QThread] = []
+
+
+def stop_thread(thread: QThread, msecs: int) -> bool:
+    """Aspetta fino a `msecs` la fine di un thread già fermato con stop().
+
+    Se è ancora in esecuzione (una chiamata rc in corso) non lo si lascia
+    distruggere: resta in vita fino a wait_lingering(). True se è finito.
+    """
+    if thread.wait(msecs):
+        return True
+    if thread not in _lingering:
+        _lingering.append(thread)
+    return False
+
+
+def wait_lingering(msecs: int = int((POLL_TIMEOUT + 1) * 1000)) -> bool:
+    """All'uscita: aspetta i thread rimasti in vita (al più una chiamata rc)."""
+    done = True
+    for thread in list(_lingering):
+        if thread.wait(msecs):
+            _lingering.remove(thread)
+        else:
+            done = False
+    return done
 
 
 class DryRunWorker(QThread):
@@ -68,7 +99,7 @@ class DryRunWorker(QThread):
         errors_in_row = 0
         while time.monotonic() < deadline and not self._stop:
             try:
-                status = self._api.job_status(jobid)
+                status = self._api.job_status(jobid, timeout=POLL_TIMEOUT)
                 errors_in_row = 0
             except Exception:  # noqa: BLE001 — transitori: riproviamo
                 errors_in_row += 1
@@ -81,7 +112,8 @@ class DryRunWorker(QThread):
             if status.get("finished"):
                 if status.get("success"):
                     try:
-                        stats = self._api.stats(f"job/{jobid}")
+                        stats = self._api.stats(f"job/{jobid}",
+                                                timeout=POLL_TIMEOUT)
                     except Exception:  # noqa: BLE001 — stats non critiche
                         stats = {}
                     riepilogo = tr("{files} file, {size}").format(
@@ -159,7 +191,7 @@ class PollWorker(QThread):
             return
         self._started_once = True
         try:
-            ids = self._api.job_list().get("jobids", [])
+            ids = self._api.job_list(timeout=POLL_TIMEOUT).get("jobids", [])
             adopted = {int(i) for i in ids[-MAX_WATCHED:]}
             with self._lock:
                 self._watched |= adopted
@@ -173,7 +205,7 @@ class PollWorker(QThread):
         # stats aggregate: servono per l'header e per scovare job esterni attivi
         agg: dict = {}
         try:
-            agg = self._api.stats()
+            agg = self._api.stats(timeout=POLL_TIMEOUT)
         except ApiError:
             pass
         for tf in agg.get("transferring") or []:
@@ -191,10 +223,12 @@ class PollWorker(QThread):
             watched = sorted(self._watched)[-MAX_WATCHED:]
         jobs: dict[int, dict] = {}
         for jid in watched:
+            if self._stop:
+                break   # uscita: non fare altre chiamate (fino a 200 job)
             status = self._status_cache.get(jid)
             if status is None:
                 try:
-                    status = self._api.job_status(jid)
+                    status = self._api.job_status(jid, timeout=POLL_TIMEOUT)
                 except ApiError:
                     continue  # race transitoria: riproveremo al prossimo tick
                 if status.get("finished"):
@@ -205,13 +239,14 @@ class PollWorker(QThread):
                 if jid not in self._final_stats:
                     self._final_stats.add(jid)
                     try:
-                        self._stats_cache[jid] = self._api.stats(f"job/{jid}")
+                        self._stats_cache[jid] = self._api.stats(
+                            f"job/{jid}", timeout=POLL_TIMEOUT)
                     except ApiError:
                         pass   # conserviamo l'ultimo campione noto
                 stats = self._stats_cache.get(jid) or {}
             else:
                 try:
-                    stats = self._api.stats(f"job/{jid}")
+                    stats = self._api.stats(f"job/{jid}", timeout=POLL_TIMEOUT)
                 except ApiError:
                     stats = self._stats_cache.get(jid) or {}
                 self._stats_cache[jid] = stats
@@ -234,7 +269,10 @@ class PollWorker(QThread):
     def run(self) -> None:
         while not self._stop:
             try:
-                self.ready.emit(self._snapshot())
+                snap = self._snapshot()
+                if self._stop:
+                    break   # snapshot interrotto a metà: non pubblicarlo
+                self.ready.emit(snap)
             except (requests.RequestException, ApiError) as exc:
                 self.failed.emit(str(exc))
             except Exception as exc:  # non lasciare che il thread muoia in silenzio

@@ -145,18 +145,19 @@ class RcloneApi:
             payload["_config"] = {"BackupDir": backup_dir}
         return int(self.call(endpoint, payload)["jobid"])
 
-    def job_list(self) -> dict:
+    def job_list(self, timeout: float | None = None) -> dict:
         """Tutti i job: {jobids, runningIds, finishedIds, executeId}."""
-        return self.call("job/list")
+        return self.call("job/list", timeout=timeout)
 
-    def job_status(self, jobid: int) -> dict:
-        return self.call("job/status", {"jobid": int(jobid)})
+    def job_status(self, jobid: int, timeout: float | None = None) -> dict:
+        return self.call("job/status", {"jobid": int(jobid)}, timeout=timeout)
 
     def stop_job(self, jobid: int) -> None:
         self.call("job/stop", {"jobid": int(jobid)})
 
-    def stats(self, group: str | None = None) -> dict:
-        return self.call("core/stats", {"group": group} if group else None)
+    def stats(self, group: str | None = None, timeout: float | None = None) -> dict:
+        return self.call("core/stats", {"group": group} if group else None,
+                         timeout=timeout)
 
     # ------------------------------------------------------------ cestino/dettagli
 

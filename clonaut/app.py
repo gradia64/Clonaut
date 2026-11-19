@@ -31,6 +31,7 @@ from clonaut import settings as app_settings
 from clonaut.rcd import RcdStartError, find_rclone, launch_rcd
 from clonaut.ui.main_window import MainWindow
 from clonaut.util import esc
+from clonaut.worker import wait_lingering
 
 
 def collect_garbage_in_main_thread(app: QtWidgets.QApplication,
@@ -176,4 +177,6 @@ def main(argv: list[str] | None = None) -> int:
         pass   # resta ridotta nella tray (l'icona è già attiva)
     else:
         win.show()
-    return app.exec()
+    code = app.exec()
+    wait_lingering()   # thread rimasti in una chiamata rc all'uscita
+    return code
