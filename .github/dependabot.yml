@@ -1,0 +1,18 @@
+# Aggiornamenti automatici delle GitHub Actions.
+#
+# Le azioni nei workflow sono fissate per SHA con la versione nel commento
+# (`uses: actions/checkout@<sha>  # v7.0.1`): Dependabot aggiorna insieme lo
+# SHA e il commento, con una sola pull request al mese per tutte le azioni.
+# Le pull request passano dalla CI come ogni altra modifica; si uniscono a mano.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      azioni:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+    open-pull-requests-limit: 5
