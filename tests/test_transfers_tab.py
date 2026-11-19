@@ -306,3 +306,38 @@ def test_files_summary_without_comparisons(qapp):
     tab.tree.setCurrentItem(tab.tree.topLevelItem(0))
     assert tab.lbl_files.text().startswith("Copiati 1 di 2 file")
     assert "confrontati" not in tab.lbl_files.text()
+
+
+def test_recurring_corrotto_viene_conservato(qapp):
+    """Un recurring.json illeggibile veniva sovrascritto in silenzio al primo salvataggio."""
+    from clonaut.ui.transfers_tab import TransfersTab
+    path = settings.config_dir() / "recurring.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('{"definitions": [{"id": "rec-1", "src": "/a"')   # troncato
+    tab = TransfersTab(_Ctx())
+    tab._rec_timer.stop()
+    kept = list(path.parent.glob("recurring.json.corrupt-*"))
+    assert len(kept) == 1
+    assert kept[0].read_text().startswith('{"definitions"')
+    assert kept[0].name in tab.lbl_rec_warn.text()
+    tab.add_recurring("copy", "/x", "/y", [], 3600)   # salva il file nuovo
+    assert kept[0].exists()
+
+
+def test_salvataggio_programmazioni_fallito_avvisa(qapp, monkeypatch):
+    """Gli OSError di _save_recurring venivano ignorati: modifiche perse senza avviso."""
+    from clonaut.ui.transfers_tab import TransfersTab
+    tab = TransfersTab(_Ctx())
+    tab._rec_timer.stop()
+
+    def fail(*_a, **_k):
+        raise OSError(13, "permesso negato")
+    monkeypatch.setattr(settings, "write_private", fail)
+    tab.add_recurring("copy", "/x", "/y", [], 3600)
+    assert "programmazioni non salvate" in tab.lbl_rec_warn.text()
+    assert not tab.lbl_rec_warn.isHidden()
+    tab.on_snapshot({"agg": {}, "jobs": {}})   # le statistiche non lo cancellano
+    assert "programmazioni non salvate" in tab.lbl_rec_warn.text()
+    monkeypatch.undo()
+    tab._save_recurring()
+    assert tab.lbl_rec_warn.isHidden()

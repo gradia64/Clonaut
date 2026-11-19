@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from pathlib import Path
 
 DEFAULTS = {
@@ -54,10 +55,38 @@ def make_private(path: Path) -> None:
 
 
 def write_private(path: Path, text: str) -> None:
-    """Scrive un file di stato con permessi 0600 (vedi make_private)."""
+    """Scrive un file di stato con permessi 0600 (vedi make_private), in modo atomico.
+
+    Il testo va in un file temporaneo nella stessa cartella (mkstemp lo crea
+    già 0600), che dopo fsync prende il posto del vecchio con os.replace: un
+    crash o un disco pieno a metà scrittura lasciano intatta la versione
+    precedente invece di un file troncato.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    make_private(path)
-    path.write_text(text)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+    try:   # anche la rinomina deve arrivare sul disco
+        dir_fd = os.open(path.parent, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(dir_fd)
+    except OSError:
+        pass
+    finally:
+        os.close(dir_fd)
 
 
 def _migrate_legacy(old: Path, new: Path) -> None:

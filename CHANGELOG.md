@@ -23,6 +23,11 @@ All notable changes to Clonaut are listed here. Versions follow
   and is notified when it ends.
 - The end-of-run notification of a schedule edited during a run now shows the
   paths of the run that actually happened.
+- `settings.json` and `recurring.json` are written atomically (temporary file,
+  fsync, rename): a crash or a full disk no longer leaves them truncated.
+  A failed save of the schedules now shows a warning on the «⏰ Schedule» row
+  instead of being ignored, and an unreadable `recurring.json` is
+  kept as `recurring.json.corrupt-<timestamp>` instead of being overwritten.
 
 ## [0.4.1] — 2026-11-10
 

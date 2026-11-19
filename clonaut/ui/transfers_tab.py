@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 
 from pathlib import Path
@@ -115,6 +116,10 @@ class TransfersTab(QtWidgets.QWidget):
         self._rec_of_jid: dict[int, str] = {}   # jobid del giro in corso -> def_id
         self._rec_next_id = 1
         self._dismissed: set[int] = set()   # job tolti con «Rimuovi completati»
+        # avviso sulle programmazioni (file illeggibile o non salvabile):
+        # resta sulla riga ⏰ finché il problema non si risolve
+        self._rec_warning = ""
+        self._rec_save_failed = False
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
@@ -169,7 +174,17 @@ class TransfersTab(QtWidgets.QWidget):
                     self.btn_unschedule):
             btn.setEnabled(False)
             rec_bar.addWidget(btn)
-        rec_bar.addStretch(1)
+        # avviso sul file delle programmazioni: qui c'è spazio, e andando a
+        # capo non allarga la finestra
+        self.lbl_rec_warn = QtWidgets.QLabel("")
+        self.lbl_rec_warn.setProperty("role", "warn")
+        self.lbl_rec_warn.setTextFormat(QtCore.Qt.TextFormat.PlainText)
+        self.lbl_rec_warn.setWordWrap(True)
+        self.lbl_rec_warn.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight
+                                       | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.lbl_rec_warn.hide()
+        rec_bar.addWidget(self.lbl_rec_warn, 1)
+        rec_bar.addStretch(0)
         layout.addLayout(rec_bar)
 
         # -- coda job
@@ -363,6 +378,14 @@ class TransfersTab(QtWidgets.QWidget):
             tr("⇅ {speed}   ·   {active} job attivi   ·   falliti: {failed}").format(
                 speed=speed, active=active, failed=failed))
 
+    def _set_rec_warning(self, warning: str) -> None:
+        """Mostra (o toglie, con "") l'avviso sul file delle programmazioni."""
+        if warning == self._rec_warning:
+            return   # già mostrato: niente ripetizioni a ogni salvataggio
+        self._rec_warning = warning
+        self.lbl_rec_warn.setText(warning)
+        self.lbl_rec_warn.setVisible(bool(warning))
+
     # ------------------------------------------------------------------ tabella
 
     def _update_tree(self, snap: dict) -> None:
@@ -518,12 +541,18 @@ class TransfersTab(QtWidgets.QWidget):
             TransferDialog(self.ctx, self, self, schedule=d, def_id=def_id).exec()
 
     def _load_recurring(self) -> None:
+        path = _rec_path()
         try:
-            data = json.loads(_rec_path().read_text())
-        except (OSError, ValueError, RecursionError):
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
             return
+        except (OSError, ValueError, RecursionError):
+            data = None
         if not isinstance(data, dict) or not isinstance(data.get("definitions"), list):
-            return   # file estraneo o corrotto: si riparte da zero
+            # file estraneo o corrotto: lo si mette da parte invece di
+            # sovrascriverlo al primo salvataggio, poi si riparte da zero
+            self._set_rec_warning(self._keep_corrupt(path))
+            return
         for d in data["definitions"]:
             parsed = _parse_recurring(d)
             if parsed is not None:
@@ -543,8 +572,30 @@ class TransfersTab(QtWidgets.QWidget):
         try:
             app_settings.write_private(
                 _rec_path(), json.dumps(data, indent=2, ensure_ascii=False))
-        except OSError:
-            pass
+        except OSError as exc:
+            self._rec_save_failed = True
+            self._set_rec_warning(
+                tr("⚠ programmazioni non salvate ({error})").format(error=exc))
+        else:
+            if self._rec_save_failed:   # il problema è passato: via l'avviso
+                self._rec_save_failed = False
+                self._set_rec_warning("")
+
+    @staticmethod
+    def _keep_corrupt(path: Path) -> str:
+        """Rinomina un recurring.json illeggibile in .corrupt-<data>; dà l'avviso."""
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        dest = path.with_name(f"{path.name}.corrupt-{stamp}")
+        n = 1
+        while dest.exists():
+            n += 1
+            dest = path.with_name(f"{path.name}.corrupt-{stamp}-{n}")
+        try:
+            os.replace(path, dest)
+        except OSError as exc:
+            return tr("⚠ programmazioni illeggibili ({error})").format(error=exc)
+        return tr("⚠ programmazioni illeggibili: file conservato come {name}").format(
+            name=dest.name)
 
     def _new_rec_row(self, def_id: str, d: dict) -> None:
         item = QtWidgets.QTreeWidgetItem()

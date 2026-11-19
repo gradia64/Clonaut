@@ -71,3 +71,34 @@ def test_log_del_demone_solo_per_il_proprietario(tmp_path):
     proc.start()
     proc.proc.wait()
     assert _mode(tmp_path / "rcd-1.log") == 0o600
+
+
+# --- scritture atomiche (revisioni esterne) ---
+
+def test_scrittura_atomica_non_tronca_il_file_se_fallisce(monkeypatch):
+    """Un errore a metà scrittura lasciava il file vuoto o troncato."""
+    import os
+    settings.save(dict(settings.DEFAULTS, rclone_path="/opt/rclone"))
+    path = settings.settings_path()
+    before = path.read_text()
+
+    def boom(_fd):
+        raise OSError(28, "disco pieno")
+    monkeypatch.setattr(os, "fsync", boom)
+    try:
+        settings.save(dict(settings.DEFAULTS, rclone_path="/altro"))
+    except OSError:
+        pass
+    else:
+        raise AssertionError("l'errore di scrittura non è arrivato al chiamante")
+    assert path.read_text() == before
+    assert [p.name for p in path.parent.iterdir()] == ["settings.json"]   # niente .tmp
+
+
+def test_scrittura_atomica_resta_privata():
+    path = settings.settings_path()
+    settings.save(dict(settings.DEFAULTS))
+    inode = path.stat().st_ino
+    settings.save(dict(settings.DEFAULTS, language="en"))
+    assert path.stat().st_ino != inode   # file nuovo rinominato al posto del vecchio
+    assert _mode(path) == 0o600
