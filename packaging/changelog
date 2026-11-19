@@ -1,3 +1,23 @@
+clonaut (0.5.0) unstable; urgency=medium
+
+  * Transfers tab: a «⏰ Schedule» button row (Run now, Edit, Pause/Resume,
+    Remove schedule) besides the right-click menu.
+  * Fix: «Files in progress» stayed empty while a job was only comparing
+    files; it now lists them too, with copied/compared counters.
+  * Fix: the rclone daemon no longer inherits RCLONE_DRY_RUN from the
+    environment (transfers finished as «Done» without writing anything).
+  * Fix: removing a schedule during a run keeps that run in the queue as a
+    normal transfer; end-of-run notices show the paths of the actual run.
+  * Fix: settings and schedules are written atomically; a failed save is
+    reported and an unreadable recurring.json is kept aside.
+  * Fix: quitting no longer waits on slow rc calls or destroys running
+    threads; a schedule whose run vanished from the daemon recovers.
+  * Fix: boolean settings written as text («false») are read correctly.
+  * Fix: typing a type or alias in the new remote dialog rebuilds the form.
+  * Building from source requires setuptools 77 or newer.
+
+ -- @MAINTAINER@  Fri, 20 Nov 2026 00:00:11 +0100
+
 clonaut (0.4.1) unstable; urgency=medium
 
   * Security fixes from a white-box penetration test (Strix):

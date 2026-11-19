@@ -83,6 +83,17 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.5.0" date="2026-11-20">
+      <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.5.0</url>
+      <description>
+        <p>Buttons for scheduled transfers above the queue, and a «Files in
+        progress» panel that also shows the files being compared.</p>
+        <p>Fixes: an RCLONE_DRY_RUN variable in the environment no longer makes
+        transfers write nothing, removing a schedule during a run keeps the run
+        visible, settings and schedules are saved atomically, and quitting no
+        longer waits on slow calls.</p>
+      </description>
+    </release>
     <release version="0.4.1" date="2026-11-10">
       <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.4.1</url>
       <description>

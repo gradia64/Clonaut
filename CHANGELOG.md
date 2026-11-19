@@ -5,6 +5,8 @@ All notable changes to Clonaut are listed here. Versions follow
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-11-20
+
 ### Added
 - Transfers tab: a «⏰ Schedule» button row (Run now, Edit, Pause/Resume,
   Remove schedule) acting on the selected scheduled row, besides the
@@ -188,6 +190,7 @@ First public release.
 
 First packaged version (as "GUI rclone").
 
+[0.5.0]: https://github.com/gradia64/Clonaut/releases/tag/v0.5.0
 [0.4.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.1
 [0.4.0]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.0
 [0.3.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.3.1
