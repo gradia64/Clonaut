@@ -245,3 +245,64 @@ def test_run_now_button_comes_back_when_the_daemon_is_down(qapp):
     tab._on_rec_tick()
     assert tab._recurrent[def_id]["last_status"] == "err"
     assert tab.btn_run_now.isEnabled()
+
+
+def _running_schedule(tab, jid=42):
+    """Programmazione ⏰ con un giro (finto) in corso sul job `jid`."""
+    def_id = tab.add_recurring("sync", "/a", "/b", [], 3600)
+    d = tab._recurrent[def_id]
+    d.update(current_jid=jid, last_start=10**12)
+    tab._rec_of_jid[jid] = def_id
+    tab._meta[jid] = {"mode": "sync", "src": "/a", "dst": "/b", "rec": def_id}
+    return def_id, d
+
+
+def _job(finished, success=True):
+    return {"agg": {}, "jobs": {42: {"status": {"finished": finished, "success": success},
+                                     "stats": {"totalChecks": 3, "checks": 1}}}}
+
+
+def test_removing_a_running_schedule_keeps_the_job_in_the_queue(qapp, dialogs):
+    """Il giro in corso restava orfano: niente riga, niente notifica, non annullabile."""
+    from clonaut.ui.transfers_tab import TransfersTab
+    tab = TransfersTab(_Ctx())
+    tab._rec_timer.stop()
+    finished = []
+    tab.job_finished.connect(lambda text, ok: finished.append((text, ok)))
+    def_id, _d = _running_schedule(tab)
+    tab.on_snapshot(_job(False))
+    tab.tree.setCurrentItem(tab._rec_item[def_id])
+    tab.btn_unschedule.click()
+    assert dialogs == ["Rimuovere la programmazione?"]
+    assert def_id not in tab._recurrent
+    rows = [tab.tree.topLevelItem(i) for i in range(tab.tree.topLevelItemCount())]
+    assert [r.text(0) for r in rows] == ["42"]   # riga normale, subito
+    tab.tree.setCurrentItem(rows[0])
+    assert tab.btn_stop.isEnabled()
+    tab.on_snapshot(_job(True))
+    assert finished == [("Sincronizza completato: /a → /b", True)]
+
+
+def test_end_of_run_notice_uses_the_paths_of_the_run(qapp):
+    """Programmazione modificata durante il giro: la notifica descrive il giro eseguito."""
+    from clonaut.ui.transfers_tab import TransfersTab
+    tab = TransfersTab(_Ctx())
+    tab._rec_timer.stop()
+    finished = []
+    tab.job_finished.connect(lambda text, ok: finished.append(text))
+    def_id, d = _running_schedule(tab)
+    tab.on_snapshot(_job(False))
+    assert tab.update_recurring(def_id, "copy", "/nuova", "/altra", [], 3600)
+    tab.on_snapshot(_job(True))
+    assert finished == ["Programmato Sincronizza completato: /a → /b"]
+    assert tab._rec_item[def_id].text(2) == "/nuova"   # il prossimo giro
+
+
+def test_files_summary_without_comparisons(qapp):
+    from clonaut.ui.transfers_tab import TransfersTab
+    tab = TransfersTab(_Ctx())
+    stats = {"transfers": 1, "totalTransfers": 2, "checks": 0, "totalChecks": 0}
+    tab.on_snapshot({"agg": {}, "jobs": {9: {"status": {"finished": False}, "stats": stats}}})
+    tab.tree.setCurrentItem(tab.tree.topLevelItem(0))
+    assert tab.lbl_files.text().startswith("Copiati 1 di 2 file")
+    assert "confrontati" not in tab.lbl_files.text()

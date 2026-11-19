@@ -18,6 +18,11 @@ All notable changes to Clonaut are listed here. Versions follow
 - The rclone daemon no longer inherits `RCLONE_DRY_RUN` from the environment:
   with that variable set, every transfer finished as «Done» without writing
   anything.
+- Removing a schedule while one of its runs is in progress no longer hides
+  that run: it stays in the queue as a normal transfer that can be cancelled
+  and is notified when it ends.
+- The end-of-run notification of a schedule edited during a run now shows the
+  paths of the run that actually happened.
 
 ## [0.4.1] — 2026-11-10
 

@@ -291,8 +291,8 @@ class TransferDialog(QtWidgets.QDialog):
             QtWidgets.QMessageBox.information(
                 self, tr("Trasferimento programmato"),
                 tr("Si ripeterà automaticamente ogni {n} {unit}: il primo giro "
-                   "parte adesso (riga ⏰ nella coda; tasto destro per "
-                   "pausa/rimozione).").format(n=self.spn_repeat.value(),
+                   "parte adesso (riga ⏰ nella coda; pausa e rimozione dai "
+                   "pulsanti «⏰ Programmazione» o col tasto destro).").format(n=self.spn_repeat.value(),
                                                unit=self.cb_unit.currentText()))
             super().accept()
             return

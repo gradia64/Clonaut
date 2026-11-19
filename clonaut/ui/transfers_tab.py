@@ -549,9 +549,9 @@ class TransfersTab(QtWidgets.QWidget):
     def _new_rec_row(self, def_id: str, d: dict) -> None:
         item = QtWidgets.QTreeWidgetItem()
         self._paint_rec_paths(item, d)
-        item.setToolTip(4, tr("Programmazione: doppio clic per modificarla; tasto "
-                           "destro per avviare ora, modificare, mettere in "
-                           "pausa o rimuovere."))
+        item.setToolTip(4, tr("Programmazione: doppio clic per modificarla; "
+                           "avvio, modifica, pausa e rimozione dai pulsanti "
+                           "«⏰ Programmazione» o col tasto destro."))
         bar = QtWidgets.QProgressBar()
         bar.setRange(0, 1000)
         bar.setFormat("%p%")
@@ -661,12 +661,16 @@ class TransfersTab(QtWidgets.QWidget):
                 self.job_dismissed.emit(jid)
                 self._save_recurring()
                 ok = d["last_status"] == "ok"
+                # percorsi del giro appena finito: la programmazione può
+                # essere stata modificata nel frattempo
+                run = self._meta.get(jid) or d
                 text = (tr("Programmato {mode} completato: {src} → {dst}") if ok
                         else tr("Programmato {mode} annullato: {src} → {dst}")
                         if d["last_status"] == "cancel"
                         else tr("Programmato {mode} in errore: {src} → {dst}"))
                 self.job_finished.emit(text.format(
-                    mode=_mode(d["mode"], ""), src=d["src"], dst=d["dst"]), ok)
+                    mode=_mode(run.get("mode", ""), ""), src=run.get("src", "?"),
+                    dst=run.get("dst", "?")), ok)
 
     def _context_menu(self, pos) -> None:
         item = self.tree.itemAt(pos)
@@ -686,7 +690,7 @@ class TransfersTab(QtWidgets.QWidget):
             act_pause = menu.addAction(tr("⏸ Metti in pausa") if d.get("enabled", True)
                                        else tr("▶ Riattiva"))
             menu.addSeparator()
-            act_del = menu.addAction(tr("🗑 Rimuovi programmazione"))
+            act_del = menu.addAction(tr("✕ Rimuovi programmazione"))
             menu.addSeparator()
         act_open = menu.addAction(tr("📂 Apri cestino")) if backup else None
         chosen = menu.exec(self.tree.viewport().mapToGlobal(pos))
@@ -763,17 +767,24 @@ class TransfersTab(QtWidgets.QWidget):
             self._edit_recurring(def_id)
 
     def _remove_recurring(self, def_id: str) -> None:
+        running = (self._recurrent.get(def_id) or {}).get("current_jid") is not None
+        text = tr("Rimuovere il giro automatico? I file già sincronizzati "
+                  "restano dove sono.")
+        if running:
+            text += "\n\n" + tr("Il giro in corso continua come trasferimento "
+                                 "normale nella coda: da lì si può annullare.")
         answer = QtWidgets.QMessageBox.question(
-            self, tr("Rimuovere la programmazione?"),
-            tr("Rimuovere il giro automatico? I file già sincronizzati "
-            "restano dove sono."),
+            self, tr("Rimuovere la programmazione?"), text,
             QtWidgets.QMessageBox.StandardButton.Yes
             | QtWidgets.QMessageBox.StandardButton.No)
         if answer != QtWidgets.QMessageBox.StandardButton.Yes:
             return
         self._recurrent.pop(def_id, None)
         for jid in [j for j, dd in self._rec_of_jid.items() if dd == def_id]:
+            # il giro in corso diventa un job normale: riga propria in coda,
+            # annullabile e notificato alla fine (non resta orfano)
             self._rec_of_jid.pop(jid, None)
+            self._meta.get(jid, {}).pop("rec", None)
         removed = self._rec_item.pop(def_id, None)
         if removed is not None:
             index = self.tree.indexOfTopLevelItem(removed)
@@ -781,6 +792,8 @@ class TransfersTab(QtWidgets.QWidget):
                 self.tree.takeTopLevelItem(index)
         self._rec_bars.pop(def_id, None)
         self._save_recurring()
+        if self._last is not None:
+            self._update_tree(self._last)
         self._update_files()
 
     def _on_open_trash(self) -> None:
@@ -845,12 +858,13 @@ class TransfersTab(QtWidgets.QWidget):
         if not payload:
             return tr("In attesa dei primi dati da rclone…")
         stats = payload.get("stats") or {}
-        text = tr("Copiati {done} di {total} file · confrontati {checked} di "
-                  "{to_check}").format(
+        text = tr("Copiati {done} di {total} file").format(
             done=stats.get("transfers") or 0,
-            total=stats.get("totalTransfers") or 0,
-            checked=stats.get("checks") or 0,
-            to_check=stats.get("totalChecks") or 0)
+            total=stats.get("totalTransfers") or 0)
+        if stats.get("totalChecks") or stats.get("checks"):
+            text += " · " + tr("confrontati {checked} di {to_check}").format(
+                checked=stats.get("checks") or 0,
+                to_check=stats.get("totalChecks") or 0)
         if stats.get("deletes"):
             text += " · " + tr("eliminati {count}").format(count=stats["deletes"])
         if stats.get("errors"):
