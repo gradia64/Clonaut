@@ -26,19 +26,19 @@ msgid ""
 "modalità «Copia»."
 msgstr "«Move» and «Sync» work on folders: for a single file use «Copy»."
 
-#: clonaut/app.py:71
+#: clonaut/app.py:72
 msgid "Interfaccia grafica per rclone (rcd REST API)"
 msgstr "Graphical interface for rclone (rcd REST API)"
 
-#: clonaut/app.py:72
+#: clonaut/app.py:73
 msgid "aggancia un rcd già avviato (es. http://127.0.0.1:5572)"
 msgstr "attach to an rcd that is already running (e.g. http://127.0.0.1:5572)"
 
-#: clonaut/app.py:73
+#: clonaut/app.py:74
 msgid "utente per l'API rc"
 msgstr "user for the rc API"
 
-#: clonaut/app.py:74
+#: clonaut/app.py:75
 msgid ""
 "password per l'API rc (visibile a ogni utente con `ps`: meglio la "
 "variabile CLONAUT_RC_PASS, oppure niente per digitarla)"
@@ -46,15 +46,15 @@ msgstr ""
 "password for the rc API (visible to every user via `ps`: prefer the "
 "CLONAUT_RC_PASS variable, or leave it out to type it)"
 
-#: clonaut/app.py:77
+#: clonaut/app.py:78
 msgid "file di configurazione rclone da usare"
 msgstr "rclone configuration file to use"
 
-#: clonaut/app.py:78
+#: clonaut/app.py:79
 msgid "porta per il rcd locale (default: casuale)"
 msgstr "port for the local rcd (default: random)"
 
-#: clonaut/app.py:96
+#: clonaut/app.py:97
 msgid ""
 "Attenzione: la password passata con --password è visibile a ogni utente "
 "con `ps`; usa la variabile CLONAUT_RC_PASS."
@@ -62,11 +62,11 @@ msgstr ""
 "Warning: a password given with --password is visible to every user via "
 "`ps`; use the CLONAUT_RC_PASS variable."
 
-#: clonaut/app.py:103
+#: clonaut/app.py:104
 msgid "Password per l'API rc:"
 msgstr "Password for the rc API:"
 
-#: clonaut/app.py:105
+#: clonaut/app.py:106
 msgid ""
 "Manca la password dell'API rc: indicala con la variabile d'ambiente "
 "CLONAUT_RC_PASS (quella sulla riga di comando è leggibile da ogni utente "
@@ -76,15 +76,15 @@ msgstr ""
 "environment variable (one on the command line is readable by every user "
 "via `ps`)."
 
-#: clonaut/app.py:116
+#: clonaut/app.py:117
 msgid "gestito dal rcd esterno"
 msgstr "managed by the external rcd"
 
-#: clonaut/app.py:124
+#: clonaut/app.py:125
 msgid "rclone non trovato. Fonti provate:"
 msgstr "rclone not found. Sources tried:"
 
-#: clonaut/app.py:125
+#: clonaut/app.py:126
 msgid ""
 "Installalo (es. `sudo apt install rclone`, `sudo pacman -S rclone` o da "
 "https://rclone.org), oppure indica il percorso con la variabile "
@@ -94,23 +94,23 @@ msgstr ""
 "from https://rclone.org), or set its path with the CLONAUT_RCLONE "
 "environment variable."
 
-#: clonaut/app.py:133
+#: clonaut/app.py:134
 msgid "Log recente:"
 msgstr "Recent log:"
 
-#: clonaut/app.py:133
+#: clonaut/app.py:134
 msgid "rclone rcd non si è avviato."
 msgstr "rclone rcd did not start."
 
-#: clonaut/app.py:136 clonaut/appctx.py:19
+#: clonaut/app.py:137 clonaut/appctx.py:19
 msgid "predefinito (~/.config/rclone/rclone.conf)"
 msgstr "default (~/.config/rclone/rclone.conf)"
 
-#: clonaut/app.py:156
+#: clonaut/app.py:157
 msgid "Avvio di rclone rcd…"
 msgstr "Starting rclone rcd…"
 
-#: clonaut/app.py:170 clonaut/ui/transfer_dialog.py:304
+#: clonaut/app.py:171 clonaut/ui/transfer_dialog.py:304
 msgid "Avvio fallito"
 msgstr "Startup failed"
 
@@ -776,7 +776,7 @@ msgstr "Status"
 msgid "Progresso"
 msgstr "Progress"
 
-#: clonaut/ui/transfers_tab.py:22 clonaut/ui/transfers_tab.py:219
+#: clonaut/ui/transfers_tab.py:22 clonaut/ui/transfers_tab.py:223
 msgid "Velocità"
 msgstr "Speed"
 
@@ -800,87 +800,87 @@ msgstr "Move"
 msgid "Sincronizza"
 msgstr "Sync"
 
-#: clonaut/ui/transfers_tab.py:130
+#: clonaut/ui/transfers_tab.py:134
 msgid "＋ Nuovo trasferimento"
 msgstr "＋ New transfer"
 
-#: clonaut/ui/transfers_tab.py:132
+#: clonaut/ui/transfers_tab.py:136
 msgid "⏹ Annulla"
 msgstr "⏹ Cancel"
 
-#: clonaut/ui/transfers_tab.py:135
+#: clonaut/ui/transfers_tab.py:139
 msgid "🧹 Rimuovi completati"
 msgstr "🧹 Remove finished"
 
-#: clonaut/ui/transfers_tab.py:137
+#: clonaut/ui/transfers_tab.py:141
 msgid "🗑 Cestino"
 msgstr "🗑 Trash"
 
-#: clonaut/ui/transfers_tab.py:140
+#: clonaut/ui/transfers_tab.py:144
 msgid ""
 "Apre il cestino di sicurezza del trasferimento selezionato (richiede il "
 "campo «Cestino»)"
 msgstr ""
 "Opens the safety trash of the selected transfer (needs the «Trash» field)"
 
-#: clonaut/ui/transfers_tab.py:157
+#: clonaut/ui/transfers_tab.py:161
 msgid "⏰ Programmazione:"
 msgstr "⏰ Schedule:"
 
-#: clonaut/ui/transfers_tab.py:158 clonaut/ui/transfers_tab.py:739
+#: clonaut/ui/transfers_tab.py:162 clonaut/ui/transfers_tab.py:774
 msgid "▶ Avvia ora"
 msgstr "▶ Run now"
 
-#: clonaut/ui/transfers_tab.py:159
+#: clonaut/ui/transfers_tab.py:163
 msgid ""
 "Avvia subito un giro della programmazione selezionata, anche se è in pausa"
 msgstr "Run the selected schedule right away, even if it is paused"
 
-#: clonaut/ui/transfers_tab.py:162 clonaut/ui/transfers_tab.py:740
+#: clonaut/ui/transfers_tab.py:166 clonaut/ui/transfers_tab.py:775
 msgid "✏ Modifica…"
 msgstr "✏ Edit…"
 
-#: clonaut/ui/transfers_tab.py:163
+#: clonaut/ui/transfers_tab.py:167
 msgid "Modifica la programmazione selezionata"
 msgstr "Edit the selected schedule"
 
-#: clonaut/ui/transfers_tab.py:165 clonaut/ui/transfers_tab.py:793 clonaut/ui/transfers_tab.py:741
+#: clonaut/ui/transfers_tab.py:169 clonaut/ui/transfers_tab.py:828 clonaut/ui/transfers_tab.py:776
 msgid "⏸ Metti in pausa"
 msgstr "⏸ Pause"
 
-#: clonaut/ui/transfers_tab.py:166
+#: clonaut/ui/transfers_tab.py:170
 msgid ""
 "Sospende o riattiva i giri automatici della programmazione selezionata"
 msgstr "Pause or resume the automatic runs of the selected schedule"
 
-#: clonaut/ui/transfers_tab.py:169 clonaut/ui/transfers_tab.py:744
+#: clonaut/ui/transfers_tab.py:173 clonaut/ui/transfers_tab.py:779
 msgid "✕ Rimuovi programmazione"
 msgstr "✕ Remove schedule"
 
-#: clonaut/ui/transfers_tab.py:170
+#: clonaut/ui/transfers_tab.py:174
 msgid ""
 "Rimuove la programmazione selezionata; i file già copiati restano dove "
 "sono"
 msgstr ""
 "Remove the selected schedule; files already copied stay where they are"
 
-#: clonaut/ui/transfers_tab.py:211
+#: clonaut/ui/transfers_tab.py:215
 msgid "File in corso (job selezionato)"
 msgstr "Files in progress (selected job)"
 
-#: clonaut/ui/transfers_tab.py:219 clonaut/ui/trash_dialog.py:45
+#: clonaut/ui/transfers_tab.py:223 clonaut/ui/trash_dialog.py:45
 msgid "File"
 msgstr "File"
 
-#: clonaut/ui/transfers_tab.py:219
+#: clonaut/ui/transfers_tab.py:223
 msgid "Completato"
 msgstr "Done"
 
-#: clonaut/ui/transfers_tab.py:219 clonaut/ui/trash_dialog.py:45
+#: clonaut/ui/transfers_tab.py:223 clonaut/ui/trash_dialog.py:45
 msgid "Dimensione"
 msgstr "Size"
 
-#: clonaut/ui/transfers_tab.py:232
+#: clonaut/ui/transfers_tab.py:236
 msgid ""
 "I percorsi remoti si scrivono «nome:cartella»; quelli locali come percorso "
 "del filesystem (anche un singolo file). I programmati ⏰ si gestiscono coi "
@@ -891,16 +891,16 @@ msgstr ""
 "single file too). ⏰ schedules are managed with the buttons above or with "
 "right-click: run now, edit, pause, remove (double-click to edit them)."
 
-#: clonaut/ui/transfers_tab.py:291
+#: clonaut/ui/transfers_tab.py:302
 #, python-brace-format
 msgid "Prova · {mode}"
 msgstr "Dry run · {mode}"
 
-#: clonaut/ui/transfers_tab.py:295
+#: clonaut/ui/transfers_tab.py:306
 msgid "🧪 Prova in corso…"
 msgstr "🧪 Dry run in progress…"
 
-#: clonaut/ui/transfers_tab.py:297
+#: clonaut/ui/transfers_tab.py:308
 msgid ""
 "La prova è un trasferimento vero senza scritture: può durare quanto il "
 "trasferimento stesso."
@@ -908,91 +908,91 @@ msgstr ""
 "A dry run is a real transfer without writes: it can take as long as the "
 "transfer itself."
 
-#: clonaut/ui/transfers_tab.py:303
+#: clonaut/ui/transfers_tab.py:314
 msgid "anteprima"
 msgstr "preview"
 
-#: clonaut/ui/transfers_tab.py:318
+#: clonaut/ui/transfers_tab.py:328
 #, python-brace-format
 msgid "🧪 Prova completata — {summary}"
 msgstr "🧪 Dry run done — {summary}"
 
-#: clonaut/ui/transfers_tab.py:319
+#: clonaut/ui/transfers_tab.py:329
 msgid "🧪 Prova completata"
 msgstr "🧪 Dry run done"
 
-#: clonaut/ui/transfers_tab.py:321
+#: clonaut/ui/transfers_tab.py:331
 msgid "Anteprima a vuoto: nessun file scritto o eliminato."
 msgstr "Dry-run preview: no file written or deleted."
 
-#: clonaut/ui/transfers_tab.py:325
+#: clonaut/ui/transfers_tab.py:335
 msgid "✕ Prova fallita"
 msgstr "✕ Dry run failed"
 
-#: clonaut/ui/transfers_tab.py:362
+#: clonaut/ui/transfers_tab.py:372
 #, python-brace-format
 msgid "{mode} completato: {src} → {dst}"
 msgstr "{mode} done: {src} → {dst}"
 
-#: clonaut/ui/transfers_tab.py:363
+#: clonaut/ui/transfers_tab.py:373
 #, python-brace-format
 msgid "{mode} in errore: {src} → {dst}"
 msgstr "{mode} failed: {src} → {dst}"
 
-#: clonaut/ui/transfers_tab.py:365
+#: clonaut/ui/transfers_tab.py:375
 msgid "Trasferimento"
 msgstr "Transfer"
 
-#: clonaut/ui/transfers_tab.py:369
+#: clonaut/ui/transfers_tab.py:379
 #, python-brace-format
 msgid "⚠ rcd non raggiungibile ({error})"
 msgstr "⚠ rcd unreachable ({error})"
 
-#: clonaut/ui/transfers_tab.py:378
+#: clonaut/ui/transfers_tab.py:388
 #, python-brace-format
 msgid "⇅ {speed}   ·   {active} job attivi   ·   falliti: {failed}"
 msgstr "⇅ {speed}   ·   {active} active jobs   ·   failed: {failed}"
 
-#: clonaut/ui/transfers_tab.py:441
+#: clonaut/ui/transfers_tab.py:451
 msgid "✓ Completato"
 msgstr "✓ Done"
 
-#: clonaut/ui/transfers_tab.py:443
+#: clonaut/ui/transfers_tab.py:453
 msgid "■ Annullato"
 msgstr "■ Cancelled"
 
-#: clonaut/ui/transfers_tab.py:445
+#: clonaut/ui/transfers_tab.py:455
 msgid "✕ Errore"
 msgstr "✕ Error"
 
-#: clonaut/ui/transfers_tab.py:447
+#: clonaut/ui/transfers_tab.py:457
 msgid "⇅ In corso"
 msgstr "⇅ Running"
 
-#: clonaut/ui/transfers_tab.py:450
+#: clonaut/ui/transfers_tab.py:460
 msgid "… Confronto file"
 msgstr "… Comparing files"
 
-#: clonaut/ui/transfers_tab.py:452
+#: clonaut/ui/transfers_tab.py:462
 msgid "… Preparazione"
 msgstr "… Preparing"
 
-#: clonaut/ui/transfers_tab.py:578
+#: clonaut/ui/transfers_tab.py:588
 #, python-brace-format
 msgid "⚠ programmazioni non salvate ({error})"
 msgstr "⚠ schedules not saved ({error})"
 
-#: clonaut/ui/transfers_tab.py:596
+#: clonaut/ui/transfers_tab.py:606
 #, python-brace-format
 msgid "⚠ programmazioni illeggibili ({error})"
 msgstr "⚠ schedules unreadable ({error})"
 
-#: clonaut/ui/transfers_tab.py:597
+#: clonaut/ui/transfers_tab.py:607
 #, python-brace-format
 msgid "⚠ programmazioni illeggibili: file conservato come {name}"
 msgstr "⚠ schedules unreadable: file kept as {name}"
 
-#: clonaut/ui/transfers_tab.py:603
+#: clonaut/ui/transfers_tab.py:613
 msgid ""
 "Programmazione: doppio clic per modificarla; avvio, modifica, pausa e "
 "rimozione dai pulsanti «⏰ Programmazione» o col tasto destro."
@@ -1000,61 +1000,66 @@ msgstr ""
 "Schedule: double-click to edit it; run now, edit, pause and remove with "
 "the «⏰ Schedule» buttons or right-click."
 
-#: clonaut/ui/transfers_tab.py:625
+#: clonaut/ui/transfers_tab.py:635
 msgid "⏸ In pausa"
 msgstr "⏸ Paused"
 
-#: clonaut/ui/transfers_tab.py:627
+#: clonaut/ui/transfers_tab.py:637
 msgid "⏰ Primo avvio tra poco…"
 msgstr "⏰ First run shortly…"
 
-#: clonaut/ui/transfers_tab.py:630
+#: clonaut/ui/transfers_tab.py:640
 #, python-brace-format
 msgid "⏰ Prossimo giro tra {time}"
 msgstr "⏰ Next run in {time}"
 
-#: clonaut/ui/transfers_tab.py:633
+#: clonaut/ui/transfers_tab.py:643
 msgid "ultimo: ✓"
 msgstr "last: ✓"
 
-#: clonaut/ui/transfers_tab.py:635
+#: clonaut/ui/transfers_tab.py:645
 msgid "ultimo: ■ annullato"
 msgstr "last: ■ cancelled"
 
-#: clonaut/ui/transfers_tab.py:637
+#: clonaut/ui/transfers_tab.py:647
 #, python-brace-format
 msgid "ultimo: ✕ {error}"
 msgstr "last: ✕ {error}"
 
-#: clonaut/ui/transfers_tab.py:718
+#: clonaut/ui/transfers_tab.py:733
 #, python-brace-format
 msgid "Programmato {mode} completato: {src} → {dst}"
 msgstr "Scheduled {mode} done: {src} → {dst}"
 
-#: clonaut/ui/transfers_tab.py:719
+#: clonaut/ui/transfers_tab.py:734
 #, python-brace-format
 msgid "Programmato {mode} annullato: {src} → {dst}"
 msgstr "Scheduled {mode} cancelled: {src} → {dst}"
 
-#: clonaut/ui/transfers_tab.py:721
+#: clonaut/ui/transfers_tab.py:748
+#, python-brace-format
+msgid "giro perso: il job #{job} non risulta più nel demone rclone"
+msgstr "run lost: job #{job} is no longer in the rclone daemon"
+
+#: clonaut/ui/transfers_tab.py:757 clonaut/ui/transfers_tab.py:736
 #, python-brace-format
 msgid "Programmato {mode} in errore: {src} → {dst}"
 msgstr "Scheduled {mode} failed: {src} → {dst}"
 
-#: clonaut/ui/transfers_tab.py:746
+#: clonaut/ui/transfers_tab.py:781
 msgid "📂 Apri cestino"
 msgstr "📂 Open trash"
 
-#: clonaut/ui/transfers_tab.py:793 clonaut/ui/transfers_tab.py:742
+#: clonaut/ui/transfers_tab.py:828 clonaut/ui/transfers_tab.py:777
 msgid "▶ Riattiva"
 msgstr "▶ Resume"
 
-#: clonaut/ui/transfers_tab.py:822
+#: clonaut/ui/transfers_tab.py:857
 msgid ""
 "Rimuovere il giro automatico? I file già sincronizzati restano dove sono."
 msgstr "Remove the automatic run? Files already synced stay where they are."
 
-#: clonaut/ui/transfers_tab.py:825
+#: clonaut/ui/transfers_tab.py:860
 msgid ""
 "Il giro in corso continua come trasferimento normale nella coda: da lì si "
 "può annullare."
@@ -1062,68 +1067,68 @@ msgstr ""
 "The run in progress goes on as a normal transfer in the queue, where it "
 "can be cancelled."
 
-#: clonaut/ui/transfers_tab.py:828
+#: clonaut/ui/transfers_tab.py:863
 msgid "Rimuovere la programmazione?"
 msgstr "Remove the schedule?"
 
-#: clonaut/ui/transfers_tab.py:877
+#: clonaut/ui/transfers_tab.py:912
 msgid "Seleziona un job nella coda per vedere i file su cui sta lavorando."
 msgstr "Select a job in the queue to see the files it is working on."
 
-#: clonaut/ui/transfers_tab.py:884
+#: clonaut/ui/transfers_tab.py:919
 msgid "Programmazione in attesa: i file compaiono qui durante un giro."
 msgstr "Schedule waiting: files show up here during a run."
 
-#: clonaut/ui/transfers_tab.py:887
+#: clonaut/ui/transfers_tab.py:922
 msgid "La prova a vuoto mostra solo il riepilogo finale, non i singoli file."
 msgstr "A dry run only shows the final summary, not the single files."
 
-#: clonaut/ui/transfers_tab.py:903
+#: clonaut/ui/transfers_tab.py:938
 msgid "confronto…"
 msgstr "comparing…"
 
-#: clonaut/ui/transfers_tab.py:910
+#: clonaut/ui/transfers_tab.py:945
 msgid "In attesa dei primi dati da rclone…"
 msgstr "Waiting for the first data from rclone…"
 
-#: clonaut/ui/transfers_tab.py:912
+#: clonaut/ui/transfers_tab.py:947
 #, python-brace-format
 msgid "Copiati {done} di {total} file"
 msgstr "Copied {done} of {total} files"
 
-#: clonaut/ui/transfers_tab.py:916
+#: clonaut/ui/transfers_tab.py:951
 #, python-brace-format
 msgid "confrontati {checked} di {to_check}"
 msgstr "compared {checked} of {to_check}"
 
-#: clonaut/ui/transfers_tab.py:920
+#: clonaut/ui/transfers_tab.py:955
 #, python-brace-format
 msgid "eliminati {count}"
 msgstr "deleted {count}"
 
-#: clonaut/ui/transfers_tab.py:922
+#: clonaut/ui/transfers_tab.py:957
 #, python-brace-format
 msgid "errori {count}"
 msgstr "errors {count}"
 
-#: clonaut/ui/transfers_tab.py:924
+#: clonaut/ui/transfers_tab.py:959
 msgid "Job terminato."
 msgstr "Job finished."
 
-#: clonaut/ui/transfers_tab.py:926
+#: clonaut/ui/transfers_tab.py:961
 msgid "nessun file in lavorazione in questo istante"
 msgstr "no file being processed right now"
 
-#: clonaut/ui/transfers_tab.py:939
+#: clonaut/ui/transfers_tab.py:974
 msgid "Annullare il trasferimento?"
 msgstr "Cancel the transfer?"
 
-#: clonaut/ui/transfers_tab.py:940
+#: clonaut/ui/transfers_tab.py:975
 #, python-brace-format
 msgid "Annullare il job #{job}? I file già trasferiti restano dove sono."
 msgstr "Cancel job #{job}? Files already transferred stay where they are."
 
-#: clonaut/ui/transfers_tab.py:949
+#: clonaut/ui/transfers_tab.py:984
 msgid "Annullamento fallito"
 msgstr "Cancellation failed"
 
@@ -1209,29 +1214,29 @@ msgstr "Emptying failed"
 msgid "{d}g {h:02d}h"
 msgstr "{d}d {h:02d}h"
 
-#: clonaut/worker.py:77
+#: clonaut/worker.py:108
 msgid "il backend delle prove non risponde"
 msgstr "the dry-run backend is not responding"
 
-#: clonaut/worker.py:87
+#: clonaut/worker.py:119
 #, python-brace-format
 msgid "{files} file, {size}"
 msgstr "{files} files, {size}"
 
-#: clonaut/worker.py:92
+#: clonaut/worker.py:124
 #, python-brace-format
 msgid ", {n} da eliminare"
 msgstr ", {n} to delete"
 
-#: clonaut/worker.py:93
+#: clonaut/worker.py:125
 #, python-brace-format
 msgid " in {time}"
 msgstr " in {time}"
 
-#: clonaut/worker.py:98
+#: clonaut/worker.py:130
 msgid "errore sconosciuto"
 msgstr "unknown error"
 
-#: clonaut/worker.py:102
+#: clonaut/worker.py:134
 msgid "timeout della prova (1h)"
 msgstr "dry run timed out (1h)"

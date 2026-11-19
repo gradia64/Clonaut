@@ -47,6 +47,9 @@ def _mode(mode: str, default: str | None = None) -> str:
 
 
 _MAX_INTERVAL = 999 * 86400   # il massimo che il dialogo permette (999 giorni)
+# snapshot consecutivi senza il job di un giro ⏰ prima di darlo per perso
+# (rcd riavviato, job scaduto): circa 20 s col polling a 0,9 s
+_LOST_AFTER = 20
 
 
 def _text(value) -> str:
@@ -114,6 +117,7 @@ class TransfersTab(QtWidgets.QWidget):
         self._rec_item: dict[str, QtWidgets.QTreeWidgetItem] = {}
         self._rec_bars: dict[str, QtWidgets.QProgressBar] = {}
         self._rec_of_jid: dict[int, str] = {}   # jobid del giro in corso -> def_id
+        self._rec_missing: dict[int, int] = {}  # jobid -> snapshot senza di lui
         self._rec_next_id = 1
         self._dismissed: set[int] = set()   # job tolti con «Rimuovi completati»
         # avviso sulle programmazioni (file illeggibile o non salvabile):
@@ -696,7 +700,12 @@ class TransfersTab(QtWidgets.QWidget):
                 continue
             payload = (snap.get("jobs") or {}).get(jid)
             if not payload:
+                missing = self._rec_missing.get(jid, 0) + 1
+                self._rec_missing[jid] = missing
+                if missing >= _LOST_AFTER:
+                    self._rec_lost(jid, def_id, d, item)
                 continue
+            self._rec_missing.pop(jid, None)
             status = payload.get("status") or {}
             self._paint_state(item, self._rec_bars[def_id],
                               self._meta.get(jid, {}),
@@ -728,6 +737,26 @@ class TransfersTab(QtWidgets.QWidget):
                 self.job_finished.emit(text.format(
                     mode=_mode(run.get("mode", ""), ""), src=run.get("src", "?"),
                     dst=run.get("dst", "?")), ok)
+
+    def _rec_lost(self, jid: int, def_id: str, d: dict,
+                  item: QtWidgets.QTreeWidgetItem) -> None:
+        """Il job del giro non compare più: giro perso, il prossimo può partire."""
+        self._rec_missing.pop(jid, None)
+        self._rec_of_jid.pop(jid, None)
+        d["current_jid"] = None
+        d["last_status"] = "err"
+        d["last_error"] = tr("giro perso: il job #{job} non risulta più nel demone "
+                             "rclone").format(job=jid)
+        self._paint_rec_paths(item, d)
+        self._paint_rec_idle(def_id, d)
+        self._dismissed.add(jid)
+        self.job_dismissed.emit(jid)
+        self._save_recurring()
+        self._update_rec_actions()
+        run = self._meta.get(jid) or d
+        self.job_finished.emit(tr("Programmato {mode} in errore: {src} → {dst}").format(
+            mode=_mode(run.get("mode", ""), ""), src=run.get("src", "?"),
+            dst=run.get("dst", "?")), False)
 
     def _context_menu(self, pos) -> None:
         item = self.tree.itemAt(pos)

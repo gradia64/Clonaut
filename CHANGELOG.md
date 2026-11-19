@@ -33,6 +33,10 @@ All notable changes to Clonaut are listed here. Versions follow
   a thread still inside an rc call is kept alive until it ends instead of
   being destroyed while running. Dry-run threads are also released only once
   they have really finished.
+- A schedule whose run disappears from the daemon (for example after an rcd
+  restart) no longer stays «running» forever: after about 20 s without the
+  job the run is marked as failed with a clear message and the next run can
+  start.
 
 ## [0.4.1] — 2026-11-10
 

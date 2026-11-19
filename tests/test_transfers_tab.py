@@ -341,3 +341,29 @@ def test_salvataggio_programmazioni_fallito_avvisa(qapp, monkeypatch):
     monkeypatch.undo()
     tab._save_recurring()
     assert tab.lbl_rec_warn.isHidden()
+
+
+def test_giro_programmato_perso_non_blocca_la_programmazione(qapp):
+    """Se il job di un giro spariva dagli snapshot, current_jid restava impostato per sempre."""
+    from clonaut.ui import transfers_tab as tt
+    tab = tt.TransfersTab(_Ctx())
+    tab._rec_timer.stop()
+    finished = []
+    tab.job_finished.connect(lambda text, ok: finished.append(ok))
+    def_id, d = _running_schedule(tab)
+    tab.on_snapshot(_job(False))
+    empty = {"agg": {}, "jobs": {}}
+    for _ in range(tt._LOST_AFTER - 1):
+        tab.on_snapshot(empty)
+    assert d["current_jid"] == 42          # un buco breve non basta
+    tab.on_snapshot(_job(False))           # ricompare: il conteggio riparte
+    for _ in range(tt._LOST_AFTER - 1):
+        tab.on_snapshot(empty)
+    assert d["current_jid"] == 42
+    tab.on_snapshot(empty)
+    assert d["current_jid"] is None
+    assert d["last_status"] == "err" and "#42" in d["last_error"]
+    assert finished == [False]
+    assert "ultimo: ✕ giro perso" in tab._rec_item[def_id].text(4)
+    tab.tree.setCurrentItem(tab._rec_item[def_id])
+    assert tab.btn_run_now.isEnabled()     # il giro successivo è consentito
