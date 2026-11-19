@@ -5,6 +5,15 @@ All notable changes to Clonaut are listed here. Versions follow
 
 ## [Unreleased]
 
+### Fixed
+- A slow or stuck rclone daemon no longer freezes the window when a scheduled
+  run starts: the call runs in a background thread (it could block for up to
+  20 s), the ⏰ row shows «Starting the run» meanwhile, and a schedule removed
+  while starting keeps its run in the queue as a normal transfer.
+- The safety trash viewer lists and empties the trash in a background thread
+  (up to 60 and 120 s on a slow remote): the window stays responsive and can
+  be closed, and the buttons are disabled while an operation is running.
+
 ## [0.5.0] — 2026-11-20
 
 ### Added

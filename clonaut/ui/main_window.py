@@ -225,7 +225,7 @@ class MainWindow(QtWidgets.QMainWindow):
             event.accept()
             return
         self._shut_down = True
-        threads = [self.worker, *self.transfers_tab.dry_workers()]
+        threads = [self.worker, *self.transfers_tab.background_threads()]
         for thread in threads:
             thread.stop()
         # di solito il thread è in pausa tra due tick e finisce subito; se è

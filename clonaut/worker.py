@@ -57,6 +57,42 @@ def wait_lingering(msecs: int = int((POLL_TIMEOUT + 1) * 1000)) -> bool:
     return done
 
 
+class CallWorker(QThread):
+    """Esegue una chiamata rc fuori dal thread della GUI.
+
+    Le chiamate che possono durare (avvio di un trasferimento: fino a 20 s
+    con un rcd lento; elenco e svuotamento del cestino: fino a 60/120 s)
+    non devono bloccare la finestra. Il risultato arriva con `succeeded`,
+    l'errore con `failed` (testo); dopo stop() non arriva più nulla.
+    Entrambi i segnali portano per primo `tag`, il contesto di chi chiama:
+    così si collegano a metodi di oggetti Qt (eseguiti nel thread della GUI)
+    invece che a lambda, che con PySide6 girerebbero nel thread che emette.
+    """
+
+    succeeded = Signal(object, object)   # tag, risultato
+    failed = Signal(object, str)         # tag, messaggio d'errore
+
+    def __init__(self, tag, fn, *args, **kwargs):
+        super().__init__()
+        self.tag = tag
+        self._fn, self._args, self._kwargs = fn, args, kwargs
+        self._stop = False
+
+    def stop(self) -> None:
+        """La chiamata in corso non si interrompe, ma il suo esito viene ignorato."""
+        self._stop = True
+
+    def run(self) -> None:
+        try:
+            result = self._fn(*self._args, **self._kwargs)
+        except Exception as exc:  # noqa: BLE001 — l'errore va mostrato a chi chiama
+            if not self._stop:
+                self.failed.emit(self.tag, str(exc))
+            return
+        if not self._stop:
+            self.succeeded.emit(self.tag, result)
+
+
 class DryRunWorker(QThread):
     """Prova a vuoto su un rcd dedicato avviato con --dry-run globale.
 

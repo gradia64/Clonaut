@@ -25,6 +25,11 @@ class _Ctx:
     rclone_exe = None
 
 
+def _wait_starts(qapp, tab):
+    """I giri ⏰ partono in un thread: aspetta l'esito di tutti gli avvii."""
+    assert spin(qapp, 10, until=lambda: not tab._rec_starters)
+
+
 def _snap(*finished_jids):
     return {"agg": {}, "jobs": {j: {"status": {"finished": True, "success": True},
                                     "stats": {}} for j in finished_jids}}
@@ -119,6 +124,7 @@ def test_schedule_with_dead_daemon_records_the_error(rcd, qapp, tree):
     def_id = tab.add_recurring("sync", str(tree / "a"), str(tree / "b"), [], 3600)
     rcd.rcd.stop()
     tab._on_rec_tick()
+    _wait_starts(qapp, tab)
     d = tab._recurrent[def_id]
     assert d["last_status"] == "err"
     assert "non risponde" in d["last_error"]
@@ -157,6 +163,7 @@ def test_recurring_con_valori_sbagliati_si_carica_corretto(qapp):
 
     tab.ctx = type("Ctx", (_Ctx,), {"api": _ApiGiu()})()
     tab._on_rec_tick()                    # il timer non deve cadere
+    _wait_starts(qapp, tab)
     assert tab._recurrent["rec-1"]["last_status"] == "err"
     tab._save_recurring()
     again = TransfersTab(_Ctx())
@@ -243,6 +250,7 @@ def test_run_now_button_comes_back_when_the_daemon_is_down(qapp):
     tab.btn_run_now.click()
     assert not tab.btn_run_now.isEnabled()
     tab._on_rec_tick()
+    _wait_starts(qapp, tab)
     assert tab._recurrent[def_id]["last_status"] == "err"
     assert tab.btn_run_now.isEnabled()
 
@@ -367,3 +375,108 @@ def test_giro_programmato_perso_non_blocca_la_programmazione(qapp):
     assert "ultimo: ✕ giro perso" in tab._rec_item[def_id].text(4)
     tab.tree.setCurrentItem(tab._rec_item[def_id])
     assert tab.btn_run_now.isEnabled()     # il giro successivo è consentito
+
+
+class _SlowApi(_OfflineApi):
+    """rcd lento: ogni chiamata dura `delay` secondi."""
+
+    def __init__(self, delay=1.5):
+        self.delay = delay
+        self.purged = False
+
+    def start_transfer(self, *_a, **_k):
+        import time
+        time.sleep(self.delay)
+        return 77
+
+    def operations_list(self, _fs):
+        import time
+        time.sleep(self.delay)
+        return [] if self.purged else [{"Path": "doc/a.txt", "Size": 5,
+                                        "ModTime": "2026-11-20T10:00:00Z"}]
+
+    def purge(self, _fs):
+        import time
+        time.sleep(self.delay)
+        self.purged = True
+
+
+def test_slow_daemon_does_not_block_the_scheduler(qapp):
+    """P2-6: l'avvio di un giro ⏰ girava nel timer della GUI (fino a 20 s)."""
+    import time
+    from clonaut.ui.transfers_tab import TransfersTab
+    ctx = _Ctx()
+    ctx.api = _SlowApi()
+    tab = TransfersTab(ctx)
+    tab._rec_timer.stop()
+    started = []
+    tab.job_started.connect(started.append)
+    def_id = tab.add_recurring("copy", "/a", "/b", [], 3600)
+    tab.tree.setCurrentItem(tab._rec_item[def_id])
+    t0 = time.monotonic()
+    tab._on_rec_tick()
+    assert time.monotonic() - t0 < 0.5
+    assert tab._rec_item[def_id].text(4) == "… Avvio del giro"
+    assert not tab.btn_run_now.isEnabled()
+    tab._on_rec_tick()                       # nessun secondo avvio in parallelo
+    assert len(tab._rec_starters) == 1
+    _wait_starts(qapp, tab)
+    d = tab._recurrent[def_id]
+    assert d["current_jid"] == 77 and "starting" not in d
+    assert tab._rec_item[def_id].text(0) == "#77"
+    assert tab._meta[77]["rec"] == def_id and started == [77]
+
+
+def test_schedule_removed_while_starting_keeps_the_run(qapp, dialogs):
+    from clonaut.ui.transfers_tab import TransfersTab
+    ctx = _Ctx()
+    ctx.api = _SlowApi(0.5)
+    tab = TransfersTab(ctx)
+    tab._rec_timer.stop()
+    started = []
+    tab.job_started.connect(started.append)
+    def_id = tab.add_recurring("copy", "/a", "/b", [], 3600)
+    tab._on_rec_tick()
+    tab._remove_recurring(def_id)
+    _wait_starts(qapp, tab)
+    assert started == [77] and "rec" not in tab._meta[77]
+    tab.on_snapshot({"agg": {}, "jobs": {77: {"status": {"finished": False},
+                                               "stats": {}}}})
+    assert tab.tree.topLevelItem(0).text(0) == "77"   # riga normale in coda
+
+
+def test_trash_dialog_does_not_block(qapp, dialogs):
+    """P2-11: elenco e svuotamento del cestino giravano nel thread della GUI."""
+    import time
+    from clonaut.ui.trash_dialog import TrashDialog
+    ctx = _Ctx()
+    ctx.api = _SlowApi(1.0)
+    t0 = time.monotonic()
+    dlg = TrashDialog(ctx, "/backup-cestino")
+    assert time.monotonic() - t0 < 0.5
+    assert dlg.tree.topLevelItem(0).text(0) == "(lettura del cestino…)"
+    assert dlg.busy() and not dlg.btn_empty.isEnabled()
+    assert spin(qapp, 5, until=lambda: not dlg.busy())
+    assert dlg.tree.topLevelItem(0).text(0) == "doc/a.txt"
+
+    t0 = time.monotonic()
+    dlg._empty()
+    assert time.monotonic() - t0 < 0.5
+    assert dialogs == ["Svuotare il cestino?"]
+    assert dlg.tree.topLevelItem(0).text(0) == "(svuotamento in corso…)"
+    assert spin(qapp, 8, until=lambda: dlg.tree.topLevelItem(0).text(0)
+                == "(cestino vuoto)")
+    assert ctx.api.purged and not dlg.busy() and dlg.btn_refresh.isEnabled()
+
+
+def test_closing_the_trash_dialog_while_busy(qapp):
+    """Chiusa durante un'operazione: niente blocco, thread tenuto in vita."""
+    from clonaut import worker as worker_mod
+    from clonaut.ui.trash_dialog import TrashDialog
+    ctx = _Ctx()
+    ctx.api = _SlowApi(1.0)
+    dlg = TrashDialog(ctx, "/backup-cestino")
+    running = dlg._worker
+    dlg.reject()
+    assert not dlg.busy() and running in worker_mod._lingering
+    assert worker_mod.wait_lingering(5000)

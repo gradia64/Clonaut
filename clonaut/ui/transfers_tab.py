@@ -14,7 +14,7 @@ from ..i18n import N_, tr
 from ..qtcompat import QtCore, QtGui, QtWidgets, Signal
 from .. import settings as app_settings
 from ..util import esc, fmt_duration, fmt_eta, human_size, human_speed
-from ..worker import DryRunWorker
+from ..worker import CallWorker, DryRunWorker
 from .transfer_dialog import TransferDialog
 from .trash_dialog import TrashDialog
 
@@ -118,6 +118,8 @@ class TransfersTab(QtWidgets.QWidget):
         self._rec_bars: dict[str, QtWidgets.QProgressBar] = {}
         self._rec_of_jid: dict[int, str] = {}   # jobid del giro in corso -> def_id
         self._rec_missing: dict[int, int] = {}  # jobid -> snapshot senza di lui
+        # avvii dei giri in corso (chiamata rc fuori dal thread della GUI)
+        self._rec_starters: dict[str, CallWorker] = {}
         self._rec_next_id = 1
         self._dismissed: set[int] = set()   # job tolti con «Rimuovi completati»
         # avviso sulle programmazioni (file illeggibile o non salvabile):
@@ -289,6 +291,10 @@ class TransfersTab(QtWidgets.QWidget):
     def dry_workers(self) -> list[DryRunWorker]:
         """Thread delle prove a vuoto non ancora finiti (da fermare all'uscita)."""
         return list(self._dry_workers.values())
+
+    def background_threads(self) -> list:
+        """Tutti i thread della scheda ancora attivi: prove e avvii dei giri ⏰."""
+        return [*self._dry_workers.values(), *self._rec_starters.values()]
 
     def _drop_dry_worker(self, key: str) -> None:
         worker = self._dry_workers.pop(key, None)
@@ -528,7 +534,7 @@ class TransfersTab(QtWidgets.QWidget):
                   "interval": max(60, int(interval_sec)),
                   "backup_dir": backup_dir or ""})
         item = self._rec_item.get(def_id)
-        running = d.get("current_jid") is not None
+        running = d.get("current_jid") is not None or bool(d.get("starting"))
         if item is not None:
             item.setData(0, _ROLE_BACKUP, d["backup_dir"] or None)
             if not running:   # il giro in corso mostra ancora i suoi percorsi
@@ -630,6 +636,10 @@ class TransfersTab(QtWidgets.QWidget):
         item = self._rec_item.get(def_id)
         if item is None:
             return
+        if d.get("starting"):
+            item.setText(4, tr("… Avvio del giro"))
+            item.setForeground(4, _BLUE)
+            return   # l'esito della chiamata ridipinge la riga
         enabled = d.get("enabled", True)
         if not enabled:
             stato = tr("⏸ In pausa")
@@ -655,8 +665,8 @@ class TransfersTab(QtWidgets.QWidget):
     def _on_rec_tick(self) -> None:
         now = time.time()
         for def_id, d in self._recurrent.items():
-            if d.get("current_jid") is not None:
-                continue   # un giro è in corso: lo aggiorna lo snapshot
+            if d.get("current_jid") is not None or d.get("starting"):
+                continue   # giro in corso (lo aggiorna lo snapshot) o in avvio
             self._paint_rec_idle(def_id, d)
             run_now = d.pop("run_now", False)   # «Avvia ora», anche se in pausa
             if not run_now:
@@ -665,30 +675,69 @@ class TransfersTab(QtWidgets.QWidget):
                 if (d.get("last_start") is not None
                         and now - d["last_start"] < d["interval"]):
                     continue
-            try:
-                jid = self.ctx.api.start_transfer(d["mode"], d["src"], d["dst"],
-                                                  exclude=d.get("exclude") or None,
-                                                  backup_dir=d.get("backup_dir") or None)
-            except ApiError as exc:
-                d["last_start"] = now   # riprova al prossimo intervallo
-                d["last_status"], d["last_error"] = "err", str(exc)
-                self._paint_rec_idle(def_id, d)   # l'errore si vede subito sulla riga
-                self._save_recurring()
-                continue
-            d["current_jid"] = jid
-            d["last_start"] = now
-            self._meta[jid] = {"mode": d["mode"], "src": d["src"],
-                               "dst": d["dst"], "rec": def_id,
-                               "exclude": d.get("exclude") or [],
-                               "backup_dir": d.get("backup_dir") or ""}
-            self.job_started.emit(jid)   # registra il job nella watch-list
-            self._rec_of_jid[jid] = def_id
-            item = self._rec_item.get(def_id)
-            if item is not None:
-                item.setText(0, f"#{jid}")
-                item.setData(0, _ROLE_JID, jid)
-            self._save_recurring()
+            self._start_rec_run(def_id, d, now)
         # senza snapshot (rcd irraggiungibile) nessun altro riaccende i pulsanti
+        self._update_rec_actions()
+
+    def _start_rec_run(self, def_id: str, d: dict, now: float) -> None:
+        """Avvia un giro ⏰ in un thread: con un rcd lento la chiamata può
+        durare fino a 20 s, e nel timer della GUI bloccherebbe la finestra."""
+        run = {"mode": d["mode"], "src": d["src"], "dst": d["dst"], "rec": def_id,
+               "exclude": d.get("exclude") or [],
+               "backup_dir": d.get("backup_dir") or "", "started": now}
+        worker = CallWorker((def_id, run), self.ctx.api.start_transfer,
+                            run["mode"], run["src"], run["dst"],
+                            exclude=run["exclude"] or None,
+                            backup_dir=run["backup_dir"] or None)
+        worker.succeeded.connect(self._on_rec_started)
+        worker.failed.connect(self._on_rec_start_failed)
+        d["starting"] = True
+        self._rec_starters[def_id] = worker
+        self._paint_rec_idle(def_id, d)
+        worker.start()
+
+    def _release_rec_starter(self, def_id: str) -> None:
+        worker = self._rec_starters.pop(def_id, None)
+        if worker is not None:
+            worker.wait()   # ha appena emesso l'esito: finisce subito
+
+    def _on_rec_started(self, tag, jid) -> None:
+        def_id, run = tag
+        self._release_rec_starter(def_id)
+        d = self._recurrent.get(def_id)
+        if d is None:
+            # programmazione rimossa durante l'avvio: il giro è partito lo
+            # stesso, resta in coda come trasferimento normale
+            run.pop("rec", None)
+            run.pop("started", None)
+            self._meta[jid] = run
+            self.job_started.emit(jid)
+            return
+        d.pop("starting", None)
+        d["current_jid"] = jid
+        d["last_start"] = run.pop("started")
+        self._meta[jid] = run
+        self.job_started.emit(jid)   # registra il job nella watch-list
+        self._rec_of_jid[jid] = def_id
+        item = self._rec_item.get(def_id)
+        if item is not None:
+            item.setText(0, f"#{jid}")
+            item.setData(0, _ROLE_JID, jid)
+            item.setText(4, tr("… Preparazione"))
+        self._save_recurring()
+        self._update_files()
+
+    def _on_rec_start_failed(self, tag, message: str) -> None:
+        def_id, run = tag
+        self._release_rec_starter(def_id)
+        d = self._recurrent.get(def_id)
+        if d is None:
+            return
+        d.pop("starting", None)
+        d["last_start"] = run["started"]   # riprova al prossimo intervallo
+        d["last_status"], d["last_error"] = "err", message
+        self._paint_rec_idle(def_id, d)   # l'errore si vede subito sulla riga
+        self._save_recurring()
         self._update_rec_actions()
 
     def _update_recurring(self, snap: dict) -> None:
@@ -796,7 +845,7 @@ class TransfersTab(QtWidgets.QWidget):
 
     def _run_now(self, def_id: str) -> None:
         d = self._recurrent.get(def_id)
-        if d is not None and d.get("current_jid") is None:
+        if d is not None and d.get("current_jid") is None and not d.get("starting"):
             d["run_now"] = True   # parte al prossimo tick, anche se in pausa
             self._update_rec_actions()
 
@@ -823,7 +872,7 @@ class TransfersTab(QtWidgets.QWidget):
         for btn in (self.btn_edit, self.btn_pause, self.btn_unschedule):
             btn.setEnabled(d is not None)
         self.btn_run_now.setEnabled(d is not None and d.get("current_jid") is None
-                                    and not d.get("run_now"))
+                                    and not d.get("run_now") and not d.get("starting"))
         paused = d is not None and not d.get("enabled", True)
         self.btn_pause.setText(tr("▶ Riattiva") if paused else tr("⏸ Metti in pausa"))
 
@@ -853,7 +902,8 @@ class TransfersTab(QtWidgets.QWidget):
             self._edit_recurring(def_id)
 
     def _remove_recurring(self, def_id: str) -> None:
-        running = (self._recurrent.get(def_id) or {}).get("current_jid") is not None
+        d = self._recurrent.get(def_id) or {}
+        running = d.get("current_jid") is not None or bool(d.get("starting"))
         text = tr("Rimuovere il giro automatico? I file già sincronizzati "
                   "restano dove sono.")
         if running:
