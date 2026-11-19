@@ -169,3 +169,55 @@ def test_recurring_annidato_all_infinito(qapp):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("[" * 100000 + "]" * 100000)
     assert TransfersTab(_Ctx()).tree.topLevelItemCount() == 0
+
+
+def test_files_panel_lists_files_being_compared(qapp):
+    """Una sync con poco da copiare passa il tempo a confrontare: il pannello
+    «File in corso» restava vuoto perché leggeva solo «transferring»."""
+    from clonaut.ui.transfers_tab import TransfersTab
+    tab = TransfersTab(_Ctx())
+    assert "Seleziona un job" in tab.lbl_files.text()
+    stats = {"checking": ["foto/a.jpg", "foto/b.jpg"], "checks": 40,
+             "totalChecks": 300, "transfers": 0, "totalTransfers": 0}
+    snap = {"agg": {}, "jobs": {7: {"status": {"finished": False}, "stats": stats}}}
+    tab.on_snapshot(snap)
+    tab.tree.setCurrentItem(tab.tree.topLevelItem(0))
+    assert tab.tree.topLevelItem(0).text(4) == "… Confronto file"
+    names = [tab.files.topLevelItem(i).text(0) for i in range(tab.files.topLevelItemCount())]
+    assert names == ["foto/a.jpg", "foto/b.jpg"]
+    assert tab.files.topLevelItem(0).text(1) == "confronto…"
+    assert "confrontati 40 di 300" in tab.lbl_files.text()
+
+    stats.pop("checking")
+    tab.on_snapshot(snap)
+    assert tab.files.topLevelItemCount() == 0
+    assert "nessun file in lavorazione" in tab.lbl_files.text()
+
+
+def test_schedule_buttons_in_the_bar(qapp, dialogs):
+    """Avvia ora / Modifica / Pausa / Rimuovi anche nella barra, non solo col tasto destro."""
+    from clonaut.ui.transfers_tab import TransfersTab
+    tab = TransfersTab(_Ctx())
+    tab._rec_timer.stop()   # niente giri veri: l'API è finta
+    buttons = (tab.btn_run_now, tab.btn_edit, tab.btn_pause, tab.btn_unschedule)
+    def_id = tab.add_recurring("copy", "/a", "/b", [], 3600)
+    assert not any(b.isEnabled() for b in buttons)
+
+    tab.tree.setCurrentItem(tab._rec_item[def_id])
+    assert all(b.isEnabled() for b in buttons)
+    assert "Programmazione in attesa" in tab.lbl_files.text()
+
+    tab.btn_pause.click()
+    d = tab._recurrent[def_id]
+    assert not d["enabled"] and tab.btn_pause.text() == "▶ Riattiva"
+    assert tab._rec_item[def_id].text(4).startswith("⏸ In pausa")
+    tab.btn_pause.click()
+    assert d["enabled"] and tab.btn_pause.text() == "⏸ Metti in pausa"
+
+    tab.btn_run_now.click()
+    assert d["run_now"] and not tab.btn_run_now.isEnabled()
+
+    tab.btn_unschedule.click()
+    assert dialogs == ["Rimuovere la programmazione?"]
+    assert def_id not in tab._recurrent and tab.tree.topLevelItemCount() == 0
+    assert not any(b.isEnabled() for b in buttons)

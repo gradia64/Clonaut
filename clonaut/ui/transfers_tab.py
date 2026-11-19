@@ -146,6 +146,32 @@ class TransfersTab(QtWidgets.QWidget):
         bar.addWidget(self.lbl_agg)
         layout.addLayout(bar)
 
+        # -- azioni sulla programmazione ⏰ selezionata (le stesse del tasto
+        #    destro), su una riga a parte per non allargare la finestra
+        rec_bar = QtWidgets.QHBoxLayout()
+        rec_bar.addWidget(QtWidgets.QLabel(tr("⏰ Programmazione:")))
+        self.btn_run_now = QtWidgets.QPushButton(tr("▶ Avvia ora"))
+        self.btn_run_now.setToolTip(tr("Avvia subito un giro della programmazione "
+                                       "selezionata, anche se è in pausa"))
+        self.btn_run_now.clicked.connect(self._on_run_now)
+        self.btn_edit = QtWidgets.QPushButton(tr("✏ Modifica…"))
+        self.btn_edit.setToolTip(tr("Modifica la programmazione selezionata"))
+        self.btn_edit.clicked.connect(self._on_edit)
+        self.btn_pause = QtWidgets.QPushButton(tr("⏸ Metti in pausa"))
+        self.btn_pause.setToolTip(tr("Sospende o riattiva i giri automatici "
+                                     "della programmazione selezionata"))
+        self.btn_pause.clicked.connect(self._on_pause)
+        self.btn_unschedule = QtWidgets.QPushButton(tr("✕ Rimuovi programmazione"))
+        self.btn_unschedule.setToolTip(tr("Rimuove la programmazione selezionata; "
+                                          "i file già copiati restano dove sono"))
+        self.btn_unschedule.clicked.connect(self._on_unschedule)
+        for btn in (self.btn_run_now, self.btn_edit, self.btn_pause,
+                    self.btn_unschedule):
+            btn.setEnabled(False)
+            rec_bar.addWidget(btn)
+        rec_bar.addStretch(1)
+        layout.addLayout(rec_bar)
+
         # -- coda job
         self.tree = QtWidgets.QTreeWidget()
         self.tree.setHeaderLabels([tr(c) for c in _COLS])
@@ -169,6 +195,11 @@ class TransfersTab(QtWidgets.QWidget):
         # -- file in corso del job selezionato
         group = QtWidgets.QGroupBox(tr("File in corso (job selezionato)"))
         g_layout = QtWidgets.QVBoxLayout(group)
+        self.lbl_files = QtWidgets.QLabel("")
+        self.lbl_files.setProperty("role", "hint")
+        self.lbl_files.setWordWrap(True)
+        self.lbl_files.setTextFormat(QtCore.Qt.TextFormat.PlainText)
+        g_layout.addWidget(self.lbl_files)
         self.files = QtWidgets.QTreeWidget()
         self.files.setHeaderLabels([tr("File"), tr("Completato"), tr("Dimensione"), tr("Velocità")])
         self.files.setRootIsDecorated(False)
@@ -185,8 +216,8 @@ class TransfersTab(QtWidgets.QWidget):
         hint = QtWidgets.QLabel(
             tr("I percorsi remoti si scrivono «nome:cartella»; quelli locali come "
             "percorso del filesystem (anche un singolo file). I programmati ⏰ "
-            "si gestiscono col tasto destro: avvia ora, modifica, pausa, "
-            "rimuovi (doppio clic per modificarli)."))
+            "si gestiscono coi pulsanti in alto o col tasto destro: avvia ora, "
+            "modifica, pausa, rimuovi (doppio clic per modificarli)."))
         hint.setProperty("role", "hint")
         hint.setWordWrap(True)
         layout.addWidget(hint)
@@ -199,6 +230,7 @@ class TransfersTab(QtWidgets.QWidget):
         self._rec_timer.setInterval(1000)
         self._rec_timer.timeout.connect(self._on_rec_tick)
         self._rec_timer.start()
+        self._update_files()   # testo iniziale del pannello file
 
     # ------------------------------------------------------------- avvio job
 
@@ -390,6 +422,9 @@ class TransfersTab(QtWidgets.QWidget):
             state, color = tr("✕ Errore"), _RED
         elif stats.get("totalBytes"):
             state, color = tr("⇅ In corso"), _BLUE
+        elif stats.get("totalChecks"):
+            # nulla da copiare (finora): rclone sta solo confrontando i file
+            state, color = tr("… Confronto file"), _BLUE
         else:
             state, color = tr("… Preparazione"), _BLUE
 
@@ -658,16 +693,67 @@ class TransfersTab(QtWidgets.QWidget):
         if chosen is act_open:
             self._open_trash(backup)
         elif is_rec:
-            d = self._recurrent[def_id]
             if chosen is act_edit:
                 self._edit_recurring(def_id)
-            elif chosen is act_run and d.get("current_jid") is None:
-                d["run_now"] = True   # parte al prossimo tick, anche se in pausa
+            elif chosen is act_run:
+                self._run_now(def_id)
             elif chosen is act_pause:
-                d["enabled"] = not d.get("enabled", True)
-                self._save_recurring()
+                self._toggle_pause(def_id)
             elif chosen is act_del:
                 self._remove_recurring(def_id)
+
+    def _run_now(self, def_id: str) -> None:
+        d = self._recurrent.get(def_id)
+        if d is not None and d.get("current_jid") is None:
+            d["run_now"] = True   # parte al prossimo tick, anche se in pausa
+            self._update_rec_actions()
+
+    def _toggle_pause(self, def_id: str) -> None:
+        d = self._recurrent.get(def_id)
+        if d is None:
+            return
+        d["enabled"] = not d.get("enabled", True)
+        if d.get("current_jid") is None:
+            self._paint_rec_idle(def_id, d)
+        self._save_recurring()
+        self._update_rec_actions()
+
+    def _selected_rec(self) -> str | None:
+        """def_id della programmazione ⏰ selezionata, se c'è."""
+        item = self.tree.currentItem()
+        def_id = item.data(0, _ROLE_REC) if item is not None else None
+        return def_id if def_id in self._recurrent else None
+
+    def _update_rec_actions(self) -> None:
+        """Pulsanti ⏰ della barra in base alla riga selezionata."""
+        def_id = self._selected_rec()
+        d = self._recurrent.get(def_id) if def_id else None
+        for btn in (self.btn_edit, self.btn_pause, self.btn_unschedule):
+            btn.setEnabled(d is not None)
+        self.btn_run_now.setEnabled(d is not None and d.get("current_jid") is None
+                                    and not d.get("run_now"))
+        paused = d is not None and not d.get("enabled", True)
+        self.btn_pause.setText(tr("▶ Riattiva") if paused else tr("⏸ Metti in pausa"))
+
+    def _on_run_now(self) -> None:
+        def_id = self._selected_rec()
+        if def_id:
+            self._run_now(def_id)
+
+    def _on_edit(self) -> None:
+        def_id = self._selected_rec()
+        if def_id:
+            self._edit_recurring(def_id)
+
+    def _on_pause(self) -> None:
+        def_id = self._selected_rec()
+        if def_id:
+            self._toggle_pause(def_id)
+
+    def _on_unschedule(self) -> None:
+        def_id = self._selected_rec()
+        if def_id:
+            self._remove_recurring(def_id)
 
     def _on_double_click(self, item: QtWidgets.QTreeWidgetItem, _col: int) -> None:
         def_id = item.data(0, _ROLE_REC)
@@ -693,6 +779,7 @@ class TransfersTab(QtWidgets.QWidget):
                 self.tree.takeTopLevelItem(index)
         self._rec_bars.pop(def_id, None)
         self._save_recurring()
+        self._update_files()
 
     def _on_open_trash(self) -> None:
         item = self.tree.currentItem()
@@ -706,23 +793,39 @@ class TransfersTab(QtWidgets.QWidget):
     # ------------------------------------------------------------------ file
 
     def _update_files(self) -> None:
+        """Pannello «File in corso»: i file che rclone sta copiando o confrontando.
+
+        rclone elenca solo i file in lavorazione in questo istante: copiati
+        («transferring») o confrontati con la destinazione («checking»). Una
+        sincronizzazione con poco da copiare passa quasi tutto il tempo a
+        confrontare, e i file piccoli durano meno di un aggiornamento (1 s):
+        per questo sopra l'elenco c'è sempre il riepilogo dei contatori.
+        """
         self.files.clear()
+        self._update_rec_actions()
         item = self.tree.currentItem()
         backup = item.data(0, _ROLE_BACKUP) if item else None
         self.btn_trash.setEnabled(bool(backup))
         if item is None:
             self.btn_stop.setEnabled(False)
+            self.lbl_files.setText(tr("Seleziona un job nella coda per vedere "
+                                      "i file su cui sta lavorando."))
             return
         jid = item.data(0, _ROLE_JID)
         if jid is None:
             self.btn_stop.setEnabled(False)
+            if item.data(0, _ROLE_REC):
+                self.lbl_files.setText(tr("Programmazione in attesa: i file "
+                                          "compaiono qui durante un giro."))
+            else:
+                self.lbl_files.setText(tr("La prova a vuoto mostra solo il "
+                                          "riepilogo finale, non i singoli file."))
             return
-        self.btn_stop.setEnabled(
-            not (self._last or {}).get("jobs", {}).get(jid, {}).get("status", {})
-            .get("finished", False))
-        payload = (self._last or {}).get("jobs", {}).get(jid)
-        transferring = ((payload or {}).get("stats") or {}).get("transferring") or []
-        for tf in transferring:
+        payload = (self._last or {}).get("jobs", {}).get(jid) or {}
+        finished = bool((payload.get("status") or {}).get("finished"))
+        self.btn_stop.setEnabled(not finished)
+        stats = payload.get("stats") or {}
+        for tf in stats.get("transferring") or []:
             row = QtWidgets.QTreeWidgetItem([
                 str(tf.get("name", "?")),
                 f"{human_size(tf.get('bytes'))} ({tf.get('percentage', '?')}%)",
@@ -730,6 +833,31 @@ class TransfersTab(QtWidgets.QWidget):
                 human_speed(tf.get("speedAvg") or tf.get("speed")),
             ])
             self.files.addTopLevelItem(row)
+        for name in stats.get("checking") or []:
+            row = QtWidgets.QTreeWidgetItem([str(name), tr("confronto…"), "", ""])
+            row.setForeground(1, _GRAY)
+            self.files.addTopLevelItem(row)
+        self.lbl_files.setText(self._files_summary(payload, finished))
+
+    def _files_summary(self, payload: dict, finished: bool) -> str:
+        if not payload:
+            return tr("In attesa dei primi dati da rclone…")
+        stats = payload.get("stats") or {}
+        text = tr("Copiati {done} di {total} file · confrontati {checked} di "
+                  "{to_check}").format(
+            done=stats.get("transfers") or 0,
+            total=stats.get("totalTransfers") or 0,
+            checked=stats.get("checks") or 0,
+            to_check=stats.get("totalChecks") or 0)
+        if stats.get("deletes"):
+            text += " · " + tr("eliminati {count}").format(count=stats["deletes"])
+        if stats.get("errors"):
+            text += " · " + tr("errori {count}").format(count=stats["errors"])
+        if finished:
+            return tr("Job terminato.") + " " + text
+        if not stats.get("transferring") and not stats.get("checking"):
+            text += " · " + tr("nessun file in lavorazione in questo istante")
+        return text
 
     # ---------------------------------------------------------------- azioni
 

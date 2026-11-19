@@ -5,6 +5,17 @@ All notable changes to Clonaut are listed here. Versions follow
 
 ## [Unreleased]
 
+### Added
+- Transfers tab: a «⏰ Schedule» button row (Run now, Edit, Pause/Resume,
+  Remove schedule) acting on the selected scheduled row, besides the
+  right-click menu.
+
+### Fixed
+- «Files in progress» stayed empty while a job was only comparing files
+  (typical of a sync with little to copy): it now lists the files being
+  compared too, with a summary of copied/compared files above the list.
+  Such jobs show «Comparing files» instead of «Preparing».
+
 ## [0.4.1] — 2026-11-10
 
 ### Security
