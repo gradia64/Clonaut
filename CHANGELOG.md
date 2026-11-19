@@ -44,6 +44,9 @@ All notable changes to Clonaut are listed here. Versions follow
   «Type» box now rebuilds the form for it (before, only picking an entry from
   the list did, and a typed name silently kept the previous type). An unknown
   type is refused with a message.
+- Building from source requires setuptools 77 or newer, the first version
+  that accepts the SPDX `license = "GPL-3.0-only"` field (PEP 639); older
+  versions failed with an unclear error.
 
 ## [0.4.1] — 2026-11-10
 
