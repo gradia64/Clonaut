@@ -110,6 +110,14 @@ def test_a_maintainer_tag_publishes_the_pkgbuilds_of_the_tag(release):
         ["git", "--git-dir", str(release["repo"].parent / "aur" / "clonaut.git"),
          "show", "master:PKGBUILD"], capture_output=True, text=True, check=True).stdout
     assert "# dopo il tag" not in pushed
+    # clonaut-git mostra sull'AUR la versione del commit del tag, non il segnaposto
+    short = release["git"]("rev-parse", "--short=7", f"v{version}^{{commit}}").strip()
+    for f, line in (("PKGBUILD", f"pkgver={version}.r0.g{short}"),
+                    (".SRCINFO", f"\tpkgver = {version}.r0.g{short}")):
+        text = subprocess.run(
+            ["git", "--git-dir", str(release["repo"].parent / "aur" / "clonaut-git.git"),
+             "show", f"master:{f}"], capture_output=True, text=True, check=True).stdout
+        assert line in text.splitlines(), f
 
 
 def test_a_tag_signed_by_another_subkey_publishes_nothing(release):

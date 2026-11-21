@@ -11,7 +11,9 @@
 #    dei tag);
 # 2. prende PKGBUILD e .SRCINFO di entrambi i pacchetti dal contenuto del tag,
 #    non dalla cartella di lavoro: si pubblica ciò che il tag firmato contiene;
-# 3. controlla che il pkgver del pacchetto stabile sia la versione del tag;
+# 3. controlla che il pkgver del pacchetto stabile sia la versione del tag e
+#    scrive in clonaut-git la versione del commit del tag (X.Y.Z.r0.g<sha>),
+#    quella che il suo pkgver() calcolerebbe: è ciò che la pagina AUR mostra;
 # 4. controlla che nella run di release.yml per quel tag il job «arch» sia
 #    riuscito (CLONAUT_SKIP_CI_CHECK=1 lo salta, per i test);
 # 5. pubblica con scripts/publish-aur.sh e la chiave SSH dell'utente
@@ -44,6 +46,10 @@ if [ "$pkgver" != "$VERSION" ]; then
     echo "il PKGBUILD di $TAG dice pkgver=$pkgver, non $VERSION" >&2
     exit 1
 fi
+short="$(git -C "$REPO" rev-parse --short=7 "refs/tags/$TAG^{commit}")"
+gitver="$VERSION.r0.g$short"
+sed -i "s/^pkgver=.*/pkgver=$gitver/" "$AUR/clonaut-git/PKGBUILD"
+sed -i "s/^\tpkgver = .*/\tpkgver = $gitver/" "$AUR/clonaut-git/.SRCINFO"
 
 # 4. la CI ha costruito e provato quel PKGBUILD su Arch
 if [ -z "${CLONAUT_SKIP_CI_CHECK:-}" ]; then
