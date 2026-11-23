@@ -54,3 +54,28 @@ def test_senza_aggancio_nessuna_password(monkeypatch):
     assert app_mod._resolve_rc_password(_args()) == ""
     # senza utente rclone non usa l'autenticazione: niente da chiedere
     assert app_mod._resolve_rc_password(_args("--url", "http://127.0.0.1:5572")) == ""
+
+
+@pytest.mark.parametrize("url", [
+    "http://127.0.0.1:5572", "http://localhost:5572", "http://[::1]:5572",
+    "https://nas.example:5572",
+])
+def test_aggancio_ammesso(url):
+    app_mod._check_attach_url(_args("--url", url, "--user", "utente"))
+
+
+def test_aggancio_in_chiaro_verso_altra_macchina_rifiutato():
+    """P2-10: HTTP Basic su http:// in rete manda le credenziali in chiaro."""
+    with pytest.raises(RuntimeError, match="insecure-http"):
+        app_mod._check_attach_url(_args("--url", "http://192.168.1.5:5572",
+                                        "--user", "utente"))
+    # scelta esplicita, oppure nessuna credenziale da proteggere
+    app_mod._check_attach_url(_args("--url", "http://192.168.1.5:5572", "--user",
+                                    "utente", "--insecure-http"))
+    app_mod._check_attach_url(_args("--url", "http://192.168.1.5:5572"))
+
+
+@pytest.mark.parametrize("url", ["192.168.1.5:5572", "ftp://nas:5572", "http://"])
+def test_aggancio_indirizzo_non_valido(url):
+    with pytest.raises(RuntimeError, match="non valido"):
+        app_mod._check_attach_url(_args("--url", url))

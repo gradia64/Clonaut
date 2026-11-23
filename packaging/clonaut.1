@@ -21,7 +21,17 @@ Usa il file di configurazione rclone indicato invece di quello predefinito.
 Porta fissa per il demone locale (predefinito: una porta libera casuale).
 .TP
 .BI "\-\-url " URL
-Aggancia un rclone rcd già avviato, invece di avviarne uno.
+Aggancia un rclone rcd già avviato, invece di avviarne uno. Verso un'altra
+macchina serve
+.B https://
+(o un tunnel SSH su 127.0.0.1): con
+.B http://
+e un utente, le credenziali viaggerebbero in chiaro e l'aggancio è rifiutato.
+.TP
+.B \-\-insecure\-http
+Permette comunque
+.B http://
+verso un'altra macchina, su una rete fidata.
 .TP
 .BI "\-\-user " UTENTE
 Utente per il rcd esterno agganciato con \-\-url. La password arriva da

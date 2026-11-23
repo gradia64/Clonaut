@@ -228,6 +228,9 @@ clonaut --port 5572                      # porta fissa per il rcd locale
 CLONAUT_RC_PASS=segreta clonaut --url http://127.0.0.1:5572 --user utente
 # senza CLONAUT_RC_PASS la password rc viene chiesta nel terminale;
 # --password funziona ancora, ma ogni utente della macchina la legge con `ps`
+# un'altra macchina richiede https:// (o un tunnel SSH su 127.0.0.1): con http://
+# utente e password rc viaggerebbero in chiaro, quindi Clonaut lo rifiuta
+# salvo --insecure-http
 ```
 
 ## Come si usa

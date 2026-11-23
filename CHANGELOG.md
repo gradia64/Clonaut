@@ -5,7 +5,22 @@ All notable changes to Clonaut are listed here. Versions follow
 
 ## [Unreleased]
 
+### Security
+- Attach mode refuses a plain `http://` `--url` to another machine when a
+  user is given, because HTTP Basic would send the rc user and password in
+  clear text: use `https://` or an SSH tunnel to `127.0.0.1`, or
+  `--insecure-http` on a trusted network. Malformed addresses are refused
+  with a clear message.
+
 ### Fixed
+- If the dry-run rclone daemon dies, the next dry run starts a new one
+  instead of failing until Clonaut is restarted.
+- Polling thread: finished jobs beyond the 200 most recent are dropped from
+  memory too (with schedules running for weeks they grew without limit),
+  while running jobs are always kept; a failed read of a job's final
+  statistics is retried (up to 3 times) instead of leaving stale numbers;
+  a job removed from the queue while being read no longer comes back into
+  the caches.
 - A slow or stuck rclone daemon no longer freezes the window when a scheduled
   run starts: the call runs in a background thread (it could block for up to
   20 s), the ⏰ row shows «Starting the run» meanwhile, and a schedule removed

@@ -31,10 +31,15 @@ class AppContext:
 
         Il flag _dry_run non è applicabile chiamata per chiamata via rc (rclone
         lo ignora), quindi le prove a vuoto girano su un processo separato che
-        NON PUÒ scrivere nulla. Il processo resta attivo per tutta la sessione.
+        NON PUÒ scrivere nulla. Il processo resta attivo per tutta la sessione;
+        se nel frattempo è morto (crash, kill) se ne avvia un altro, invece di
+        far fallire ogni prova fino al riavvio dell'app.
         """
         if self.api_dry is not None:
-            return self.api_dry
+            proc = self.rcd_dry.proc if self.rcd_dry is not None else None
+            if proc is None or proc.poll() is None:
+                return self.api_dry
+            self.rcd_dry = self.api_dry = None
         exe = self.rclone_exe or find_rclone()[0]
         if not exe:
             raise RuntimeError(tr("rclone non trovato: indicane il percorso in "

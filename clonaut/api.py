@@ -25,6 +25,10 @@ _ENDPOINTS = {
 _REMOTE_RE = re.compile(r"^[^/:]+:")
 
 
+# indirizzi della stessa macchina: lì le credenziali non passano in rete
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
 def is_remote(path: str) -> bool:
     """True se il percorso sembra un remote («nome:...»)."""
     return bool(_REMOTE_RE.match(path))
@@ -37,7 +41,7 @@ class RcloneApi:
         self.url = url.rstrip("/")
         self.timeout = timeout
         self.session = requests.Session()
-        if urlsplit(self.url).hostname in ("127.0.0.1", "localhost", "::1"):
+        if urlsplit(self.url).hostname in LOOPBACK_HOSTS:
             # demone sulla stessa macchina: niente proxy dell'ambiente (vedrebbe
             # le chiamate e le credenziali) né credenziali da ~/.netrc
             self.session.trust_env = False

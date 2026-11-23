@@ -21,8 +21,9 @@ import gc
 import getpass
 import os
 import sys
+from urllib.parse import urlsplit
 
-from clonaut.api import RcloneApi
+from clonaut.api import LOOPBACK_HOSTS, RcloneApi
 from clonaut.appctx import AppContext
 from clonaut import i18n
 from clonaut.i18n import tr
@@ -75,12 +76,37 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--password", default="", help=tr(
         "password per l'API rc (visibile a ogni utente con `ps`: meglio la "
         "variabile CLONAUT_RC_PASS, oppure niente per digitarla)"))
+    parser.add_argument("--insecure-http", action="store_true", help=tr(
+        "permette --url in http:// verso un'altra macchina: utente e password "
+        "viaggiano in chiaro (meglio https o un tunnel SSH)"))
     parser.add_argument("--config", help=tr("file di configurazione rclone da usare"))
     parser.add_argument("--port", type=int, help=tr("porta per il rcd locale (default: casuale)"))
     return parser.parse_args(argv)
 
 
 RC_PASS_ENV = "CLONAUT_RC_PASS"
+
+
+def _check_attach_url(args: argparse.Namespace) -> None:
+    """Rifiuta un aggancio che manderebbe le credenziali in chiaro in rete.
+
+    L'API rc usa HTTP Basic: in http:// utente e password viaggiano leggibili
+    da chiunque stia sul percorso. Verso la stessa macchina va bene; verso
+    un'altra serve https (o un tunnel SSH su 127.0.0.1), salvo --insecure-http.
+    """
+    if not args.url:
+        return
+    parts = urlsplit(args.url)
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        raise RuntimeError(tr("Indirizzo non valido per --url: {url} (serve "
+                              "http:// o https://)").format(url=args.url))
+    if (parts.scheme == "http" and args.user and parts.hostname not in LOOPBACK_HOSTS
+            and not args.insecure_http):
+        raise RuntimeError(tr(
+            "--url {url} usa http:// verso un'altra macchina: utente e password "
+            "dell'API rc viaggerebbero in chiaro. Usa https://, oppure un tunnel "
+            "SSH (ssh -L 5572:127.0.0.1:5572 …) e --url http://127.0.0.1:5572; "
+            "se la rete è fidata, aggiungi --insecure-http.").format(url=args.url))
 
 
 def _resolve_rc_password(args: argparse.Namespace) -> str:
@@ -146,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
     # il prompt della password va chiesto prima che compaiano le finestre
     password_error: RuntimeError | None = None
     try:
+        _check_attach_url(args)
         args.password = _resolve_rc_password(args)
     except RuntimeError as exc:
         password_error = exc

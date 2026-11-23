@@ -5,40 +5,40 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: en\n"
 
-#: clonaut/api.py:57
+#: clonaut/api.py:61
 #, python-brace-format
 msgid "rclone rcd non risponde ({endpoint}): {error}"
 msgstr "rclone rcd is not responding ({endpoint}): {error}"
 
-#: clonaut/api.py:68
+#: clonaut/api.py:72
 #, python-brace-format
 msgid "{endpoint}: risposta non JSON ({error})"
 msgstr "{endpoint}: response is not JSON ({error})"
 
-#: clonaut/api.py:111
+#: clonaut/api.py:115
 #, python-brace-format
 msgid "modalità di trasferimento sconosciuta: {mode}"
 msgstr "unknown transfer mode: {mode}"
 
-#: clonaut/api.py:120
+#: clonaut/api.py:124
 msgid ""
 "«Sposta» e «Sincronizza» operano su cartelle: per un file singolo usa la "
 "modalità «Copia»."
 msgstr "«Move» and «Sync» work on folders: for a single file use «Copy»."
 
-#: clonaut/app.py:72
+#: clonaut/app.py:73
 msgid "Interfaccia grafica per rclone (rcd REST API)"
 msgstr "Graphical interface for rclone (rcd REST API)"
 
-#: clonaut/app.py:73
+#: clonaut/app.py:74
 msgid "aggancia un rcd già avviato (es. http://127.0.0.1:5572)"
 msgstr "attach to an rcd that is already running (e.g. http://127.0.0.1:5572)"
 
-#: clonaut/app.py:74
+#: clonaut/app.py:75
 msgid "utente per l'API rc"
 msgstr "user for the rc API"
 
-#: clonaut/app.py:75
+#: clonaut/app.py:76
 msgid ""
 "password per l'API rc (visibile a ogni utente con `ps`: meglio la "
 "variabile CLONAUT_RC_PASS, oppure niente per digitarla)"
@@ -46,15 +46,41 @@ msgstr ""
 "password for the rc API (visible to every user via `ps`: prefer the "
 "CLONAUT_RC_PASS variable, or leave it out to type it)"
 
-#: clonaut/app.py:78
+#: clonaut/app.py:79
+msgid ""
+"permette --url in http:// verso un'altra macchina: utente e password "
+"viaggiano in chiaro (meglio https o un tunnel SSH)"
+msgstr ""
+"allow an http:// --url to another machine: user and password travel in "
+"clear text (better https or an SSH tunnel)"
+
+#: clonaut/app.py:82
 msgid "file di configurazione rclone da usare"
 msgstr "rclone configuration file to use"
 
-#: clonaut/app.py:79
+#: clonaut/app.py:83
 msgid "porta per il rcd locale (default: casuale)"
 msgstr "port for the local rcd (default: random)"
 
-#: clonaut/app.py:97
+#: clonaut/app.py:101
+#, python-brace-format
+msgid "Indirizzo non valido per --url: {url} (serve http:// o https://)"
+msgstr "Invalid address for --url: {url} (http:// or https:// required)"
+
+#: clonaut/app.py:105
+#, python-brace-format
+msgid ""
+"--url {url} usa http:// verso un'altra macchina: utente e password "
+"dell'API rc viaggerebbero in chiaro. Usa https://, oppure un tunnel SSH "
+"(ssh -L 5572:127.0.0.1:5572 …) e --url http://127.0.0.1:5572; se la rete è "
+"fidata, aggiungi --insecure-http."
+msgstr ""
+"--url {url} uses http:// to another machine: the rc API user and password "
+"would travel in clear text. Use https://, or an SSH tunnel (ssh -L "
+"5572:127.0.0.1:5572 …) and --url http://127.0.0.1:5572; if the network is "
+"trusted, add --insecure-http."
+
+#: clonaut/app.py:123
 msgid ""
 "Attenzione: la password passata con --password è visibile a ogni utente "
 "con `ps`; usa la variabile CLONAUT_RC_PASS."
@@ -62,11 +88,11 @@ msgstr ""
 "Warning: a password given with --password is visible to every user via "
 "`ps`; use the CLONAUT_RC_PASS variable."
 
-#: clonaut/app.py:104
+#: clonaut/app.py:130
 msgid "Password per l'API rc:"
 msgstr "Password for the rc API:"
 
-#: clonaut/app.py:106
+#: clonaut/app.py:132
 msgid ""
 "Manca la password dell'API rc: indicala con la variabile d'ambiente "
 "CLONAUT_RC_PASS (quella sulla riga di comando è leggibile da ogni utente "
@@ -76,15 +102,15 @@ msgstr ""
 "environment variable (one on the command line is readable by every user "
 "via `ps`)."
 
-#: clonaut/app.py:117
+#: clonaut/app.py:143
 msgid "gestito dal rcd esterno"
 msgstr "managed by the external rcd"
 
-#: clonaut/app.py:125
+#: clonaut/app.py:151
 msgid "rclone non trovato. Fonti provate:"
 msgstr "rclone not found. Sources tried:"
 
-#: clonaut/app.py:126
+#: clonaut/app.py:152
 msgid ""
 "Installalo (es. `sudo apt install rclone`, `sudo pacman -S rclone` o da "
 "https://rclone.org), oppure indica il percorso con la variabile "
@@ -94,31 +120,31 @@ msgstr ""
 "from https://rclone.org), or set its path with the CLONAUT_RCLONE "
 "environment variable."
 
-#: clonaut/app.py:134
+#: clonaut/app.py:160
 msgid "Log recente:"
 msgstr "Recent log:"
 
-#: clonaut/app.py:134
+#: clonaut/app.py:160
 msgid "rclone rcd non si è avviato."
 msgstr "rclone rcd did not start."
 
-#: clonaut/app.py:137 clonaut/appctx.py:19
+#: clonaut/app.py:163 clonaut/appctx.py:19
 msgid "predefinito (~/.config/rclone/rclone.conf)"
 msgstr "default (~/.config/rclone/rclone.conf)"
 
-#: clonaut/app.py:157
+#: clonaut/app.py:184
 msgid "Avvio di rclone rcd…"
 msgstr "Starting rclone rcd…"
 
-#: clonaut/app.py:171 clonaut/ui/transfer_dialog.py:304
+#: clonaut/app.py:198 clonaut/ui/transfer_dialog.py:304
 msgid "Avvio fallito"
 msgstr "Startup failed"
 
-#: clonaut/appctx.py:40
+#: clonaut/appctx.py:45
 msgid "rclone non trovato: indicane il percorso in File → Impostazioni."
 msgstr "rclone not found: set its path in File → Settings."
 
-#: clonaut/appctx.py:47
+#: clonaut/appctx.py:52
 msgid ""
 "Il backend delle prove non si è avviato.\n"
 "\n"
@@ -1235,29 +1261,29 @@ msgstr "(emptying…)"
 msgid "{d}g {h:02d}h"
 msgstr "{d}d {h:02d}h"
 
-#: clonaut/worker.py:144
+#: clonaut/worker.py:146
 msgid "il backend delle prove non risponde"
 msgstr "the dry-run backend is not responding"
 
-#: clonaut/worker.py:155
+#: clonaut/worker.py:157
 #, python-brace-format
 msgid "{files} file, {size}"
 msgstr "{files} files, {size}"
 
-#: clonaut/worker.py:160
+#: clonaut/worker.py:162
 #, python-brace-format
 msgid ", {n} da eliminare"
 msgstr ", {n} to delete"
 
-#: clonaut/worker.py:161
+#: clonaut/worker.py:163
 #, python-brace-format
 msgid " in {time}"
 msgstr " in {time}"
 
-#: clonaut/worker.py:166
+#: clonaut/worker.py:168
 msgid "errore sconosciuto"
 msgstr "unknown error"
 
-#: clonaut/worker.py:170
+#: clonaut/worker.py:172
 msgid "timeout della prova (1h)"
 msgstr "dry run timed out (1h)"

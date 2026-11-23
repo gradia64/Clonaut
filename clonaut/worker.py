@@ -23,7 +23,9 @@ from .qtcompat import Signal, QThread
 from .util import fmt_duration, human_size
 
 INTERVAL = 0.9          # secondi tra un tick e l'altro
-MAX_WATCHED = 200       # quanti job osservati tenere nello snapshot (i più recenti)
+MAX_WATCHED = 200       # quanti job finiti tenere nello snapshot (i più recenti)
+MAX_FORGOTTEN = 1000    # quanti job tolti dalla UI ricordare (per non riadottarli)
+FINAL_STATS_TRIES = 3   # letture delle stats finali di un job prima di arrendersi
 # timeout delle chiamate di polling: corto, perché all'uscita si aspetta la
 # fine della chiamata in corso (quello generale dell'API è di 20 s)
 POLL_TIMEOUT = 5.0
@@ -191,8 +193,10 @@ class PollWorker(QThread):
         self._status_cache: dict[int, dict] = {}
         self._stats_cache: dict[int, dict] = {}
         self._final_stats: set[int] = set()   # job finiti di cui abbiamo le stats finali
+        self._final_tries: dict[int, int] = {}   # letture finali fallite, per job
         self._forgotten: set[int] = set()     # tolti dalla UI: non riadottarli
-        # la watch-list è toccata sia dal thread GUI (register/forget) sia da qui
+        # watch-list e cache sono toccate sia dal thread GUI (register/forget)
+        # sia da qui: si leggono e si scrivono solo sotto lock
         self._lock = threading.Lock()
 
     def register(self, jobid: int) -> None:
@@ -207,9 +211,18 @@ class PollWorker(QThread):
             self._watched.discard(jid)
             self._unvalidated.discard(jid)
             self._forgotten.add(jid)
-            self._status_cache.pop(jid, None)
-            self._stats_cache.pop(jid, None)
-            self._final_stats.discard(jid)
+            self._drop(jid)
+            if len(self._forgotten) > MAX_FORGOTTEN:
+                # i più vecchi sono finiti da tempo: le stats aggregate (unica
+                # fonte di riadozione) elencano solo job in corso
+                self._forgotten = set(sorted(self._forgotten)[-MAX_FORGOTTEN:])
+
+    def _drop(self, jid: int) -> None:
+        """Toglie un job dalle cache (da chiamare col lock preso)."""
+        self._status_cache.pop(jid, None)
+        self._stats_cache.pop(jid, None)
+        self._final_stats.discard(jid)
+        self._final_tries.pop(jid, None)
 
     def stop(self) -> None:
         self._stop = True
@@ -256,49 +269,70 @@ class PollWorker(QThread):
                         self._watched.add(jid)
 
         with self._lock:
-            watched = sorted(self._watched)[-MAX_WATCHED:]
+            ids = sorted(self._watched)
+            # i job finiti oltre i MAX_WATCHED più recenti escono anche dalla
+            # memoria (altrimenti con giri programmati per settimane crescono
+            # senza limite); quelli in corso restano tutti
+            finished = [j for j in ids if j in self._status_cache]
+            for jid in finished[:-MAX_WATCHED]:
+                self._watched.discard(jid)
+                self._drop(jid)
+            watched = [j for j in ids if j in self._watched]
         jobs: dict[int, dict] = {}
         for jid in watched:
             if self._stop:
                 break   # uscita: non fare altre chiamate (fino a 200 job)
+            entry = self._poll_job(jid)
+            if entry is not None:
+                jobs[jid] = entry
+
+        return {"agg": agg, "jobs": jobs}
+
+    def _poll_job(self, jid: int) -> dict | None:
+        """Stato e stats di un job; None se va saltato in questo snapshot."""
+        with self._lock:
             status = self._status_cache.get(jid)
-            if status is None:
-                try:
-                    status = self._api.job_status(jid, timeout=POLL_TIMEOUT)
-                except ApiError:
-                    continue  # race transitoria: riproveremo al prossimo tick
-                if status.get("finished"):
-                    self._status_cache[jid] = status
+            need_final = jid not in self._final_stats
+            last_stats = self._stats_cache.get(jid) or {}
+        if status is None:
+            try:
+                status = self._api.job_status(jid, timeout=POLL_TIMEOUT)
+            except ApiError:
+                return None   # race transitoria: riproveremo al prossimo tick
 
+        stats = last_stats
+        final_ok = False
+        if not status.get("finished") or need_final:
+            # in corso: a ogni tick; finito: un'ultima lettura per i numeri
+            # finali (100%), ritentata se fallisce
+            try:
+                stats = self._api.stats(f"job/{jid}", timeout=POLL_TIMEOUT)
+                final_ok = bool(status.get("finished"))
+            except ApiError:
+                pass   # conserviamo l'ultimo campione noto
+
+        with self._lock:
+            if jid in self._forgotten or jid not in self._watched:
+                return None   # tolto dalla UI mentre lo leggevamo
             if status.get("finished"):
-                # un'ultima lettura al termine, per i numeri finali (100%)
-                if jid not in self._final_stats:
-                    self._final_stats.add(jid)
-                    try:
-                        self._stats_cache[jid] = self._api.stats(
-                            f"job/{jid}", timeout=POLL_TIMEOUT)
-                    except ApiError:
-                        pass   # conserviamo l'ultimo campione noto
-                stats = self._stats_cache.get(jid) or {}
-            else:
-                try:
-                    stats = self._api.stats(f"job/{jid}", timeout=POLL_TIMEOUT)
-                except ApiError:
-                    stats = self._stats_cache.get(jid) or {}
-                self._stats_cache[jid] = stats
-
+                self._status_cache[jid] = status
+                if need_final:
+                    tries = self._final_tries.get(jid, 0) + 1
+                    if final_ok or tries >= FINAL_STATS_TRIES:
+                        self._final_stats.add(jid)
+                        self._final_tries.pop(jid, None)
+                    else:
+                        self._final_tries[jid] = tries
+            self._stats_cache[jid] = stats
             if jid in self._unvalidated:
                 self._unvalidated.discard(jid)
                 if (status.get("finished") and status.get("success")
                         and not (stats.get("totalBytes") or 0)
                         and not (stats.get("bytes") or 0)):
-                    with self._lock:
-                        self._watched.discard(jid)   # rumore interno: non mostrarlo
-                    continue
-
-            jobs[jid] = {"status": status, "stats": stats}
-
-        return {"agg": agg, "jobs": jobs}
+                    self._watched.discard(jid)   # rumore interno: non mostrarlo
+                    self._drop(jid)
+                    return None
+        return {"status": status, "stats": stats}
 
     # ---------------------------------------------------------------------- run
 

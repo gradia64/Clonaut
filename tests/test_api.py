@@ -149,3 +149,103 @@ def test_thread_ancora_in_esecuzione_non_viene_distrutto(qapp):
     assert worker_mod._lingering and worker_mod._lingering[0].isRunning()
     assert worker_mod.wait_lingering(3000)
     assert worker_mod._lingering == []
+
+
+def test_backend_delle_prove_morto_viene_riavviato(rcd, tree):
+    """P2-9: se il rcd delle prove muore, la prova successiva ne avvia un altro."""
+    first = rcd.ensure_dry_backend()
+    assert rcd.ensure_dry_backend() is first          # vivo: riusato
+    rcd.rcd_dry.proc.kill()
+    rcd.rcd_dry.proc.wait(5)
+    second = rcd.ensure_dry_backend()
+    assert second is not first
+    assert rcd.rcd_dry.proc.poll() is None
+    assert second.ping().get("version")
+
+
+# --- PollWorker sotto carico (P2-12) ---
+
+class _FakeApi:
+    """API finta per il PollWorker: job finiti, stats che possono fallire."""
+
+    def __init__(self, finished=(), failing_stats=0):
+        self.finished = set(finished)
+        self.failing_stats = failing_stats   # quante letture di stats fallire
+        self.stats_calls = []
+
+    def job_list(self, timeout=None):
+        return {"jobids": []}
+
+    def job_status(self, jid, timeout=None):
+        return {"finished": jid in self.finished, "success": True}
+
+    def stats(self, group=None, timeout=None):
+        from clonaut.api import ApiError
+        if group is None:
+            return {}
+        self.stats_calls.append(group)
+        if self.failing_stats:
+            self.failing_stats -= 1
+            raise ApiError("lento")
+        return {"bytes": 10, "totalBytes": 10}
+
+
+def test_stats_finali_ritentate_se_falliscono():
+    from clonaut.worker import PollWorker
+    api = _FakeApi(finished={7}, failing_stats=1)
+    worker = PollWorker(api)
+    worker.register(7)
+    assert worker._snapshot()["jobs"][7]["stats"] == {}      # lettura fallita
+    assert worker._snapshot()["jobs"][7]["stats"]["bytes"] == 10   # ritentata
+    worker._snapshot()
+    assert api.stats_calls.count("job/7") == 2               # poi più nulla
+
+
+def test_stats_finali_non_ritentate_all_infinito():
+    from clonaut.worker import FINAL_STATS_TRIES, PollWorker
+    api = _FakeApi(finished={7}, failing_stats=100)
+    worker = PollWorker(api)
+    worker.register(7)
+    for _ in range(FINAL_STATS_TRIES + 3):
+        worker._snapshot()
+    assert api.stats_calls.count("job/7") == FINAL_STATS_TRIES
+
+
+def test_job_finiti_vecchi_potati_quelli_in_corso_restano():
+    from clonaut.worker import MAX_WATCHED, PollWorker
+    total = MAX_WATCHED + 50
+    api = _FakeApi(finished=set(range(2, total + 1)))   # il job 1 è ancora in corso
+    worker = PollWorker(api)
+    for jid in range(1, total + 1):
+        worker.register(jid)
+    worker._snapshot()                       # legge e mette in cache i finiti
+    jobs = worker._snapshot()["jobs"]
+    assert 1 in jobs                         # in corso: mai potato
+    assert len(jobs) == MAX_WATCHED + 1
+    assert len(worker._watched) == MAX_WATCHED + 1
+    assert len(worker._status_cache) == MAX_WATCHED
+    assert len(worker._stats_cache) <= MAX_WATCHED + 1
+
+
+def test_job_dimenticato_durante_la_lettura_non_torna_in_cache():
+    from clonaut.worker import PollWorker
+
+    class Api(_FakeApi):
+        def job_status(self, jid, timeout=None):
+            worker.forget(jid)               # «Rimuovi completati» a metà lettura
+            return super().job_status(jid, timeout)
+
+    api = Api(finished={5})
+    worker = PollWorker(api)
+    worker.register(5)
+    assert 5 not in worker._snapshot()["jobs"]
+    assert 5 not in worker._status_cache and 5 not in worker._stats_cache
+
+
+def test_elenco_dei_dimenticati_limitato():
+    from clonaut.worker import MAX_FORGOTTEN, PollWorker
+    worker = PollWorker(_FakeApi())
+    for jid in range(1, MAX_FORGOTTEN + 101):
+        worker.forget(jid)
+    assert len(worker._forgotten) <= MAX_FORGOTTEN
+    assert MAX_FORGOTTEN + 100 in worker._forgotten
