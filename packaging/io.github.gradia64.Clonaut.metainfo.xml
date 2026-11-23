@@ -8,6 +8,7 @@
   <summary>Graphical pilot for rclone</summary>
   <summary xml:lang="it">Il pilota grafico per rclone</summary>
 
+  <update_contact>gradia@disroot.org</update_contact>
   <developer id="io.github.gradia64">
     <name>Gradia</name>
   </developer>
@@ -123,6 +124,11 @@
     <release version="0.3.0" date="2026-11-08">
       <description>
         <p>Renamed from «GUI rclone» to Clonaut, with many fixes.</p>
+      </description>
+    </release>
+    <release version="0.2.0" date="2026-11-08">
+      <description>
+        <p>First packaged version, as «GUI rclone».</p>
       </description>
     </release>
   </releases>

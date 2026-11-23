@@ -145,8 +145,12 @@ unpack_python() {   # unpack_python <arch> <cartella>
 
 # Python della macchina che costruisce: pip, compileall e i controlli
 HOSTPY_DIR="$WORK/hostpython"
-if [ ! -x "$HOSTPY_DIR/bin/python3" ]; then
+# la copia in cache vale solo per la stessa release di python-build-standalone
+HOSTPY_STAMP="$PBS_RELEASE-$PBS_PYTHON-$HOST_ARCH"
+if [ ! -x "$HOSTPY_DIR/bin/python3" ] \
+        || [ "$(cat "$HOSTPY_DIR/.clonaut-stamp" 2>/dev/null)" != "$HOSTPY_STAMP" ]; then
     unpack_python "$HOST_ARCH" "$HOSTPY_DIR"
+    printf '%s\n' "$HOSTPY_STAMP" > "$HOSTPY_DIR/.clonaut-stamp"
 fi
 HOSTPY="$HOSTPY_DIR/bin/python3"
 

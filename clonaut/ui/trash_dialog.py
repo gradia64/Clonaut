@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import html
+import os
 from pathlib import Path
 
 from ..api import is_remote
@@ -22,6 +24,9 @@ class TrashDialog(QtWidgets.QDialog):
     def __init__(self, ctx: AppContext, backup_dir: str, parent=None):
         super().__init__(parent)
         self.ctx = ctx
+        # «~/Cestino» scritto a mano: rclone non espande la tilde
+        if not is_remote(backup_dir):
+            backup_dir = os.path.expanduser(backup_dir)
         self.backup_dir = backup_dir
         # elenco e svuotamento possono durare (fino a 60 e 120 s con un remote
         # lento): girano in un thread, la finestra resta usabile e chiudibile
@@ -32,7 +37,7 @@ class TrashDialog(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(8)
 
-        head = QtWidgets.QLabel(f"<b>{backup_dir}</b>")
+        head = QtWidgets.QLabel(f"<b>{html.escape(backup_dir)}</b>")
         head.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         layout.addWidget(head)
 

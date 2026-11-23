@@ -30,8 +30,11 @@ def human_size(n) -> str:
 
 def human_speed(n) -> str:
     """Formatta una velocità in byte/s (es. "4.2 MiB/s")."""
-    if n is None or float(n or 0) <= 0:
-        return "—"
+    try:
+        if n is None or float(n or 0) <= 0:
+            return "—"
+    except (TypeError, ValueError):
+        return "—"   # valore inatteso da rclone: non far cadere l'aggiornamento
     return f"{human_size(n)}/s"
 
 

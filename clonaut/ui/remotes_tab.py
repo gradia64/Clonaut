@@ -7,7 +7,7 @@ import json
 from ..api import ApiError
 from ..appctx import AppContext
 from ..i18n import N_, tr
-from ..qtcompat import QtCore, QtWidgets, Signal
+from ..qtcompat import QtCore, QtWidgets
 from ..util import esc
 from .remote_dialog import RemoteDialog
 
@@ -52,20 +52,21 @@ class RemoteDetailsDialog(QtWidgets.QDialog):
         layout.addWidget(text, 1)
 
         btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Close)
-        btns.rejected.connect(self.reject)
-        btns.clicked.connect(self.accept)
+        btns.rejected.connect(self.reject)   # Close è RejectRole: basta questo
         layout.addWidget(btns)
 
 
 class RemotesTab(QtWidgets.QWidget):
     """Elenco dei remote con azioni di gestione."""
 
-    changed = Signal()  # la lista remote è cambiata (per i completer)
 
     def __init__(self, ctx: AppContext):
         super().__init__()
         self.ctx = ctx
         self._dump: dict = {}
+        # nome di un remote → programmazioni ⏰ che lo usano (lo collega la
+        # finestra principale alla scheda Trasferimenti)
+        self.schedules_using = lambda name: []
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
@@ -150,17 +151,22 @@ class RemotesTab(QtWidgets.QWidget):
         dlg = RemoteDialog(self.ctx, self)
         if dlg.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             self.refresh()
-            self.changed.emit()
 
     def _on_delete(self) -> None:
         name = self._selected_name()
         if not name:
             return
+        text = tr("Eliminare il remote «{name}» dalla configurazione di rclone?\n\n"
+                  "I file sui servizi remoti NON vengono cancellati: viene rimossa "
+                  "solo la voce di configurazione.").format(name=name)
+        used = self.schedules_using(name)
+        if used:
+            text += "\n\n" + tr(
+                "Lo usano {n} programmazioni ⏰, i cui giri falliranno finché non "
+                "lo ricrei con lo stesso nome o non le modifichi:").format(n=len(used))
+            text += "\n" + "\n".join(f"  • {u}" for u in used)
         answer = QtWidgets.QMessageBox.question(
-            self, tr("Eliminare il remote?"),
-            tr("Eliminare il remote «{name}» dalla configurazione di rclone?\n\n"
-               "I file sui servizi remoti NON vengono cancellati: viene rimossa "
-               "solo la voce di configurazione.").format(name=name),
+            self, tr("Eliminare il remote?"), esc(text),
             QtWidgets.QMessageBox.StandardButton.Yes
             | QtWidgets.QMessageBox.StandardButton.No)
         if answer != QtWidgets.QMessageBox.StandardButton.Yes:
@@ -171,7 +177,6 @@ class RemotesTab(QtWidgets.QWidget):
             _show_error(self, exc, tr("Eliminazione fallita"))
             return
         self.refresh()
-        self.changed.emit()
 
     def _on_details(self) -> None:
         name = self._selected_name()

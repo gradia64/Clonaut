@@ -198,3 +198,16 @@ def test_default_config_description_follows_the_language(english):
     # il predefinito si traduce alla creazione, non all'import del modulo
     from clonaut.appctx import AppContext
     assert AppContext(api=None).config_desc == CATALOG["predefinito (~/.config/rclone/rclone.conf)"]
+
+
+def test_catalogo_valido_per_msgfmt():
+    import shutil
+    import subprocess
+    from pathlib import Path
+    import pytest
+    if shutil.which("msgfmt") is None:
+        pytest.skip("msgfmt non installato")
+    po = Path(__file__).resolve().parent.parent / "clonaut" / "locale" / "en.po"
+    res = subprocess.run(["msgfmt", "-c", "-o", "/dev/null", str(po)],
+                         capture_output=True, text=True, env={"LC_ALL": "C", "PATH": "/usr/bin:/bin"})
+    assert res.returncode == 0 and not res.stderr, res.stderr

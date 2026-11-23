@@ -6,7 +6,7 @@ from clonaut import __version__
 from clonaut.qtcompat import QtWidgets
 from clonaut.ui.settings_dialog import SettingsDialog
 from clonaut.ui.transfer_dialog import TransferDialog
-from conftest import needs_rclone
+from conftest import needs_rclone, spin
 
 pytestmark = needs_rclone
 
@@ -150,3 +150,49 @@ def test_garbage_is_collected_only_in_the_gui_thread(qapp):
     finally:
         timer.stop()
         timer.deleteLater()
+
+
+def test_testi_html_mostrati_come_testo(window):
+    """Percorsi e descrizioni con «<» non diventano markup (about e barra di stato)."""
+    window.ctx.config_desc = "/conf/<img src=x>.conf"
+    assert "<img" not in window.about_text()
+    assert "&lt;img src=x&gt;" in window.about_text()
+    window._set_status(ok=True)
+    assert "<img" not in window._status_lbl.text()
+
+
+def test_eliminare_un_remote_in_uso_avvisa(window, monkeypatch):
+    window.transfers_tab._rec_timer.stop()
+    window.transfers_tab.add_recurring("copy", "/casa", "demo:backup", [], 3600)
+    assert window.remotes_tab.schedules_using("demo") == ["/casa → demo:backup"]
+    asked = []
+    monkeypatch.setattr(window.remotes_tab, "_selected_name", lambda: "demo")
+    monkeypatch.setattr(QtWidgets.QMessageBox, "question",
+                        lambda *a, **k: asked.append(a[2])
+                        or QtWidgets.QMessageBox.StandardButton.No)
+    window.remotes_tab._on_delete()
+    assert "/casa → demo:backup" in asked[0]
+
+
+def test_dettagli_remote_chiusi_una_volta(qapp):
+    from clonaut.ui.remotes_tab import RemoteDetailsDialog
+    dlg = RemoteDetailsDialog("demo", {"type": "local"})
+    results = []
+    dlg.finished.connect(results.append)
+    dlg.show()
+    btn = dlg.findChild(QtWidgets.QDialogButtonBox).buttons()[0]
+    btn.click()
+    assert results == [QtWidgets.QDialog.DialogCode.Rejected.value]
+
+
+def test_cestino_con_tilde_e_html(rcd, qapp, tmp_path, monkeypatch):
+    from clonaut.ui.trash_dialog import TrashDialog
+    monkeypatch.setenv("HOME", str(tmp_path))
+    dlg = TrashDialog(rcd, "~/<b>cestino</b>")
+    try:
+        assert dlg.backup_dir == str(tmp_path / "<b>cestino</b>")
+        head = dlg.findChildren(QtWidgets.QLabel)[0].text()
+        assert "&lt;b&gt;" in head
+        assert spin(qapp, 10, until=lambda: not dlg.busy())
+    finally:
+        dlg.done(0)

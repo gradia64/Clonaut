@@ -235,3 +235,43 @@ def test_rclone_dry_run_nell_ambiente_non_rende_muto_il_demone(tmp_path, tree, m
         assert (tree / "copia" / "new.txt").read_text() == "nuovo"
     finally:
         proc.stop()
+
+
+def test_stop_non_propaga_il_timeout(monkeypatch):
+    import subprocess
+    from clonaut.rcd import RcdProcess
+
+    class Stuck:
+        pid = 1
+        def poll(self):
+            return None
+        def terminate(self):
+            pass
+        def kill(self):
+            pass
+        def wait(self, timeout=None):
+            raise subprocess.TimeoutExpired("rclone", timeout)
+
+    proc = RcdProcess("rclone", 1, "u", "p")
+    proc.proc = Stuck()
+    proc.stop()   # prima: TimeoutExpired fino all'uscita dell'app
+
+
+def test_wait_ready_riprova_il_controllo_del_socket(monkeypatch):
+    from clonaut import rcd as rcd_mod
+
+    class Alive:
+        pid = 1
+        def poll(self):
+            return None
+
+    answers = iter([False, False, True])
+    monkeypatch.setattr(rcd_mod, "port_owned_by", lambda pid, port: next(answers))
+
+    class Api:
+        def ping(self):
+            return {}
+
+    proc = rcd_mod.RcdProcess("rclone", 1, "u", "p")
+    proc.proc = Alive()
+    assert proc.wait_ready(Api(), timeout=2)

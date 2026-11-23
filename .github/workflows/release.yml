@@ -220,6 +220,7 @@ jobs:
         run: |
           useradd -m builder
           echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+          chmod 0440 /etc/sudoers.d/builder
           cp -r packaging/aur/clonaut /home/builder/clonaut
           cp packaging/clonaut-release-key.asc /home/builder/
           chown -R builder: /home/builder

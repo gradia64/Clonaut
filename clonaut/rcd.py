@@ -7,6 +7,7 @@ import secrets
 import shutil
 import socket
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -89,14 +90,27 @@ def random_creds() -> tuple[str, str]:
     return secrets.token_hex(8), secrets.token_urlsafe(15)
 
 
-def _pdeathsig() -> None:  # pragma: no cover — gira nel figlio appena creato
-    """Su Linux: chiede al kernel di uccidere rcd se il processo GUI muore."""
+def _load_prctl():
+    """prctl della libc, caricata qui nel processo GUI e non nel figlio.
+
+    preexec_fn gira tra fork ed exec di un processo con più thread: lì import
+    e dlopen possono bloccarsi su un lock preso da un altro thread al momento
+    del fork. Nel figlio resta solo la chiamata alla funzione C già pronta.
+    """
     try:
         import ctypes
-        libc = ctypes.CDLL("libc.so.6", use_errno=True)
-        libc.prctl(1, 9)  # PR_SET_PDEATHSIG, SIGKILL
-    except Exception:
-        pass
+        return ctypes.CDLL("libc.so.6", use_errno=True).prctl
+    except (ImportError, OSError, AttributeError):
+        return None
+
+
+_PRCTL = _load_prctl() if sys.platform.startswith("linux") else None
+
+
+def _pdeathsig() -> None:  # pragma: no cover — gira nel figlio appena creato
+    """Su Linux: chiede al kernel di uccidere rcd se il processo GUI muore."""
+    if _PRCTL is not None:
+        _PRCTL(1, 9)  # PR_SET_PDEATHSIG, SIGKILL
 
 
 def _process_tree(pid: int) -> set[int]:
@@ -211,7 +225,7 @@ class RcdProcess:
         if self.config_path:
             env["RCLONE_CONFIG"] = str(self.config_path)
         kwargs: dict = {}
-        if os.name == "posix":
+        if _PRCTL is not None:
             kwargs["preexec_fn"] = _pdeathsig  # noqa: PLW1509 — necessario per non lasciare orfani
         self.proc = subprocess.Popen(cmd, env=env, cwd=self.cwd,
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -232,7 +246,17 @@ class RcdProcess:
             except Exception:
                 time.sleep(0.2)
                 continue
-            return self.proc is not None and port_owned_by(self.proc.pid, self.port)
+            if self.proc is None:
+                return False
+            # il socket in /proc può comparire un attimo dopo la prima
+            # risposta: qualche nuovo controllo prima di dire «non è nostro»
+            for _ in range(5):
+                if port_owned_by(self.proc.pid, self.port):
+                    return True
+                if self.proc.poll() is not None:
+                    return False
+                time.sleep(0.1)
+            return False
         return False
 
     def log_tail(self, lines: int = 15) -> str:
@@ -250,7 +274,10 @@ class RcdProcess:
             self.proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             self.proc.kill()
-            self.proc.wait(timeout=5)
+            try:
+                self.proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                pass   # bloccato nel kernel: non far fallire l'uscita dell'app
 
 
 def launch_rcd(exe: str, *, port: int | None = None, config_path: str | None = None,

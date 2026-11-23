@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .api import RcloneApi
+from . import settings as app_settings
 from .i18n import tr
 from .rcd import RcdProcess, RcdStartError, find_rclone, launch_rcd
 
@@ -39,8 +40,12 @@ class AppContext:
             proc = self.rcd_dry.proc if self.rcd_dry is not None else None
             if proc is None or proc.poll() is None:
                 return self.api_dry
+            self.api_dry.close()
             self.rcd_dry = self.api_dry = None
-        exe = self.rclone_exe or find_rclone()[0]
+        # rclone non trovato all'avvio: il percorso può essere stato indicato
+        # nelle impostazioni dopo
+        exe = self.rclone_exe or find_rclone(
+            str(app_settings.load().get("rclone_path") or ""))[0]
         if not exe:
             raise RuntimeError(tr("rclone non trovato: indicane il percorso in "
                                "File → Impostazioni."))

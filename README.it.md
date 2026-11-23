@@ -266,7 +266,9 @@ CLONAUT_RC_PASS=segreta clonaut --url http://127.0.0.1:5572 --user utente
 - **Tray** — chiudi (o minimizza) la finestra: resta solo l'icona nella tray e
   i giri ⏰ continuano; un clic sull'icona la riporta in primo piano (un
   altro clic la nasconde). *Esci* (menu File
-  o menu della tray) chiude davvero l'app e ferma il suo rclone rcd.
+  o menu della tray) chiude davvero l'app e ferma il suo rclone rcd. Clonaut
+  gira una volta sola per configurazione: avviarlo di nuovo porta in primo
+  piano la finestra aperta (anche se l'icona della tray non si vede).
 - **Ripeti automaticamente** — spunta «Ripeti ogni N ore/minuti/giorni»: nasce una
   riga ⏰ in coda che si rilancia da sola a ogni intervallo (mai in parallelo).
   Selezionala e usa i pulsanti «⏰ Programmazione» sopra la coda, oppure il
@@ -328,6 +330,7 @@ clonaut/
 ├── rcd.py                  ricerca di rclone, processo `rclone rcd` (porta, credenziali, log)
 ├── worker.py               thread di polling (watch-list) + DryRunWorker
 ├── appctx.py               contesto condiviso (+ backend dedicato alle prove)
+├── instance.py             istanza unica (lock, richiamo della finestra aperta)
 ├── settings.py             impostazioni persistenti (tray, notifiche)
 ├── qtcompat.py             import Qt: PySide6 o PyQt6 (`CLONAUT_QT`)
 ├── i18n.py                 lingua dell'interfaccia: `tr()`, cataloghi gettext letti come .po

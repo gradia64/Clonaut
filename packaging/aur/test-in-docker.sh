@@ -30,6 +30,7 @@ VER="$1"; shift
 pacman -Syu --noconfirm --needed base-devel git namcap sudo >/dev/null
 useradd -m builder
 echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builder
+chmod 0440 /etc/sudoers.d/builder
 sudo -u builder git config --global safe.directory '*'
 sudo -u builder git config --global user.name 'Prova'
 sudo -u builder git config --global user.email 'prova@example.org'
@@ -55,7 +56,13 @@ for t in "$@"; do
   fi
   chown -R builder: "$dir"
   cd "$dir"
-  sudo -u builder makepkg -s --noconfirm 2>&1 | grep -E "==>|passed|failed|error|signature|firma|PGP" || true
+  # log completo a parte: il filtro non deve nascondere un makepkg fallito
+  if ! sudo -u builder makepkg -s --noconfirm > /tmp/makepkg-$t.log 2>&1; then
+    tail -n 60 /tmp/makepkg-$t.log
+    echo "makepkg fallito per $t" >&2
+    exit 1
+  fi
+  grep -E "==>|passed|failed|error|signature|firma|PGP" /tmp/makepkg-$t.log || true
   pkg=$(ls "$dir"/*.pkg.tar.zst)
   echo "--- namcap PKGBUILD"; sudo -u builder namcap PKGBUILD || true
   echo "--- namcap pacchetto"; namcap "$pkg" || true

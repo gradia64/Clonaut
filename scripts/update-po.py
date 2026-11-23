@@ -75,8 +75,16 @@ def render(lang: str, messages: dict[str, list[str]], old: dict[str, dict]) -> s
               "# Generato da scripts/update-po.py: si modificano solo i msgstr.\n"
               'msgid ""\n'
               'msgstr ""\n'
+              # intestazione completa, come la vuole `msgfmt -c`: niente data
+              # di revisione reale, perché l'output deve restare deterministico
+              '"Project-Id-Version: Clonaut\\n"\n'
+              '"PO-Revision-Date: 2026-11-09 00:00+0100\\n"\n'
+              '"Last-Translator: Clonaut <https://github.com/gradia64/Clonaut>\\n"\n'
+              f'"Language-Team: {LANGUAGES[lang]}\\n"\n'
+              f'"Language: {lang}\\n"\n'
+              '"MIME-Version: 1.0\\n"\n'
               '"Content-Type: text/plain; charset=UTF-8\\n"\n'
-              f'"Language: {lang}\\n"\n')
+              '"Content-Transfer-Encoding: 8bit\\n"\n')
     blocks = [header]
     for msgid, refs in messages.items():
         prev = old.get(msgid, {})

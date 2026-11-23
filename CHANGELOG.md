@@ -12,6 +12,16 @@ All notable changes to Clonaut are listed here. Versions follow
   `--insecure-http` on a trusted network. Malformed addresses are refused
   with a clear message.
 
+### Changed
+- Clonaut runs once per configuration folder: starting it again brings the
+  open window to the front instead of opening a second instance, which would
+  overwrite the other's settings and schedules and run each ⏰ schedule
+  twice. This also gives a way back to a window hidden in a tray that the
+  desktop does not show.
+- Deleting a remote used by ⏰ schedules lists them in the confirmation.
+- «Files in progress» says whether a finished job was cancelled or ended
+  with errors, not just «Job finished».
+
 ### Fixed
 - If the dry-run rclone daemon dies, the next dry run starts a new one
   instead of failing until Clonaut is restarted.
@@ -21,6 +31,24 @@ All notable changes to Clonaut are listed here. Versions follow
   statistics is retried (up to 3 times) instead of leaving stale numbers;
   a job removed from the queue while being read no longer comes back into
   the caches.
+- Paths and descriptions containing `<` are shown as text, not as markup, in
+  the status bar, the About box, the trash viewer and the settings.
+- A safety trash typed as `~/…` is expanded (rclone would have created a
+  folder literally named `~`), also when opening it from the trash viewer.
+- The dry-run backend finds rclone through the path set in *Settings* when it
+  was missing at startup.
+- Editing a schedule whose interval was set by hand in `recurring.json` and
+  cannot be shown exactly (e.g. 100000 s) no longer turns it into 999 minutes.
+- An unexpected speed value from rclone no longer breaks the files panel.
+- Starting the local rclone daemon: the parent-death signal no longer loads
+  a library between fork and exec (a possible deadlock with threads), a
+  daemon that ignores termination no longer makes quitting fail, and the
+  ownership check of the listening socket is retried briefly.
+- Packaging: a maintainer name containing `&`, `|` or `\` no longer corrupts
+  the `.deb` metadata; the AUR container test stops on a failed `makepkg`
+  instead of hiding it; `requirements.txt` installs `PySide6-Essentials` like
+  the `pyside6` extra; the English catalog has a complete header
+  (`msgfmt -c` is clean).
 - A slow or stuck rclone daemon no longer freezes the window when a scheduled
   run starts: the call runs in a background thread (it could block for up to
   20 s), the ⏰ row shows «Starting the run» meanwhile, and a schedule removed
@@ -210,13 +238,14 @@ First public release.
 - Dry runs report how many files would be deleted.
 - Old daemon logs are removed after 7 days.
 
-## [0.2.0] — 2026-11-08
+## 0.2.0 — 2026-11-08
 
-First packaged version (as "GUI rclone").
+First packaged version (as "GUI rclone"), never published on its own: its
+code is in the 0.3.0 commit.
 
+[Unreleased]: https://github.com/gradia64/Clonaut/compare/v0.5.0...HEAD
 [0.5.0]: https://github.com/gradia64/Clonaut/releases/tag/v0.5.0
 [0.4.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.1
 [0.4.0]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.0
 [0.3.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.3.1
 [0.3.0]: https://github.com/gradia64/Clonaut/commit/5f69e4a
-[0.2.0]: https://github.com/gradia64/Clonaut/commit/5f69e4a

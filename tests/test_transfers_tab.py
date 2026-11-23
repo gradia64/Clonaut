@@ -480,3 +480,28 @@ def test_closing_the_trash_dialog_while_busy(qapp):
     dlg.reject()
     assert not dlg.busy() and running in worker_mod._lingering
     assert worker_mod.wait_lingering(5000)
+
+
+def test_files_summary_dice_annullato_o_con_errori(qapp):
+    from clonaut.ui.transfers_tab import TransfersTab
+    tab = TransfersTab(_Ctx())
+    tab._rec_timer.stop()
+    stats = {"transfers": 1, "totalTransfers": 3}
+    cases = {
+        "Job terminato.": {"finished": True, "success": True},
+        "Job annullato.": {"finished": True, "success": False, "error": "context canceled"},
+        "Job terminato con errori.": {"finished": True, "success": False, "error": "boom"},
+    }
+    for head, status in cases.items():
+        assert tab._files_summary({"status": status, "stats": stats}, True).startswith(head)
+
+
+def test_programmazioni_che_usano_un_remote(qapp):
+    from clonaut.ui.transfers_tab import TransfersTab
+    tab = TransfersTab(_Ctx())
+    tab._rec_timer.stop()
+    tab.add_recurring("copy", "/casa", "demo:backup", [], 3600)
+    tab.add_recurring("sync", "/a", "/b", [], 3600, backup_dir="demo:cestino")
+    tab.add_recurring("copy", "demox:x", "/c", [], 3600)    # altro remote
+    assert tab.schedules_using_remote("demo") == ["/casa → demo:backup", "/a → /b"]
+    assert tab.schedules_using_remote("nessuno") == []

@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 
 from ..i18n import LANGUAGES, N_, tr
-from ..qtcompat import QtWidgets
+from ..qtcompat import QtCore, QtWidgets
 
 _KEYS = (
     ("close_to_tray",
@@ -58,6 +58,7 @@ class SettingsDialog(QtWidgets.QDialog):
             "Lascia vuoto per usare rclone del sistema. La modifica "
             "vale dal prossimo avvio; la variabile d'ambiente CLONAUT_RCLONE, "
             "se impostata, ha la precedenza."))
+        r_hint.setTextFormat(QtCore.Qt.TextFormat.PlainText)   # il percorso è testo
         r_hint.setProperty("role", "hint")
         r_hint.setWordWrap(True)
         layout.addWidget(group)

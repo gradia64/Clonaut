@@ -15,12 +15,20 @@ _UNITS = ((N_("ore"), 3600), (N_("minuti"), 60), (N_("giorni"), 86400))
 
 
 def split_interval(seconds: int) -> tuple[int, int]:
-    """Intervallo in secondi → (valore, unità in secondi) nell'unità più grande esatta."""
+    """Intervallo in secondi → (valore, unità in secondi) nell'unità più grande esatta.
+
+    Un intervallo non esprimibile con esattezza (scritto a mano in
+    recurring.json, es. 100000 s) va all'unità più piccola che lo contiene
+    entro il massimo di 999, arrotondato: prima diventava 999 minuti.
+    """
     seconds = max(60, int(seconds))
     for unit in (86400, 3600, 60):
         if seconds % unit == 0 and seconds // unit <= 999:
             return seconds // unit, unit
-    return min(999, max(1, round(seconds / 60))), 60
+    for unit in (60, 3600, 86400):
+        if round(seconds / unit) <= 999:
+            return max(1, round(seconds / unit)), unit
+    return 999, 86400
 
 
 class TransferDialog(QtWidgets.QDialog):

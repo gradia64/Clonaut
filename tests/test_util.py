@@ -92,3 +92,15 @@ def test_errore_del_remote_non_diventa_un_link(qapp, monkeypatch):
     remotes_tab._show_error(None, RuntimeError(message))
     assert seen and "<a " not in seen[0]
     assert _as_shown(seen[0]) == message      # mostrato com'è, link compreso
+
+
+def test_human_speed_con_valore_non_numerico():
+    assert human_speed("veloce") == "—"
+    assert human_speed([1]) == "—"
+
+
+def test_split_interval_non_esatto_non_diventa_999_minuti():
+    # 100000 s (~27,8 h), scritto a mano in recurring.json: prima 999 minuti
+    assert split_interval(100000) == (28, 3600)
+    assert split_interval(90 * 60 + 20) == (90, 60)
+    assert split_interval(5000 * 86400) == (999, 86400)

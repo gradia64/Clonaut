@@ -266,7 +266,9 @@ CLONAUT_RC_PASS=secret clonaut --url http://127.0.0.1:5572 --user user
 - **Tray** — close (or minimize) the window: only the tray icon remains and ⏰
   runs keep going; click the icon to bring the window back (click again to hide
   it). *Quit* (in the File menu or tray menu) really exits and stops the
-  app's rclone daemon.
+  app's rclone daemon. Clonaut runs once per configuration: starting it again
+  brings the open window to the front (also when the tray icon is not
+  visible).
 - **Repeat automatically** — tick «Repeat automatically every N
   minutes/hours/days»: a ⏰ row appears and restarts itself at every interval
   (never in parallel). Select it and use the «⏰ Schedule» buttons above the
@@ -329,6 +331,7 @@ clonaut/
 ├── rcd.py                  finding rclone, `rclone rcd` process (port, credentials, stop, logs)
 ├── worker.py               polling thread (watch-list) + DryRunWorker
 ├── appctx.py               shared context (+ dedicated dry-run backend)
+├── instance.py             single instance (lock, raising the open window)
 ├── settings.py             persistent settings (tray, notifications), config/cache dirs
 ├── qtcompat.py             Qt imports: PySide6 or PyQt6 (`CLONAUT_QT`)
 ├── i18n.py                 interface language: `tr()`, gettext catalogs read as .po

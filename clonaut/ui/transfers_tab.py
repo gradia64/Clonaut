@@ -501,6 +501,13 @@ class TransfersTab(QtWidgets.QWidget):
 
     # --------------------------------------------------- trasferimenti ripetuti
 
+    def schedules_using_remote(self, name: str) -> list[str]:
+        """Programmazioni ⏰ con sorgente, destinazione o cestino sul remote `name`."""
+        prefix = f"{name}:"
+        return [f"{d['src']} → {d['dst']}" for d in self._recurrent.values()
+                if any(str(d.get(k) or "").startswith(prefix)
+                       for k in ("src", "dst", "backup_dir"))]
+
     def add_recurring(self, mode: str, src: str, dst: str,
                       exclude: list[str] | None, interval_sec: int,
                       backup_dir: str | None = None) -> str:
@@ -1006,7 +1013,15 @@ class TransfersTab(QtWidgets.QWidget):
         if stats.get("errors"):
             text += " · " + tr("errori {count}").format(count=stats["errors"])
         if finished:
-            return tr("Job terminato.") + " " + text
+            status = payload.get("status") or {}
+            error = str(status.get("error") or "")
+            if status.get("success"):
+                head = tr("Job terminato.")
+            elif "context canceled" in error:
+                head = tr("Job annullato.")
+            else:
+                head = tr("Job terminato con errori.")
+            return head + " " + text
         if not stats.get("transferring") and not stats.get("checking"):
             text += " · " + tr("nessun file in lavorazione in questo istante")
         return text

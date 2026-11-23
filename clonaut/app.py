@@ -26,6 +26,7 @@ from urllib.parse import urlsplit
 from clonaut.api import LOOPBACK_HOSTS, RcloneApi
 from clonaut.appctx import AppContext
 from clonaut import i18n
+from clonaut.instance import InstanceLock, RaiseListener, ask_owner_to_raise
 from clonaut.i18n import tr
 from clonaut.qtcompat import QtCore, QtWidgets
 from clonaut import settings as app_settings
@@ -179,6 +180,19 @@ def main(argv: list[str] | None = None) -> int:
 
     app = make_app()
 
+    # una sola istanza: un secondo avvio porta in primo piano la prima
+    lock = InstanceLock(app_settings.config_dir() / "clonaut.lock")
+    if not lock.acquire():
+        if ask_owner_to_raise(lock):
+            print(tr("Clonaut è già aperto: ne porto in primo piano la finestra."),
+                  file=sys.stderr)
+            return 0
+        QtWidgets.QMessageBox.critical(None, tr("Clonaut è già aperto"), tr(
+            "Un'altra istanza di Clonaut usa la stessa configurazione ({path}). "
+            "Due istanze sovrascriverebbero impostazioni e programmazioni a "
+            "vicenda.").format(path=app_settings.config_dir()))
+        return 1
+
     # -- avvio del backend con finestra di attesa
     progress = QtWidgets.QProgressDialog()
     progress.setLabelText(tr("Avvio di rclone rcd…"))
@@ -200,10 +214,13 @@ def main(argv: list[str] | None = None) -> int:
     progress.cancel()
 
     win = MainWindow(ctx, settings=values)
+    listener = RaiseListener(win._bring_to_front, win)
     if values.get("start_in_tray") and win.tray is not None:
         pass   # resta ridotta nella tray (l'icona è già attiva)
     else:
         win.show()
     code = app.exec()
+    listener.close()
     wait_lingering()   # thread rimasti in una chiamata rc all'uscita
+    lock.release()
     return code

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import os
 import platform
 
@@ -31,6 +32,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # -- contenuti
         self.remotes_tab = RemotesTab(ctx)
         self.transfers_tab = TransfersTab(ctx)
+        self.remotes_tab.schedules_using = self.transfers_tab.schedules_using_remote
         tabs = QtWidgets.QTabWidget()
         tabs.addTab(self.remotes_tab, tr("Remote"))
         tabs.addTab(self.transfers_tab, tr("Trasferimenti"))
@@ -145,9 +147,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 ("Python", platform.python_version()),
                 ("Config", self.ctx.config_desc),
                 (tr("Dati app"), cfg))
+        # percorsi e descrizioni possono contenere «<» o «&»: testo, non HTML
         table = "".join(
-            f"<tr><td style='white-space:nowrap; padding-right:10px'><b>{k}</b></td>"
-            f"<td>{v}</td></tr>" for k, v in rows)
+            f"<tr><td style='white-space:nowrap; padding-right:10px'><b>{html.escape(k)}</b>"
+            f"</td><td>{html.escape(str(v))}</td></tr>" for k, v in rows)
         return (
             f"<h2 style='margin-bottom:0'>Clonaut {__version__}</h2>"
             "<p style='margin-top:2px'><i>" + tr("Il pilota grafico per rclone.")
@@ -199,7 +202,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._status_lbl.setText(
             f'<span style="color:{dot}; font-weight:600">●</span> '
             + tr("rclone {version} · rcd su {url} · config: {config}").format(
-                version=extra, url=self.ctx.api.url, config=self.ctx.config_desc))
+                version=html.escape(str(extra)), url=html.escape(self.ctx.api.url),
+                config=html.escape(str(self.ctx.config_desc))))
 
     # ------------------------------------------------------------- chiusura
 

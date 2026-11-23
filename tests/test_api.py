@@ -249,3 +249,27 @@ def test_elenco_dei_dimenticati_limitato():
         worker.forget(jid)
     assert len(worker._forgotten) <= MAX_FORGOTTEN
     assert MAX_FORGOTTEN + 100 in worker._forgotten
+
+
+def test_cestino_con_tilde_espanso(monkeypatch, tmp_path):
+    from clonaut.api import RcloneApi
+    monkeypatch.setenv("HOME", str(tmp_path))
+    api = RcloneApi("http://127.0.0.1:1")
+    sent = []
+    monkeypatch.setattr(api, "call", lambda ep, payload=None, timeout=None:
+                        sent.append(payload) or {"jobid": 1})
+    api.start_transfer("sync", str(tmp_path), str(tmp_path / "b"), backup_dir="~/Cestino")
+    api.start_transfer("sync", str(tmp_path), "demo:b", backup_dir="demo:~cestino")
+    assert sent[0]["_config"]["BackupDir"] == str(tmp_path / "Cestino")
+    assert sent[1]["_config"]["BackupDir"] == "demo:~cestino"
+
+
+def test_backend_delle_prove_usa_il_percorso_delle_impostazioni(monkeypatch):
+    from clonaut import appctx, settings
+    seen = []
+    monkeypatch.setattr(settings, "load", lambda: {"rclone_path": "/opt/rclone"})
+    monkeypatch.setattr(appctx, "find_rclone", lambda path="": seen.append(path) or (None, "", []))
+    ctx = appctx.AppContext(api=None)
+    with pytest.raises(RuntimeError, match="rclone non trovato"):
+        ctx.ensure_dry_backend()
+    assert seen == ["/opt/rclone"]

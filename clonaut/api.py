@@ -48,6 +48,10 @@ class RcloneApi:
         if user:
             self.session.auth = (user, password)
 
+    def close(self) -> None:
+        """Chiude le connessioni aperte con il demone."""
+        self.session.close()
+
     # ------------------------------------------------------------------ base
 
     def call(self, endpoint: str, payload: dict | None = None,
@@ -117,6 +121,8 @@ class RcloneApi:
             src = os.path.expanduser(src)
         if not _REMOTE_RE.match(dst):
             dst = os.path.expanduser(dst)
+        if backup_dir and not _REMOTE_RE.match(backup_dir):
+            backup_dir = os.path.expanduser(backup_dir)
 
         if not _REMOTE_RE.match(src) and os.path.isfile(src):
             if mode != "copy":
