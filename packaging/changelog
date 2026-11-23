@@ -1,3 +1,21 @@
+clonaut (0.5.1) unstable; urgency=medium
+
+  * Security: attaching with --url over plain http:// to another machine
+    with a user is refused (rc credentials in clear text); use https://,
+    an SSH tunnel, or --insecure-http on a trusted network.
+  * Single instance per configuration: starting Clonaut again brings the
+    open window to the front.
+  * Fix: scheduled runs and the safety trash viewer no longer freeze the
+    window on a slow rclone daemon.
+  * Fix: a dead dry-run daemon is restarted on the next dry run.
+  * Fix: the polling thread keeps bounded memory and retries final stats.
+  * Fix: texts with «<» shown as text; «~» expanded in trash folders;
+    hand-edited intervals kept; deleting a remote lists its schedules.
+  * Packaging: safe maintainer escaping, PySide6-Essentials in
+    requirements.txt, complete English catalog header.
+
+ -- @MAINTAINER@  Mon, 23 Nov 2026 10:05:01 +0100
+
 clonaut (0.5.0) unstable; urgency=medium
 
   * Transfers tab: a «⏰ Schedule» button row (Run now, Edit, Pause/Resume,

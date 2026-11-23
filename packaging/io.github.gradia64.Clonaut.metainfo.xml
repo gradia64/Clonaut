@@ -84,6 +84,15 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.5.1" date="2026-11-23">
+      <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.5.1</url>
+      <description>
+        <p>Fixes from two external code reviews: slow rclone calls no longer
+        freeze the window, attaching over plain HTTP to another machine is
+        refused, and Clonaut runs as a single instance that brings its window
+        back when started again.</p>
+      </description>
+    </release>
     <release version="0.5.0" date="2026-11-20">
       <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.5.0</url>
       <description>

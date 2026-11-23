@@ -5,6 +5,8 @@ All notable changes to Clonaut are listed here. Versions follow
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-11-23
+
 ### Security
 - Attach mode refuses a plain `http://` `--url` to another machine when a
   user is given, because HTTP Basic would send the rc user and password in
@@ -243,7 +245,8 @@ First public release.
 First packaged version (as "GUI rclone"), never published on its own: its
 code is in the 0.3.0 commit.
 
-[Unreleased]: https://github.com/gradia64/Clonaut/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/gradia64/Clonaut/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.5.1
 [0.5.0]: https://github.com/gradia64/Clonaut/releases/tag/v0.5.0
 [0.4.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.1
 [0.4.0]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.0
