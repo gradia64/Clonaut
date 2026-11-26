@@ -5,6 +5,8 @@ All notable changes to Clonaut are listed here. Versions follow
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-11-26
+
 ### Added
 - **Update check.** Once a day Clonaut asks the GitHub releases API for the
   latest release (one anonymous request with a `Clonaut/<version>`
@@ -260,7 +262,8 @@ First public release.
 First packaged version (as "GUI rclone"), never published on its own: its
 code is in the 0.3.0 commit.
 
-[Unreleased]: https://github.com/gradia64/Clonaut/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/gradia64/Clonaut/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/gradia64/Clonaut/releases/tag/v0.5.2
 [0.5.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.5.1
 [0.5.0]: https://github.com/gradia64/Clonaut/releases/tag/v0.5.0
 [0.4.1]: https://github.com/gradia64/Clonaut/releases/tag/v0.4.1

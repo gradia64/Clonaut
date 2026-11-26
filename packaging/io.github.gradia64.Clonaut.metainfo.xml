@@ -84,6 +84,14 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.5.2" date="2026-11-26">
+      <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.5.2</url>
+      <description>
+        <p>Update check: once a day Clonaut looks for a newer release on GitHub
+        and tells you how to update for the way it is installed. It can be
+        turned off in the settings.</p>
+      </description>
+    </release>
     <release version="0.5.1" date="2026-11-23">
       <url type="details">https://github.com/gradia64/Clonaut/releases/tag/v0.5.1</url>
       <description>
