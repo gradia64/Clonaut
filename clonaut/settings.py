@@ -14,6 +14,8 @@ DEFAULTS = {
     "notify_finished": True,    # notifica a ogni trasferimento terminato
     "rclone_path": "",          # eseguibile rclone scelto a mano ("" = automatico)
     "language": "",             # lingua dell'interfaccia: "it", "en" ("" = del sistema)
+    "check_updates": True,      # una volta al giorno: c'è una release più nuova?
+    "skip_version": "",         # versione per cui l'utente ha scelto «Salta»
 }
 
 

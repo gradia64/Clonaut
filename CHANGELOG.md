@@ -5,6 +5,21 @@ All notable changes to Clonaut are listed here. Versions follow
 
 ## [Unreleased]
 
+### Added
+- **Update check.** Once a day Clonaut asks the GitHub releases API for the
+  latest release (one anonymous request with a `Clonaut/<version>`
+  User-Agent, nothing else is sent) and, when a newer version is out, shows
+  a notice in the status bar (and once in the tray) with a link to the
+  release notes and how to update for the way Clonaut is installed: apt for
+  the `.deb`, the AUR helper for `clonaut`/`clonaut-git`, Gear Lever or
+  AppImageUpdate for the AppImage. Clonaut never replaces its own files.
+  The notice offers «Skip this version» and «Don't check again»; the check
+  is on by default and can be turned off in *Settings* or with
+  `CLONAUT_UPDATE_CHECK=0`. *Help → Check for updates…* checks on request.
+
+### Fixed
+- Saving *Settings* no longer drops values the dialog does not show.
+
 ## [0.5.1] — 2026-11-23
 
 ### Security

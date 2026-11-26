@@ -35,6 +35,13 @@ su entrambe.
   nella tray, avvio ridotto nella tray, notifiche a fine trasferimento e
   lingua dell'interfaccia (`~/.config/clonaut/settings.json`). Se l'ambiente non ha tray
   (es. GNOME senza estensione), l'app funziona come prima.
+- **Controllo aggiornamenti** — una volta al giorno Clonaut chiede a GitHub
+  l'ultima release (una richiesta anonima, non invia altro) e mostra un
+  avviso nella barra di stato con le novità e come aggiornare secondo
+  l'installazione (apt, helper AUR, AppImage/Gear Lever); non sostituisce mai
+  i file da solo. L'avviso offre «Salta questa versione» e «Non controllare
+  più»; il controllo si spegne anche in **File → Impostazioni…** o con
+  `CLONAUT_UPDATE_CHECK=0`. **Aiuto → Controlla aggiornamenti…** controlla a richiesta.
 - **Prova a vuoto** — anteprima onesta: gira su un processo rclone avviato con
   `--dry-run`, impossibile che scriva o elimini; mostra file/byte che
   sarebbero stati trasferiti e quanti file verrebbero eliminati.
@@ -331,6 +338,7 @@ clonaut/
 ├── worker.py               thread di polling (watch-list) + DryRunWorker
 ├── appctx.py               contesto condiviso (+ backend dedicato alle prove)
 ├── instance.py             istanza unica (lock, richiamo della finestra aperta)
+├── updates.py              controllo aggiornamenti (release GitHub, tipo di installazione)
 ├── settings.py             impostazioni persistenti (tray, notifiche)
 ├── qtcompat.py             import Qt: PySide6 o PyQt6 (`CLONAUT_QT`)
 ├── i18n.py                 lingua dell'interfaccia: `tr()`, cataloghi gettext letti come .po

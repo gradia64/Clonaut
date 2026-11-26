@@ -215,51 +215,55 @@ msgstr "AppImage: {path} missing"
 msgid "(nessun log disponibile)"
 msgstr "(no log available)"
 
-#: clonaut/ui/main_window.py:37
+#: clonaut/ui/main_window.py:38
 msgid "Remote"
 msgstr "Remotes"
 
-#: clonaut/ui/main_window.py:38
+#: clonaut/ui/main_window.py:39
 msgid "Trasferimenti"
 msgstr "Transfers"
 
-#: clonaut/ui/main_window.py:42
+#: clonaut/ui/main_window.py:43
 msgid "&File"
 msgstr "&File"
 
-#: clonaut/ui/main_window.py:43
+#: clonaut/ui/main_window.py:44
 msgid "⚙ Impostazioni…"
 msgstr "⚙ Settings…"
 
-#: clonaut/ui/main_window.py:45 clonaut/ui/main_window.py:93
+#: clonaut/ui/main_window.py:46 clonaut/ui/main_window.py:112
 msgid "Esci"
 msgstr "Quit"
 
-#: clonaut/ui/main_window.py:51
+#: clonaut/ui/main_window.py:52
 msgid "&Aiuto"
 msgstr "&Help"
 
-#: clonaut/ui/main_window.py:52
+#: clonaut/ui/main_window.py:53
 msgid "Informazioni su Clonaut…"
 msgstr "About Clonaut…"
 
-#: clonaut/ui/main_window.py:54
+#: clonaut/ui/main_window.py:55
 msgid "Informazioni su Qt…"
 msgstr "About Qt…"
 
-#: clonaut/ui/main_window.py:90
+#: clonaut/ui/main_window.py:57
+msgid "Controlla aggiornamenti…"
+msgstr "Check for updates…"
+
+#: clonaut/ui/main_window.py:109
 msgid "Mostra / Nascondi"
 msgstr "Show / Hide"
 
-#: clonaut/ui/main_window.py:149
+#: clonaut/ui/main_window.py:169
 msgid "Dati app"
 msgstr "App data"
 
-#: clonaut/ui/main_window.py:156
+#: clonaut/ui/main_window.py:176
 msgid "Il pilota grafico per rclone."
 msgstr "The graphical pilot for rclone."
 
-#: clonaut/ui/main_window.py:157
+#: clonaut/ui/main_window.py:177
 msgid ""
 "Interfaccia desktop per <a href='https://rclone.org'>rclone</a>: remote, "
 "trasferimenti con progressi, prove a vuoto, cestino di sicurezza e "
@@ -269,32 +273,72 @@ msgstr ""
 "transfers with progress, dry runs, safety trash and schedules. All the "
 "work on files is done by rclone."
 
-#: clonaut/ui/main_window.py:162
+#: clonaut/ui/main_window.py:182
 msgid "Licenza"
 msgstr "License"
 
-#: clonaut/ui/main_window.py:167
+#: clonaut/ui/main_window.py:187
 msgid "segnala un problema"
 msgstr "report a problem"
 
-#: clonaut/ui/main_window.py:170
+#: clonaut/ui/main_window.py:190
 msgid "Informazioni su Clonaut"
 msgstr "About Clonaut"
 
-#: clonaut/ui/main_window.py:188
+#: clonaut/ui/main_window.py:222
+#, python-brace-format
+msgid "Clonaut {version} è la versione più recente."
+msgstr "Clonaut {version} is the latest version."
+
+#: clonaut/ui/main_window.py:228 clonaut/ui/main_window.py:233 clonaut/ui/main_window.py:221
+msgid "Aggiornamenti"
+msgstr "Updates"
+
+#: clonaut/ui/main_window.py:234
+msgid "Controllo non riuscito."
+msgstr "The check failed."
+
+#: clonaut/ui/main_window.py:238
+#, python-brace-format
+msgid "È disponibile Clonaut {new} (ora usi la {current})."
+msgstr "Clonaut {new} is available (you are using {current})."
+
+#: clonaut/ui/main_window.py:241
+msgid "Novità della versione"
+msgstr "What's new"
+
+#: clonaut/ui/main_window.py:249
+#, python-brace-format
+msgid "Clonaut {version} disponibile"
+msgstr "Clonaut {version} available"
+
+#: clonaut/ui/main_window.py:250
+msgid "Salta questa versione"
+msgstr "Skip this version"
+
+#: clonaut/ui/main_window.py:251
+msgid "Non controllare più"
+msgstr "Don't check again"
+
+#: clonaut/ui/main_window.py:256
+#, python-brace-format
+msgid "È disponibile Clonaut {version}."
+msgstr "Clonaut {version} is available."
+
+#: clonaut/ui/main_window.py:291
 #, python-brace-format
 msgid "{n} trasferimenti attivi"
 msgstr "{n} active transfers"
 
-#: clonaut/ui/main_window.py:189
+#: clonaut/ui/main_window.py:292
 msgid "nessun trasferimento attivo"
 msgstr "no active transfers"
 
-#: clonaut/ui/main_window.py:201
+#: clonaut/ui/main_window.py:304
 msgid "in attesa di rclone rcd…"
 msgstr "waiting for rclone rcd…"
 
-#: clonaut/ui/main_window.py:204
+#: clonaut/ui/main_window.py:307
 #, python-brace-format
 msgid "rclone {version} · rcd su {url} · config: {config}"
 msgstr "rclone {version} · rcd at {url} · config: {config}"
@@ -332,7 +376,7 @@ msgstr "Show advanced options"
 msgid "Crea remote"
 msgstr "Create remote"
 
-#: clonaut/ui/remote_dialog.py:128 clonaut/ui/settings_dialog.py:87 clonaut/ui/transfer_dialog.py:157
+#: clonaut/ui/remote_dialog.py:128 clonaut/ui/settings_dialog.py:89 clonaut/ui/transfer_dialog.py:157
 msgid "Annulla"
 msgstr "Cancel"
 
@@ -515,11 +559,18 @@ msgstr "Start minimized to tray"
 msgid "Mostra una notifica quando un trasferimento termina"
 msgstr "Show a notification when a transfer finishes"
 
-#: clonaut/ui/settings_dialog.py:24
+#: clonaut/ui/settings_dialog.py:16
+msgid ""
+"Avvisa quando esce una nuova versione di Clonaut (una richiesta a GitHub "
+"al giorno)"
+msgstr ""
+"Tell me when a new version of Clonaut is out (one request to GitHub a day)"
+
+#: clonaut/ui/settings_dialog.py:26
 msgid "Impostazioni"
 msgstr "Settings"
 
-#: clonaut/ui/settings_dialog.py:37
+#: clonaut/ui/settings_dialog.py:39
 msgid ""
 "La tray richiede il supporto dell'ambiente desktop (su GNOME serve "
 "un'estensione tipo AppIndicator). «All'avvio nella tray» vale dalla "
@@ -529,24 +580,24 @@ msgstr ""
 "such as AppIndicator is required). «Start minimized to tray» applies from "
 "the next launch."
 
-#: clonaut/ui/settings_dialog.py:45
+#: clonaut/ui/settings_dialog.py:47
 msgid "Programma rclone"
 msgstr "rclone program"
 
-#: clonaut/ui/settings_dialog.py:49
+#: clonaut/ui/settings_dialog.py:51
 msgid "automatico: rclone nel PATH"
 msgstr "automatic: rclone in PATH"
 
-#: clonaut/ui/settings_dialog.py:50 clonaut/ui/transfer_dialog.py:70 clonaut/ui/transfer_dialog.py:78 clonaut/ui/transfer_dialog.py:124
+#: clonaut/ui/settings_dialog.py:52 clonaut/ui/transfer_dialog.py:70 clonaut/ui/transfer_dialog.py:78 clonaut/ui/transfer_dialog.py:124
 msgid "Sfoglia…"
 msgstr "Browse…"
 
-#: clonaut/ui/settings_dialog.py:55
+#: clonaut/ui/settings_dialog.py:57
 #, python-brace-format
 msgid "In uso ora: {path}."
 msgstr "In use now: {path}."
 
-#: clonaut/ui/settings_dialog.py:57
+#: clonaut/ui/settings_dialog.py:59
 msgid ""
 "Lascia vuoto per usare rclone del sistema. La modifica vale dal prossimo "
 "avvio; la variabile d'ambiente CLONAUT_RCLONE, se impostata, ha la "
@@ -555,31 +606,31 @@ msgstr ""
 "Leave empty to use the system rclone. The change applies from the next "
 "launch; the CLONAUT_RCLONE environment variable, if set, takes precedence."
 
-#: clonaut/ui/settings_dialog.py:70
+#: clonaut/ui/settings_dialog.py:72
 msgid "Lingua"
 msgstr "Language"
 
-#: clonaut/ui/settings_dialog.py:72
+#: clonaut/ui/settings_dialog.py:74
 msgid "Automatica (lingua del sistema)"
 msgstr "Automatic (system language)"
 
-#: clonaut/ui/settings_dialog.py:79
+#: clonaut/ui/settings_dialog.py:81
 msgid "La lingua cambia dal prossimo avvio."
 msgstr "The language changes at the next launch."
 
-#: clonaut/ui/settings_dialog.py:86 clonaut/ui/transfer_dialog.py:185
+#: clonaut/ui/settings_dialog.py:88 clonaut/ui/transfer_dialog.py:185
 msgid "Salva"
 msgstr "Save"
 
-#: clonaut/ui/settings_dialog.py:94
+#: clonaut/ui/settings_dialog.py:96
 msgid "Scegli l'eseguibile rclone"
 msgstr "Choose the rclone executable"
 
-#: clonaut/ui/settings_dialog.py:102
+#: clonaut/ui/settings_dialog.py:104
 msgid "rclone non valido"
 msgstr "Invalid rclone"
 
-#: clonaut/ui/settings_dialog.py:103
+#: clonaut/ui/settings_dialog.py:105
 #, python-brace-format
 msgid ""
 "«{path}» non esiste o non è un file eseguibile.\n"
@@ -1295,6 +1346,57 @@ msgstr ""
 #: clonaut/ui/trash_dialog.py:192
 msgid "(svuotamento in corso…)"
 msgstr "(emptying…)"
+
+#: clonaut/updates.py:73
+#, python-brace-format
+msgid "GitHub non raggiungibile: {error}"
+msgstr "GitHub cannot be reached: {error}"
+
+#: clonaut/updates.py:75
+msgid "GitHub ha limitato le richieste: riprova più tardi."
+msgstr "GitHub is rate-limiting requests: try again later."
+
+#: clonaut/updates.py:77
+#, python-brace-format
+msgid "GitHub ha risposto HTTP {status}."
+msgstr "GitHub answered HTTP {status}."
+
+#: clonaut/updates.py:84 clonaut/updates.py:87 clonaut/updates.py:82
+msgid "Risposta di GitHub non valida."
+msgstr "Invalid response from GitHub."
+
+#: clonaut/updates.py:129
+msgid ""
+"Scarica la nuova AppImage dalla pagina della release, oppure aggiornala "
+"con Gear Lever o AppImageUpdate."
+msgstr ""
+"Download the new AppImage from the release page, or update it with Gear "
+"Lever or AppImageUpdate."
+
+#: clonaut/updates.py:132
+msgid ""
+"Scarica il nuovo pacchetto .deb dalla pagina della release e installalo "
+"con «sudo apt install ./clonaut_<versione>_all.deb»."
+msgstr ""
+"Download the new .deb package from the release page and install it with "
+"«sudo apt install ./clonaut_<version>_all.deb»."
+
+#: clonaut/updates.py:135
+msgid ""
+"Aggiorna il pacchetto «clonaut» con il tuo helper AUR (es. «yay -Syu»)."
+msgstr "Update the «clonaut» package with your AUR helper (e.g. «yay -Syu»)."
+
+#: clonaut/updates.py:138
+msgid ""
+"Ricostruisci il pacchetto «clonaut-git» con il tuo helper AUR (es. «yay "
+"-Syu --devel»)."
+msgstr ""
+"Rebuild the «clonaut-git» package with your AUR helper (e.g. «yay -Syu "
+"--devel»)."
+
+#: clonaut/updates.py:140
+msgid "Aggiorna il codice (es. «git pull» o «pip install --upgrade»)."
+msgstr "Update the code (e.g. «git pull» or «pip install --upgrade»)."
 
 #: clonaut/util.py:56
 #, python-brace-format

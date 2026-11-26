@@ -13,6 +13,8 @@ _KEYS = (
     ("minimize_to_tray", N_("Minimizza nella tray")),
     ("start_in_tray", N_("All'avvio resta ridotta nella tray")),
     ("notify_finished", N_("Mostra una notifica quando un trasferimento termina")),
+    ("check_updates", N_("Avvisa quando esce una nuova versione di Clonaut "
+                         "(una richiesta a GitHub al giorno)")),
 )
 
 

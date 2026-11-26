@@ -37,6 +37,13 @@ More languages are welcome — see [Contributing](#contributing).
   tray, start minimized to tray, notifications when a transfer finishes,
   interface language (`~/.config/clonaut/settings.json`). Without a system tray (e.g. GNOME without
   an extension) the app works as a normal window.
+- **Update check** — once a day Clonaut asks GitHub for the latest release
+  (one anonymous request, nothing else is sent) and shows a notice in the
+  status bar with the release notes and how to update for your install
+  (apt, AUR helper, AppImage/Gear Lever); it never replaces files by itself.
+  The notice offers «Skip this version» and «Don't check again»; the check
+  can also be turned off in **File → Settings…** or with
+  `CLONAUT_UPDATE_CHECK=0`. **Help → Check for updates…** checks on request.
 - **Dry run** — an honest preview: it runs on a separate rclone process started
   with `--dry-run`, so it cannot write or delete anything. It shows how many
   files/bytes would be transferred and how many files would be deleted.
@@ -332,6 +339,7 @@ clonaut/
 ├── worker.py               polling thread (watch-list) + DryRunWorker
 ├── appctx.py               shared context (+ dedicated dry-run backend)
 ├── instance.py             single instance (lock, raising the open window)
+├── updates.py              update check (GitHub releases, install method)
 ├── settings.py             persistent settings (tray, notifications), config/cache dirs
 ├── qtcompat.py             Qt imports: PySide6 or PyQt6 (`CLONAUT_QT`)
 ├── i18n.py                 interface language: `tr()`, gettext catalogs read as .po

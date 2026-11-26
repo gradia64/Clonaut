@@ -22,6 +22,8 @@ os.environ["XDG_CACHE_HOME"] = str(_ROOT / "cache")
 os.environ["XDG_CONFIG_HOME"] = str(_ROOT / "xdg-config")
 os.environ.pop("CLONAUT_RCLONE", None)
 os.environ.pop("APPDIR", None)
+# niente richieste a GitHub dai test: i controlli si provano con un server finto
+os.environ["CLONAUT_UPDATE_CHECK"] = "0"
 
 from clonaut.qtcompat import QtCore, QtWidgets  # noqa: E402
 

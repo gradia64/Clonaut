@@ -8,11 +8,12 @@ import platform
 
 from .. import __version__
 from .. import settings as app_settings
+from .. import updates
 from ..appctx import AppContext
 from ..i18n import tr
 from ..qtcompat import BINDING, QtCore, QtGui, QtWidgets
-from ..util import app_icon
-from ..worker import POLL_TIMEOUT, PollWorker, stop_thread
+from ..util import app_icon, esc
+from ..worker import POLL_TIMEOUT, CallWorker, PollWorker, stop_thread
 from .remotes_tab import RemotesTab
 from .settings_dialog import SettingsDialog
 from .transfers_tab import TransfersTab
@@ -53,6 +54,10 @@ class MainWindow(QtWidgets.QMainWindow):
         act_about.triggered.connect(self._show_about)
         act_about_qt = QtGui.QAction(tr("Informazioni su Qt…"), self)
         act_about_qt.triggered.connect(QtWidgets.QApplication.aboutQt)
+        act_updates = QtGui.QAction(tr("Controlla aggiornamenti…"), self)
+        act_updates.triggered.connect(self.check_updates_now)
+        help_menu.addAction(act_updates)
+        help_menu.addSeparator()
         help_menu.addAction(act_about)
         help_menu.addAction(act_about_qt)
 
@@ -60,6 +65,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self._status_lbl = QtWidgets.QLabel()
         self.statusBar().addWidget(self._status_lbl)
         self._set_status(ok=True)
+        # avviso di una nuova versione, a destra; nascosto finché non serve
+        self._update_lbl = QtWidgets.QLabel()
+        self._update_lbl.setTextFormat(QtCore.Qt.TextFormat.RichText)
+        self._update_lbl.linkActivated.connect(self._on_update_link)
+        self._update_lbl.hide()
+        self.statusBar().addPermanentWidget(self._update_lbl)
+        self._update_worker: CallWorker | None = None
+        self._update_release: updates.Release | None = None
+        self._update_timer = QtCore.QTimer(self)
+        self._update_timer.setInterval(updates.CHECK_EVERY_MS)
+        self._update_timer.timeout.connect(self._auto_check_updates)
+        if updates.enabled_by_env():
+            self._update_timer.start()
+            QtCore.QTimer.singleShot(updates.FIRST_CHECK_MS, self._auto_check_updates)
 
         # -- polling
         self.worker = PollWorker(ctx.api)
@@ -123,7 +142,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def _open_settings(self) -> None:
         dlg = SettingsDialog(self.settings, self, rclone_in_use=self.rclone_desc())
         if dlg.exec() == QtWidgets.QDialog.DialogCode.Accepted:
-            self.settings = dlg.values()
+            # il dialogo non mostra tutto (es. la versione saltata): si unisce
+            self.settings = {**self.settings, **dlg.values()}
             app_settings.save(self.settings)
 
     def rclone_desc(self) -> str:
@@ -168,6 +188,89 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _show_about(self) -> None:
         QtWidgets.QMessageBox.about(self, tr("Informazioni su Clonaut"), self.about_text())
+
+    # ---------------------------------------------------------- aggiornamenti
+
+    def _auto_check_updates(self) -> None:
+        if self.settings.get("check_updates") and not self._shut_down:
+            self._start_update_check(manual=False)
+
+    def check_updates_now(self) -> None:
+        """«Aiuto → Controlla aggiornamenti…»: anche con il controllo spento."""
+        self._start_update_check(manual=True)
+
+    def _start_update_check(self, manual: bool) -> None:
+        if self._update_worker is not None:
+            return   # già in corso
+        # chiesto a mano mostra anche una versione saltata
+        skip = "" if manual else str(self.settings.get("skip_version") or "")
+        worker = CallWorker(manual, updates.check, skip)
+        worker.succeeded.connect(self._on_update_checked)
+        worker.failed.connect(self._on_update_failed)
+        worker.finished.connect(self._release_update_worker)
+        self._update_worker = worker
+        worker.start()
+
+    def _release_update_worker(self) -> None:
+        self._update_worker = None
+
+    def _on_update_checked(self, manual, release) -> None:
+        if release is None:
+            if manual:
+                QtWidgets.QMessageBox.information(
+                    self, tr("Aggiornamenti"),
+                    tr("Clonaut {version} è la versione più recente.").format(
+                        version=__version__))
+            return
+        self._show_update(release)
+        if manual:
+            QtWidgets.QMessageBox.information(
+                self, tr("Aggiornamenti"), self._update_message(release))
+
+    def _on_update_failed(self, manual, message: str) -> None:
+        if manual:   # il controllo automatico fallisce in silenzio (es. offline)
+            QtWidgets.QMessageBox.warning(
+                self, tr("Aggiornamenti"),
+                esc(tr("Controllo non riuscito.") + "\n\n" + message))
+
+    def _update_message(self, release: "updates.Release") -> str:
+        """Testo (HTML) dell'avviso: versione, link alle note e come aggiornare."""
+        return ("<p>" + tr("È disponibile Clonaut {new} (ora usi la {current}).").format(
+                    new=html.escape(release.version), current=__version__)
+                + f" <a href='{html.escape(release.url, quote=True)}'>"
+                + tr("Novità della versione") + "</a></p><p>"
+                + html.escape(updates.how_to_update(updates.install_method())) + "</p>")
+
+    def _show_update(self, release: "updates.Release") -> None:
+        first = self._update_release is None or self._update_release != release
+        self._update_release = release
+        self._update_lbl.setText(
+            "⬆ <a href='open'>" + html.escape(
+                tr("Clonaut {version} disponibile").format(version=release.version))
+            + "</a> · <a href='skip'>" + tr("Salta questa versione")
+            + "</a> · <a href='off'>" + tr("Non controllare più") + "</a>")
+        self._update_lbl.setToolTip(updates.how_to_update(updates.install_method()))
+        self._update_lbl.show()
+        if first and self.tray is not None and self.settings.get("notify_finished"):
+            self.tray.showMessage(
+                "Clonaut", tr("È disponibile Clonaut {version}.").format(
+                    version=release.version),
+                QtWidgets.QSystemTrayIcon.MessageIcon.Information, 8000)
+
+    def _on_update_link(self, link: str) -> None:
+        release = self._update_release
+        if release is None:
+            return
+        if link == "open":
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl(release.url))
+            return
+        if link == "skip":
+            self.settings["skip_version"] = release.version
+        elif link == "off":
+            self.settings["check_updates"] = False
+        app_settings.save(self.settings)
+        self._update_lbl.hide()
+        self._update_release = None
 
     def quit(self) -> None:
         """Uscita vera (dal menu File o dalla tray): ferma worker e rcd."""
@@ -229,7 +332,10 @@ class MainWindow(QtWidgets.QMainWindow):
             event.accept()
             return
         self._shut_down = True
+        self._update_timer.stop()
         threads = [self.worker, *self.transfers_tab.background_threads()]
+        if self._update_worker is not None:
+            threads.append(self._update_worker)
         for thread in threads:
             thread.stop()
         # di solito il thread è in pausa tra due tick e finisce subito; se è
